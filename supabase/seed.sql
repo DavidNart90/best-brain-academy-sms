@@ -1,0 +1,3 @@
+-- Intentionally no users, credentials, role assignments or school records.
+-- Static role definitions are in the versioned foundation migration.
+-- Provision named administrators explicitly following docs/backend-setup.md.

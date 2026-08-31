@@ -1,0 +1,13 @@
+.next
+node_modules
+pnpm-lock.yaml
+coverage
+playwright-report
+test-results
+.agents
+AGENTS.md
+Project.md
+Plan.md
+Project Files
+skills-lock.json
+supabase/.temp

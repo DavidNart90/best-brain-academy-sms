@@ -141,3 +141,14 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Browser evidence may contain authenticated state; retain sanitized reports separately.
+playwright-report/
+test-results/
+.auth/
+supabase/.temp/
+.tools/
+Project Files/
+.agents/
+docs/
+tests/

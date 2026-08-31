@@ -1,0 +1,79 @@
+name: Foundation quality
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54329
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_synthetic_test_only
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm test:coverage
+      - run: pnpm build
+      - run: pnpm test:client-boundary
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: synthetic-browser-evidence
+          path: test-results/*.png
+          retention-days: 7
+
+  isolated-database:
+    needs: local-quality
+    if: github.event_name == 'workflow_dispatch' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: isolated-supabase-test
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:db
+        env:
+          TEST_TARGET_ACK: ${{ vars.TEST_TARGET_ACK }}
+          TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          TEST_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
+          TEST_SUPABASE_PROJECT_REF: ${{ secrets.TEST_SUPABASE_PROJECT_REF }}
+          TEST_ALLOWED_EMAIL: ${{ secrets.TEST_ALLOWED_EMAIL }}
+          TEST_ALLOWED_PASSWORD: ${{ secrets.TEST_ALLOWED_PASSWORD }}
+          TEST_DENIED_EMAIL: ${{ secrets.TEST_DENIED_EMAIL }}
+          TEST_DENIED_PASSWORD: ${{ secrets.TEST_DENIED_PASSWORD }}
+          TEST_DISABLED_EMAIL: ${{ secrets.TEST_DISABLED_EMAIL }}
+          TEST_DISABLED_PASSWORD: ${{ secrets.TEST_DISABLED_PASSWORD }}
+      - run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e:auth
+        env:
+          TEST_TARGET_ACK: ${{ vars.TEST_TARGET_ACK }}
+          TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          TEST_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
+          TEST_SUPABASE_PROJECT_REF: ${{ secrets.TEST_SUPABASE_PROJECT_REF }}
+          TEST_ALLOWED_EMAIL: ${{ secrets.TEST_ALLOWED_EMAIL }}
+          TEST_ALLOWED_PASSWORD: ${{ secrets.TEST_ALLOWED_PASSWORD }}

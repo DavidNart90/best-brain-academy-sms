@@ -1,0 +1,12 @@
+packages:
+  - .
+useNodeVersion: 24.20.0
+saveExact: true
+strictPeerDependencies: true
+minimumReleaseAge: 1440
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - "@tailwindcss/oxide"
