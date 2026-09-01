@@ -42,7 +42,7 @@ describe("password change validation", () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].path).toEqual(["newPassword"]);
+      expect(result.error.issues[0]?.path).toEqual(["newPassword"]);
     }
   });
 
@@ -54,7 +54,7 @@ describe("password change validation", () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].path).toEqual(["confirmPassword"]);
+      expect(result.error.issues[0]?.path).toEqual(["confirmPassword"]);
     }
   });
 
