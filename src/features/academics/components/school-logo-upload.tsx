@@ -86,6 +86,7 @@ export function SchoolLogoUpload({ version }: { version: string }) {
             id="school-logo-upload"
             type="file"
             accept="image/png,.png"
+            aria-label="Upload school logo"
             className="sr-only"
             disabled={uploading}
             onChange={(event) => {
