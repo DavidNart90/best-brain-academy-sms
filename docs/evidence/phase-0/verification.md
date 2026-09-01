@@ -36,8 +36,8 @@ are verified; see the
 | `pnpm test:client-boundary`      | Exit 0                     | 21 client JS chunks, 1,469,567 uncompressed bytes across all routes; no listed server/key markers           |
 | `pnpm audit --json`              | Exit 0                     | 0 reported vulnerabilities, 692 dependencies; not a complete provenance/security audit                      |
 | React Doctor full scan           | Exit 0; no errors          | Review notes below; score and external supply-chain scan disabled                                           |
-| `pnpm test:db`                   | Exit 0, 8 tests            | Four provider preflight plus anonymous/allowed/pending/disabled real Auth/RLS tests                          |
-| `pnpm test:e2e:auth`             | Exit 0, 3 tests            | Allowed login/reload/logout plus pending and disabled denial through real Supabase                           |
+| `pnpm test:db`                   | Exit 0, 8 tests            | Four provider preflight plus anonymous/allowed/pending/disabled real Auth/RLS tests                         |
+| `pnpm test:e2e:auth`             | Exit 0, 3 tests            | Allowed login/reload/logout plus pending and disabled denial through real Supabase                          |
 | pgTAP / hosted CI                | **Not run**                | Separate pgTAP file not run; migration SQL contract checks passed; workflow not executed on GitHub          |
 
 Coverage is **not whole-application coverage**. Its include set is environment

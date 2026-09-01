@@ -8,6 +8,11 @@
     "node": "24.20.0",
     "pnpm": "10.33.0"
   },
+  "pnpm": {
+    "overrides": {
+      "uuid": "11.1.1"
+    }
+  },
   "scripts": {
     "predev": "node scripts/check-runtime.mjs",
     "prebuild": "node scripts/check-runtime.mjs",
@@ -33,6 +38,8 @@
     "@supabase/supabase-js": "2.112.4",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
+    "exceljs": "4.4.0",
+    "framer-motion": "13.1.1",
     "lucide-react": "1.38.0",
     "next": "16.3.3",
     "radix-ui": "1.6.7",

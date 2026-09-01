@@ -18,6 +18,8 @@ if (
   );
 }
 
+const appPort = process.env.LIVE_E2E_APP_PORT ?? "3000";
+
 const targetUrl = URL.parse(process.env.TEST_SUPABASE_URL);
 if (
   !targetUrl ||
@@ -40,13 +42,17 @@ export default defineConfig({
   workers: 1,
   forbidOnly: true,
   reporter: "list",
-  use: { baseURL: "http://127.0.0.1:3000", trace: "off", screenshot: "off" },
+  use: {
+    baseURL: `http://127.0.0.1:${appPort}`,
+    trace: "off",
+    screenshot: "off",
+  },
   projects: [
     { name: "real-supabase-chromium", use: { ...devices["Desktop Chrome"] } },
   ],
   webServer: {
-    command: "pnpm start --hostname 127.0.0.1",
-    url: "http://127.0.0.1:3000/login",
+    command: `pnpm start --hostname 127.0.0.1 --port ${appPort}`,
+    url: `http://127.0.0.1:${appPort}/login`,
     timeout: 60000,
     reuseExistingServer: false,
     env: {

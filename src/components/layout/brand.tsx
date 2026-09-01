@@ -1,13 +1,19 @@
-import { BookOpen } from "lucide-react";
+import Image from "next/image";
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex min-h-16 items-center gap-3">
-      <span
-        className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground"
-        aria-hidden="true"
-      >
-        <BookOpen size={21} strokeWidth={1.6} />
+      <span className="flex size-11 shrink-0 items-center justify-center">
+        <Image
+          src="/api/branding/logo"
+          alt=""
+          width={1254}
+          height={1254}
+          className="size-11 object-contain drop-shadow-[0_4px_8px_rgba(78,35,32,0.12)]"
+          sizes="44px"
+          unoptimized
+          priority
+        />
       </span>
       <span className={compact ? "sr-only" : "text-[13px] leading-5"}>
         <strong className="block font-semibold">Best Brain Academy</strong>

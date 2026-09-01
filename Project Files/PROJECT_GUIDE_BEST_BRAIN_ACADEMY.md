@@ -180,7 +180,11 @@ Minimum student fields:
 - Class
 - Academic Year
 - Term
+- Student Location
 - Student Status
+- Has Disability: Yes / No
+- Disability Details (required when Yes)
+- Religious Denomination
 
 Guardian fields:
 
@@ -941,6 +945,9 @@ gender
 date_of_birth
 admission_date
 status
+has_disability
+disability_details
+religious_denomination
 photo_url
 created_at
 updated_at
@@ -1234,6 +1241,12 @@ Last Name
 Gender
 Date of Birth
 Class
+Academic Year
+Term
+Student Location
+Has Disability
+Disability Details
+Religious Denomination
 Guardian Name
 Guardian Relationship
 Guardian Phone

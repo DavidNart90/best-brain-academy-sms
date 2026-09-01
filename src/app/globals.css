@@ -11,6 +11,8 @@
   --surface-page: #f7f8fa;
   --surface-card: #ffffff;
   --surface-subtle: #f2f4f7;
+  --auth-panel: #211d1d;
+  --brand-panel-accent: rgba(189, 59, 54, 0.24);
   --text-primary: #1f2328;
   --text-secondary: #667085;
   --border-default: #e4e7ec;
@@ -48,6 +50,10 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-canvas: var(--surface-canvas);
+  --color-auth-panel: var(--auth-panel);
+  --color-brand-panel-accent: var(--brand-panel-accent);
+  --color-brand-soft: var(--brand-primary-soft);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
@@ -121,6 +127,15 @@
   }
   .table-scroll {
     @apply max-w-full overflow-x-auto;
+  }
+  .configuration-disclosure {
+    @apply overflow-hidden rounded-lg border border-border bg-card;
+  }
+  .configuration-disclosure > summary {
+    @apply flex min-h-12 list-none items-center justify-between gap-3 px-4 py-3 text-sm transition-colors hover:bg-muted/50;
+  }
+  .configuration-disclosure > summary::-webkit-details-marker {
+    display: none;
   }
 }
 

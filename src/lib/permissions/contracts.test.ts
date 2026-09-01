@@ -11,6 +11,7 @@ const manager: AccessContext = {
   id,
   displayName: "Synthetic manager",
   status: "active",
+  mustChangePassword: false,
   roles: ["MANAGEMENT"],
   permissions: ["dashboard.read", "financials.read", "reports.read"],
 };

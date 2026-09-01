@@ -28,6 +28,7 @@ export async function requireActiveAccount() {
   if (!context) redirect("/login");
   if (context.status !== "active" || context.roles.length === 0)
     redirect("/login?notice=access");
+  if (context.mustChangePassword) redirect("/change-password");
   return context;
 }
 

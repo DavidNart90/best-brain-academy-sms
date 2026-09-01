@@ -120,6 +120,23 @@ Test content fit rather than relying on one device width. Prevent accidental pag
 
 Use 120–160ms hover/focus transitions and 160–200ms drawer/dialog transitions where useful. Respect `prefers-reduced-motion`; no interaction should require animation to be understood. Maintain visible focus, accessible names, and approximately 40px or larger touch targets. Status must have text or an icon as well as color.
 
+## Records, Forms, and Spreadsheet Imports
+
+Use one shared operational pattern for Students, Staff, and Administrators as those modules are implemented. Reuse the components and interaction model; adapt labels, permissions, columns, and validation to the entity instead of copying a finished screen.
+
+- Empty directories present an ordered, three-step start: create one record, download the approved Excel template, then import records. Keep these actions inside one bordered panel rather than three decorative dashboard cards.
+- Directory tables use server-side filtering, stable sorting, an exact count, and 25-row pagination. Search is debounced into the URL, labelled filters remain visible, and changing filters resets the page. Keep export filters aligned with the visible table and cap export size server-side.
+- Distinguish the truly empty directory from a no-results search. Provide dedicated loading, permission-denied, recoverable-error, and success states. On narrow screens, place the table in a named keyboard-focusable scroll region; do not remove essential columns globally.
+- Forms use visible labels, restrained section panels, helpful descriptions, and at most four columns on wide screens. Validate with a shared Zod contract on the client and again on the server. Show field-level errors, a clear pending label, and a non-obscuring final action row.
+- Conditional student fields must remain explicit: ask for disability status with a labelled Yes/No control, reveal and require details only when Yes is selected, and keep religious denomination as a clearly labelled text field. Do not infer either value.
+- Student profiles use a compact identity header, restrained detail panels, actionable guardian contacts, and a chronological enrollment timeline. Keep unavailable finance sections visible but clearly locked until Phase 3; secure photo controls must show pending, error, and success feedback without exposing public file URLs.
+- Staff profiles use the same compact record language with employment details, a bounded class-assignment history table, explicit add/end/archive actions, and visible creator/updater context. Keep salary deductions visibly locked until Phase 4 and state plainly that a staff profile is not a login account.
+- Administrator screens use the same directory language with visible role, account status, last sign-in, and an explicit confirmation before role or status changes. Keep staff employment records separate from login provisioning, require Super Administrator authorization for account configuration, and disable self-management controls. Under the approved password-only policy, new logins receive an administrator-set temporary password and must replace it at first sign-in; do not add OTP or MFA screens.
+- Spreadsheet import is a deliberate sequence: template → file selection → preview → row-level validation and duplicate review → explicit confirmation → one transactional save. Confirmation stays disabled until every row is valid and the user checks the confirmation control. A failed batch saves nothing.
+- Administrator imports transactionally stage the fully validated batch before Auth account creation runs. Temporary passwords stay out of previews, directory data, and database staging; remind the operator to share them through a trusted channel and delete completed workbooks. Show a clear per-account result and retain audited, retryable failure state instead of claiming all-or-nothing provisioning.
+- Import previews use a bounded scrollable table with a row number, a small identifying column set, and plain-language validation errors. Never expose raw SQL, constraint, or provider messages to the browser.
+- The approved implementation follows the accessible form/error patterns in the [shadcn form guidance](https://ui.shadcn.com/docs/forms/react-hook-form), the composable table structure in the [shadcn data-table guidance](https://ui.shadcn.com/docs/components/data-table), and controlled server-side state from the [TanStack Table guide](https://tanstack.com/table/latest/docs/guide/pagination).
+
 ## Design Change Acceptance Checklist
 
 - [ ] GPT Taste and other relevant skills were read and applied; project overrides are identified.

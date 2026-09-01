@@ -2,6 +2,8 @@ import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { writeFile } from "node:fs/promises";
 
+const fixtureUrl = `http://127.0.0.1:${process.env.E2E_AUTH_PORT ?? "54329"}`;
+
 async function login(page: Page, actor = "super") {
   await page.goto("/login");
   await page.getByLabel("Email address").fill(`${actor}@example.invalid`);
@@ -136,7 +138,7 @@ test("synthetic dashboard, filters, navigation, responsive layout and logout", a
   }
   await page.getByRole("link", { name: "Students", exact: true }).click();
   await expect(
-    page.getByText("This workspace is not available yet"),
+    page.getByRole("heading", { name: "Your student directory is ready" }),
   ).toBeVisible();
   await page.goto("/financials/payments");
   await expect(
@@ -157,14 +159,14 @@ test("account disablement and access-service errors fail closed", async ({
 }) => {
   await login(page, "manager");
   await expect(page).toHaveURL(/\/dashboard$/);
-  await request.post("http://127.0.0.1:54329/control", {
+  await request.post(`${fixtureUrl}/control`, {
     data: { email: "manager@example.invalid", action: "disable" },
   });
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login\?notice=access$/);
   await login(page, "super");
   await expect(page).toHaveURL(/\/dashboard$/);
-  await request.post("http://127.0.0.1:54329/control", {
+  await request.post(`${fixtureUrl}/control`, {
     data: { email: "super@example.invalid", action: "fail-access" },
   });
   await page.reload();
@@ -181,11 +183,8 @@ test("documented module and record shells remain unavailable for business work",
   await expect(page).toHaveURL(/\/dashboard$/);
   const paths = [
     "/admissions",
-    "/admissions/new",
     "/admissions/demo-001",
-    "/students",
     "/students/demo-001",
-    "/classes",
     "/classes/demo-001",
     "/staff",
     "/staff/demo-001",
@@ -202,8 +201,6 @@ test("documented module and record shells remain unavailable for business work",
     "/reports",
     "/administrators",
     "/settings",
-    "/settings/school",
-    "/settings/academics",
     "/settings/financial",
     "/settings/roles",
   ];
@@ -224,6 +221,107 @@ test("documented module and record shells remain unavailable for business work",
   ).toBeVisible();
 });
 
+test("student empty state, template, import confirmation and onboarding validation", async ({
+  page,
+}) => {
+  await login(page);
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.goto("/students");
+  await expect(
+    page.getByRole("heading", { name: "Students", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("ol > li h3").allTextContents()).resolves.toEqual([
+    "Add Student",
+    "Download Excel Template",
+    "Import Students",
+  ]);
+
+  const template = await page.request.get("/api/students/template");
+  expect(template.status()).toBe(200);
+  expect(template.headers()["content-type"]).toContain(
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  );
+
+  await page.getByRole("button", { name: "Import Students" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Import students" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Confirm and import" }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Cancel" }).click();
+
+  await page.goto("/admissions/new");
+  await expect(page).toHaveURL(/\/students\/new$/);
+  await expect(
+    page.getByRole("heading", { name: "Add student", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Add student", exact: true }).click();
+  await expect(page.getByText("First name is required.")).toBeVisible();
+  await expect(page.getByText("Last name is required.")).toBeVisible();
+  await expect(page.getByText("Guardian name is required.")).toBeVisible();
+  await expect(
+    page.getByText("Religious denomination is required."),
+  ).toBeVisible();
+  await page
+    .getByLabel("Does the student have a disability?")
+    .selectOption("yes");
+  await expect(page.getByLabel("Disability details")).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.getByRole("heading", { name: "Add student", exact: true }).click();
+  await page.screenshot({
+    path: `test-results/student-onboarding-${test.info().project.name}.png`,
+    fullPage: true,
+  });
+});
+
+test("academic configuration renders approved classes, terms and locations", async ({
+  page,
+}) => {
+  await login(page);
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.goto("/classes");
+  await expect(
+    page.getByRole("heading", { name: "Class catalogue" }),
+  ).toBeVisible();
+  await expect(page.getByText("13 matching classes")).toBeVisible();
+  await expect(page.getByRole("cell", { name: "Nursery 1" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "JHS 3" })).toBeVisible();
+  await page.getByLabel("Class name").fill("Basic");
+  await expect(page).toHaveURL(/\/classes\?q=Basic$/);
+  await expect(page.getByText("6 matching classes")).toBeVisible();
+
+  await page.goto("/settings/academics");
+  await expect(
+    page.getByRole("heading", { name: "Academic settings" }),
+  ).toBeVisible();
+  await expect(page.getByText("2026/2027").first()).toBeVisible();
+  await expect(page.getByText("8 Sept 2026").first()).toBeVisible();
+  await expect(page.getByText("Dates can be added when confirmed")).toHaveCount(
+    2,
+  );
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+
+  await page.goto("/settings/school");
+  await expect(
+    page.getByRole("heading", { name: "School locations" }),
+  ).toBeVisible();
+  for (const location of [
+    "Osenase & Akwadum",
+    "Asuofori",
+    "Kobriso & Abaase",
+    "Anomaa Kojo",
+    "Bamenase",
+  ])
+    await expect(page.getByText(location, { exact: true })).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
 test("management cannot open administrator shells or gain access through URL role spoofing", async ({
   page,
 }) => {
@@ -240,6 +338,10 @@ test("management cannot open administrator shells or gain access through URL rol
   await expect(
     page.getByRole("heading", { name: "You don’t have access to this page" }),
   ).toBeVisible();
+  await page.goto("/settings/academics");
+  await expect(
+    page.getByRole("heading", { name: "You don’t have access to this page" }),
+  ).toBeVisible();
 });
 
 test("revoked sessions and removed permissions are rechecked on the server", async ({
@@ -248,7 +350,7 @@ test("revoked sessions and removed permissions are rechecked on the server", asy
 }) => {
   await login(page, "manager");
   await expect(page).toHaveURL(/\/dashboard$/);
-  await request.post("http://127.0.0.1:54329/control", {
+  await request.post(`${fixtureUrl}/control`, {
     data: { email: "manager@example.invalid", action: "remove-permissions" },
   });
   await page.reload();
@@ -256,7 +358,7 @@ test("revoked sessions and removed permissions are rechecked on the server", asy
     page.getByRole("heading", { name: "You don’t have access to this page" }),
   ).toBeVisible();
   expect((await page.request.get("/api/access")).status()).toBe(403);
-  await request.post("http://127.0.0.1:54329/control", {
+  await request.post(`${fixtureUrl}/control`, {
     data: { email: "manager@example.invalid", action: "revoke" },
   });
   await page.goto("/dashboard");

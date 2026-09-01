@@ -4,12 +4,19 @@ export const permissionSchema = z.enum([
   "dashboard.read",
   "admissions.read",
   "students.read",
+  "students.manage",
+  "students.import",
+  "students.export",
   "classes.read",
   "staff.read",
+  "staff.manage",
+  "staff.import",
+  "staff.export",
   "financials.read",
   "reports.read",
   "administrators.manage",
   "settings.manage",
+  "audit.read",
 ]);
 export type Permission = z.infer<typeof permissionSchema>;
 export const roleSchema = z.enum([
@@ -23,6 +30,7 @@ export const accessContextSchema = z.object({
   id: z.uuid(),
   displayName: z.string().max(120),
   status: z.enum(["pending", "active", "disabled"]),
+  mustChangePassword: z.boolean(),
   roles: z.array(roleSchema).max(4),
   permissions: z.array(permissionSchema).max(50),
 });

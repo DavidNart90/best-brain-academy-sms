@@ -22,7 +22,7 @@ export const appRoutes: AppRoute[] = [
   {
     href: "/admissions/new",
     title: "New Admission",
-    permission: "admissions.read",
+    permission: "students.manage",
     phase: 2,
     description: "Student and guardian intake with class enrollment.",
   },
