@@ -1,8 +1,8 @@
 # Phase 0 backend verification — 1 September 2026
 
-Owner: Codex. Working-tree evidence; no deployment. **Phase 0 integrated gate
-passed.** This report supersedes the historical unapplied/backend-blocked state and
-supplements the local UI/test report.
+Owner: Codex. Checkpoint commit: `2e1ab95`; no push or deployment. **Phase 0
+integrated gate passed.** This report supersedes the historical
+unapplied/backend-blocked state and supplements the local UI/test report.
 
 ## Authorization and changes
 
