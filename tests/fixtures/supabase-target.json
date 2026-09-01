@@ -1,0 +1,6 @@
+{
+  "projectRef": "cefwopisbgfctzdloequ",
+  "purpose": "test-only",
+  "liveDataAllowed": false,
+  "decision": "D-01: Chief Engineer authorized this existing free-plan project for testing on 2026-08-31. Disable test runs before any production conversion."
+}

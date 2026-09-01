@@ -2,7 +2,8 @@
 
 Phase 0 foundation: protected staff sign-in, permission-aware navigation, school-red
 design tokens and clearly labeled synthetic dashboard previews. **No business CRUD
-or financial transactions are implemented. Phase 0 is not yet accepted.** See
+or financial transactions are implemented. Phase 0 passed its integrated gate on
+1 September 2026; Phase 1 has not started.** See
 [Plan.md](Plan.md) for task status and [backend setup](docs/backend-setup.md) for the
 applied migrations, approved test-only target and remaining verification requirements.
 
@@ -37,7 +38,7 @@ preflight checks prevent running development/production commands on the wrong pa
 | `pnpm build`         | Production build                                                       |
 | `pnpm start`         | Serve the production build                                             |
 | `pnpm test:e2e`      | Chromium desktop/tablet/mobile tests using a loopback Auth double      |
-| `pnpm test:e2e:auth` | Actual Supabase login/logout smoke test; requires isolated setup       |
+| `pnpm test:e2e:auth` | Actual Supabase allowed/pending/disabled browser journeys              |
 
 ## Repeatable local browser tests
 
@@ -76,7 +77,7 @@ GitHub in this session. No real credentials or live-provider traces are uploaded
 - `src/features/dashboard`: synthetic chart, metrics and filterable display records.
 - `src/components`: owned shadcn primitives, shell and reusable data presentation.
 - `src/lib`: request-scoped Supabase clients, verified identity and permission contracts.
-- `supabase`: three applied/tracked migrations, verified SQL access contracts, no-user seed and separate unrun pgTAP checks.
+- `supabase`: four applied/tracked migrations, verified SQL access contracts, no-business-data seed and separate unrun pgTAP checks.
 - `tests`: isolated synthetic fixtures and separate real-provider integration checks.
 
 Follow [AGENTS.md](AGENTS.md), [Project.md](Project.md), and the

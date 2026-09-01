@@ -148,7 +148,3 @@ test-results/
 .auth/
 supabase/.temp/
 .tools/
-Project Files/
-.agents/
-docs/
-tests/

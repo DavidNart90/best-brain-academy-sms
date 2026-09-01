@@ -2,7 +2,7 @@
 
 **Owner:** Chief Engineer (the user)  
 **Research baseline:** 31 August 2026  
-**Status:** Phase 0 scaffold and Supabase schema/RLS verified; authenticated-provider journeys and the phase gate remain blocked.  
+**Status:** Phase 0 foundation and integrated gate verified on 1 September 2026; Phase 1 has not started.
 **Execution plan:** [Plan.md](Plan.md) contains current task statuses, verification evidence, and handover. Phase 1 has not started.
 
 ## 1. Purpose and Engineering Ownership

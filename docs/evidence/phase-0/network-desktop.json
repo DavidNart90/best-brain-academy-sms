@@ -1,0 +1,11 @@
+{
+  "navigationDurationMs": 130.60000000149012,
+  "resourceRequests": 27,
+  "transferredBytes": 9640,
+  "decodedBytes": 1404102,
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "scope": "Warm local production reload; synthetic Auth and five demo rows. Not a Core Web Vitals or real backend benchmark."
+}
