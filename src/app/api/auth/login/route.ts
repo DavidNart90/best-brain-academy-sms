@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { loginSchema } from "@/features/auth/schemas";
 import { getPublicEnvironment } from "@/lib/env";
+import { isSameOriginAsHost } from "@/lib/auth/origin";
 import { parseAccessContext } from "@/lib/permissions/contracts";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -12,7 +13,8 @@ function json(body: unknown, status = 200) {
 
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
-  if (origin && origin !== request.nextUrl.origin)
+  const host = request.headers.get("host");
+  if (origin && (!host || !isSameOriginAsHost(origin, host)))
     return json({ error: "This sign-in request was blocked." }, 403);
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     return json({ error: "Enter a valid email and password." }, 415);

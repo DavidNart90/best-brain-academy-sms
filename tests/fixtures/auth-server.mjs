@@ -205,6 +205,7 @@ const server = createServer(async (request, response) => {
     return json(response, 200, { service: "synthetic-auth-fixture-only" });
   if (url.pathname === "/auth/v1/token") {
     const data = JSON.parse(body || "{}");
+    console.error("DEBUG token request", JSON.stringify(data), "search", url.search);
     if (url.searchParams.get("grant_type") === "refresh_token") {
       const previous = [...sessions.entries()].find(
         ([, entry]) => entry.refreshToken === data.refresh_token,
@@ -292,6 +293,7 @@ const server = createServer(async (request, response) => {
       id: session.id,
       displayName: session.displayName,
       status: session.status,
+      mustChangePassword: false,
       roles: session.roles,
       permissions: session.permissions,
     });

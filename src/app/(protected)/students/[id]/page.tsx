@@ -246,7 +246,7 @@ export default async function StudentProfilePage({
               className="relative grid grid-cols-[20px_1fr] gap-4 pb-6 last:pb-0"
             >
               {index < student.enrollments.length - 1 && (
-                <span className="absolute top-5 bottom-0 left-[9px] w-px bg-border" />
+                <span className="absolute top-5 bottom-0 left-2.25 w-px bg-border" />
               )}
               <span
                 className={`relative mt-1.5 size-5 rounded-full border-4 border-card ${enrollment.status === "active" ? "bg-primary" : "bg-muted-foreground/40"}`}
