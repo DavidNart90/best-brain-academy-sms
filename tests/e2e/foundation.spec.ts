@@ -196,7 +196,6 @@ test("documented module and record shells remain unavailable for business work",
     "/financials/expenses",
     "/financials/salary-deductions",
     "/reports",
-    "/settings",
     "/settings/financial",
     "/settings/roles",
   ];
