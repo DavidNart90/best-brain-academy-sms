@@ -148,3 +148,4 @@ test-results/
 .auth/
 supabase/.temp/
 .tools/
+.agents/
