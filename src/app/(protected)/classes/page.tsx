@@ -93,7 +93,12 @@ export default async function ClassesPage({
               {result.rows.map((schoolClass) => (
                 <TableRow key={schoolClass.id}>
                   <TableCell className="px-5 py-4 font-semibold">
-                    {schoolClass.name}
+                    <Link
+                      href={`/classes/${schoolClass.id}`}
+                      className="hover:text-primary hover:underline"
+                    >
+                      {schoolClass.name}
+                    </Link>
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {schoolClass.code}

@@ -130,6 +130,21 @@ export async function getClassPage(
   };
 }
 
+export async function getSchoolClass(
+  classId: number,
+): Promise<SchoolClass | null> {
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase
+    .from("classes")
+    .select(
+      "id,code,name,class_group,sort_order,status,created_by,updated_by,created_at,updated_at",
+    )
+    .eq("id", classId)
+    .maybeSingle();
+  if (result.error) throw new Error(configurationError);
+  return result.data as SchoolClass | null;
+}
+
 export async function getSchoolLocations(): Promise<{
   settings: SchoolSettings;
   locations: SchoolLocation[];

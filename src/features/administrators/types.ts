@@ -1,4 +1,5 @@
 import type { AdministratorListQuery } from "./schemas";
+import type { Permission, Role } from "@/lib/permissions/contracts";
 
 export type AdministratorDirectoryRow = {
   userId: string;
@@ -32,4 +33,13 @@ export type AdministratorImportPreview = {
   errorCount: number;
   duplicateCount: number;
   canConfirm: boolean;
+};
+
+export type RolePermissionMatrix = {
+  roles: Array<{ code: Role; label: string }>;
+  permissions: Array<{
+    code: Permission;
+    description: string;
+    roleCodes: Role[];
+  }>;
 };

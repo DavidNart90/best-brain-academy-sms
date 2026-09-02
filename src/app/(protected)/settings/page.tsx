@@ -36,11 +36,11 @@ const settingsDestinations = [
     icon: CalendarRange,
   },
   {
-    href: "/administrators",
-    title: "Administrator access",
+    href: "/settings/roles",
+    title: "Roles & permissions",
     description:
-      "Configure administrator accounts, assigned roles and active access to the platform.",
-    detail: "Accounts and permissions",
+      "Review the live permission matrix and open administrator accounts when a role assignment must change.",
+    detail: "Access matrix and roles",
     icon: ShieldCheck,
   },
 ] as const;
