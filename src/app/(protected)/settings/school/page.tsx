@@ -17,7 +17,7 @@ export default async function SchoolSettingsPage() {
     <>
       <PageHeader
         title="School settings"
-        description="Maintain school identity and the locations used to determine future location-based fee components."
+        description="Maintain school identity and the transport locations used to charge each student's transport fee by how far they stay from school."
       />
       <section className="panel p-5" aria-labelledby="school-details-title">
         <h2 id="school-details-title" className="text-base font-semibold">
@@ -36,11 +36,14 @@ export default async function SchoolSettingsPage() {
       <section className="panel mt-6 p-5" aria-labelledby="locations-title">
         <div>
           <h2 id="locations-title" className="text-base font-semibold">
-            School locations
+            Transport locations
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
+            A location is not a school campus; it identifies how far a student
+            stays from school and sets that student&apos;s transport charge.
             These five approved locations are configuration only. Their monetary
-            charges will be implemented with fee structures in Phase 3.
+            transport charges will be implemented with fee structures in Phase
+            3.
           </p>
         </div>
         <div className="mt-5 space-y-3">

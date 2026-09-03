@@ -14,7 +14,7 @@ export default async function NewStaffPage() {
     <>
       <PageHeader
         title="Add staff member"
-        description="Create an employment profile and an optional first class assignment. No login account is created."
+        description="Create an employment profile with optional class and subject assignments. No login account is created."
       >
         <Button asChild variant="outline">
           <Link href="/staff">

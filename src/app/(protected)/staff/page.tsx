@@ -227,7 +227,7 @@ export default async function StaffPage({
                         <TableCell>{member.position}</TableCell>
                         <TableCell>{member.assignedClasses || "—"}</TableCell>
                         <TableCell>
-                          <p>{member.phone}</p>
+                          <p>{member.phone ?? "Phone not recorded"}</p>
                           <p className="mt-0.5 text-xs text-muted-foreground">
                             {member.email ?? "No email"}
                           </p>

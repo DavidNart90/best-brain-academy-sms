@@ -12,7 +12,7 @@ import type {
 const loadError =
   "Staff records could not be loaded. Try again or contact an administrator.";
 const directoryColumns =
-  "id,staff_number,first_name,middle_name,last_name,full_name,phone,email,staff_type,position,status,date_joined,assigned_classes,created_at";
+  "id,staff_number,first_name,middle_name,last_name,full_name,phone,email,staff_type,position,status,date_joined,assigned_classes,known_subjects,created_at";
 const firstValue = (value: string | string[] | undefined) =>
   Array.isArray(value) ? value[0] : value;
 const safeSearch = (value: string) =>
@@ -26,13 +26,16 @@ function mapRow(row: Record<string, unknown>): StaffDirectoryRow {
     id: Number(row.id),
     staffNumber: String(row.staff_number),
     fullName: String(row.full_name),
-    phone: String(row.phone),
+    phone: row.phone ? String(row.phone) : null,
     email: row.email ? String(row.email) : null,
     staffType: row.staff_type === "non_teaching" ? "non_teaching" : "teaching",
     position: String(row.position),
     status: row.status as StaffDirectoryRow["status"],
     dateJoined: row.date_joined ? String(row.date_joined) : null,
     assignedClasses: String(row.assigned_classes ?? ""),
+    knownSubjects: Array.isArray(row.known_subjects)
+      ? row.known_subjects.map(String)
+      : [],
   };
 }
 
@@ -101,8 +104,7 @@ export async function getStaffPage(
     request = request.eq("staff_type", query.staffType);
   const [result, allCount] = await Promise.all([
     request
-      .order("last_name")
-      .order("first_name")
+      .order("full_name")
       .order("id")
       .range(offset, offset + pageSize - 1),
     supabase.from("staff").select("id", { count: "exact", head: true }),
@@ -136,10 +138,7 @@ export async function getStaffExportRows(
   if (query.status !== "all") request = request.eq("status", query.status);
   if (query.staffType !== "all")
     request = request.eq("staff_type", query.staffType);
-  const result = await request
-    .order("last_name")
-    .order("first_name")
-    .limit(5000);
+  const result = await request.order("full_name").order("id").limit(5000);
   if (result.error) throw new Error(loadError);
   return (result.data as Array<Record<string, unknown>>).map(mapRow);
 }
@@ -151,7 +150,7 @@ export async function getStaffProfile(
   const member = await supabase
     .from("staff")
     .select(
-      "id,staff_number,first_name,middle_name,last_name,phone,email,staff_type,position,status,date_joined,created_at,updated_at,created_by,updated_by",
+      "id,staff_number,recorded_name,first_name,middle_name,last_name,phone,email,staff_type,position,status,date_joined,date_of_birth,known_subjects,created_at,updated_at,created_by,updated_by",
     )
     .eq("id", staffId)
     .maybeSingle();
@@ -160,11 +159,12 @@ export async function getStaffProfile(
   const assignments = await supabase
     .from("staff_assignments")
     .select(
-      "id,academic_year_id,academic_term_id,class_id,status,started_on,ended_on",
+      "id,academic_year_id,academic_term_id,class_id,status,started_on,ended_on,assignment_kind,subject_name",
     )
     .eq("staff_id", staffId)
     .order("started_on", { ascending: false })
-    .order("id", { ascending: false });
+    .order("id", { ascending: false })
+    .limit(1000);
   if (assignments.error) throw new Error(loadError);
   const ids = <T>(rows: T[], key: keyof T) => [
     ...new Set(rows.map((row) => Number(row[key]))),
@@ -204,9 +204,11 @@ export async function getStaffProfile(
   return {
     ...mapRow({
       ...row,
-      full_name: [row.first_name, row.middle_name, row.last_name]
-        .filter(Boolean)
-        .join(" "),
+      full_name:
+        row.recorded_name ??
+        [row.first_name, row.middle_name, row.last_name]
+          .filter(Boolean)
+          .join(" "),
       assigned_classes: assignments.data
         .filter((item) => item.status === "active")
         .map((item) => names(classes.data).get(item.class_id))
@@ -216,6 +218,7 @@ export async function getStaffProfile(
     firstName: row.first_name,
     middleName: row.middle_name,
     lastName: row.last_name,
+    dateOfBirth: row.date_of_birth ? String(row.date_of_birth) : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     createdBy: profileNames.get(row.created_by) || "Authorized administrator",
@@ -227,6 +230,13 @@ export async function getStaffProfile(
       academicTermName:
         names(terms.data).get(item.academic_term_id) ?? "Unknown term",
       className: names(classes.data).get(item.class_id) ?? "Unknown class",
+      assignmentKind:
+        item.assignment_kind === "teaching"
+          ? "teaching"
+          : item.assignment_kind === "head"
+            ? "head"
+            : "general",
+      subjectName: item.subject_name,
       status: item.status === "completed" ? "completed" : "active",
       startedOn: item.started_on,
       endedOn: item.ended_on,

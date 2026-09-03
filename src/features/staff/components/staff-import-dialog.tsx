@@ -13,6 +13,7 @@ export function StaffImportDialog() {
         { key: "staffType", label: "Type" },
         { key: "position", label: "Position" },
         { key: "assignedClass", label: "Assigned class" },
+        { key: "knownSubjects", label: "Known subjects" },
         { key: "status", label: "Status" },
       ]}
     />

@@ -15,6 +15,9 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${appPort}`,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
+    // Scan the at-rest UI: Framer Motion entrance fades otherwise blend colors
+    // mid-animation and make axe contrast checks nondeterministic.
+    contextOptions: { reducedMotion: "reduce" },
   },
   projects: [
     {

@@ -357,6 +357,209 @@ export type Database = {
           },
         ];
       };
+      expense_categories: {
+        Row: {
+          code: string;
+          created_at: string;
+          created_by: string | null;
+          id: number;
+          name: string;
+          sort_order: number;
+          status: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: never;
+          name: string;
+          sort_order: number;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: never;
+          name?: string;
+          sort_order?: number;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "expense_categories_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expense_categories_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fee_component_rates: {
+        Row: {
+          academic_term_id: number;
+          academic_year_id: number;
+          amount: number;
+          class_id: number | null;
+          created_at: string;
+          created_by: string | null;
+          fee_component_id: number;
+          id: number;
+          school_location_id: number | null;
+          status: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          academic_term_id: number;
+          academic_year_id: number;
+          amount: number;
+          class_id?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          fee_component_id: number;
+          id?: never;
+          school_location_id?: number | null;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          academic_term_id?: number;
+          academic_year_id?: number;
+          amount?: number;
+          class_id?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          fee_component_id?: number;
+          id?: never;
+          school_location_id?: number | null;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fee_component_rates_academic_term_id_fkey";
+            columns: ["academic_term_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_terms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fee_component_rates_academic_year_id_fkey";
+            columns: ["academic_year_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_years";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fee_component_rates_class_id_fkey";
+            columns: ["class_id"];
+            isOneToOne: false;
+            referencedRelation: "classes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fee_component_rates_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fee_component_rates_fee_component_id_fkey";
+            columns: ["fee_component_id"];
+            isOneToOne: false;
+            referencedRelation: "fee_components";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fee_component_rates_school_location_id_fkey";
+            columns: ["school_location_id"];
+            isOneToOne: false;
+            referencedRelation: "school_locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fee_component_rates_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fee_components: {
+        Row: {
+          code: string;
+          created_at: string;
+          created_by: string | null;
+          id: number;
+          is_required: boolean;
+          name: string;
+          scope: string;
+          sort_order: number;
+          status: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: never;
+          is_required?: boolean;
+          name: string;
+          scope: string;
+          sort_order: number;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: never;
+          is_required?: boolean;
+          name?: string;
+          scope?: string;
+          sort_order?: number;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fee_components_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fee_components_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       guardians: {
         Row: {
           address: string | null;
@@ -407,6 +610,111 @@ export type Database = {
           },
           {
             foreignKeyName: "guardians_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      misc_income_categories: {
+        Row: {
+          code: string;
+          created_at: string;
+          created_by: string | null;
+          id: number;
+          name: string;
+          sort_order: number;
+          status: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: never;
+          name: string;
+          sort_order: number;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: never;
+          name?: string;
+          sort_order?: number;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "misc_income_categories_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "misc_income_categories_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      payment_methods: {
+        Row: {
+          code: string;
+          created_at: string;
+          created_by: string | null;
+          id: number;
+          name: string;
+          requires_reference: boolean;
+          sort_order: number;
+          status: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: never;
+          name: string;
+          requires_reference?: boolean;
+          sort_order: number;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: never;
+          name?: string;
+          requires_reference?: boolean;
+          sort_order?: number;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payment_methods_updated_by_fkey";
             columns: ["updated_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
@@ -620,13 +928,16 @@ export type Database = {
           created_at: string;
           created_by: string;
           date_joined: string | null;
+          date_of_birth: string | null;
           email: string | null;
-          first_name: string;
+          first_name: string | null;
           id: number;
-          last_name: string;
+          known_subjects: string[];
+          last_name: string | null;
           middle_name: string | null;
-          phone: string;
+          phone: string | null;
           position: string;
+          recorded_name: string | null;
           staff_number: string;
           staff_type: string;
           status: string;
@@ -637,13 +948,16 @@ export type Database = {
           created_at?: string;
           created_by: string;
           date_joined?: string | null;
+          date_of_birth?: string | null;
           email?: string | null;
-          first_name: string;
+          first_name?: string | null;
           id?: never;
-          last_name: string;
+          known_subjects?: string[];
+          last_name?: string | null;
           middle_name?: string | null;
-          phone: string;
+          phone?: string | null;
           position: string;
+          recorded_name?: string | null;
           staff_number: string;
           staff_type: string;
           status?: string;
@@ -654,13 +968,16 @@ export type Database = {
           created_at?: string;
           created_by?: string;
           date_joined?: string | null;
+          date_of_birth?: string | null;
           email?: string | null;
-          first_name?: string;
+          first_name?: string | null;
           id?: never;
-          last_name?: string;
+          known_subjects?: string[];
+          last_name?: string | null;
           middle_name?: string | null;
-          phone?: string;
+          phone?: string | null;
           position?: string;
+          recorded_name?: string | null;
           staff_number?: string;
           staff_type?: string;
           status?: string;
@@ -688,6 +1005,7 @@ export type Database = {
         Row: {
           academic_term_id: number;
           academic_year_id: number;
+          assignment_kind: string;
           class_id: number;
           created_at: string;
           created_by: string;
@@ -696,12 +1014,14 @@ export type Database = {
           staff_id: number;
           started_on: string;
           status: string;
+          subject_name: string | null;
           updated_at: string;
           updated_by: string;
         };
         Insert: {
           academic_term_id: number;
           academic_year_id: number;
+          assignment_kind?: string;
           class_id: number;
           created_at?: string;
           created_by: string;
@@ -710,12 +1030,14 @@ export type Database = {
           staff_id: number;
           started_on: string;
           status?: string;
+          subject_name?: string | null;
           updated_at?: string;
           updated_by: string;
         };
         Update: {
           academic_term_id?: number;
           academic_year_id?: number;
+          assignment_kind?: string;
           class_id?: number;
           created_at?: string;
           created_by?: string;
@@ -724,6 +1046,7 @@ export type Database = {
           staff_id?: number;
           started_on?: string;
           status?: string;
+          subject_name?: string | null;
           updated_at?: string;
           updated_by?: string;
         };
@@ -1081,6 +1404,7 @@ export type Database = {
           first_name: string | null;
           full_name: string | null;
           id: number | null;
+          known_subjects: string[] | null;
           last_name: string | null;
           middle_name: string | null;
           phone: string | null;
@@ -1223,6 +1547,10 @@ export type Database = {
       };
       set_student_photo: {
         Args: { target_photo_path: string; target_student_id: number };
+        Returns: Json;
+      };
+      update_staff: {
+        Args: { payload: Json; target_staff_id: number };
         Returns: Json;
       };
     };

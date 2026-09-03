@@ -264,7 +264,7 @@ test("academic configuration renders approved classes, terms and locations", asy
 
   await page.goto("/settings/school");
   await expect(
-    page.getByRole("heading", { name: "School locations" }),
+    page.getByRole("heading", { name: "Transport locations" }),
   ).toBeVisible();
   for (const location of [
     "Osenase & Akwadum",

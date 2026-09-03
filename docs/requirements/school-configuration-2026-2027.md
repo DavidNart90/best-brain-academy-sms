@@ -23,7 +23,9 @@
 | Upper Basic        | Basic 4, Basic 5, Basic 6        |
 | Junior High School | JHS 1, JHS 2, JHS 3              |
 
-## School locations
+## Transport locations
+
+A "location" is not a school campus; it identifies how far a student stays from school and therefore which transport charge applies to that student.
 
 1. Osenase & Akwadum
 2. Asuofori
@@ -31,7 +33,7 @@
 4. Anomaa Kojo
 5. Bamenase
 
-Locations are Phase 1 school configuration. Their monetary charges are Phase 3 fee configuration.
+Transport locations are Phase 1 school configuration. Their monetary transport charges are Phase 3 fee configuration.
 
 ## Confirmed fee requirements for Phase 3
 
@@ -47,6 +49,8 @@ The markdown file and handwritten schedule agree on the following current values
 | JHS 1–3        |         207.00 |
 
 ### Location / transport charges
+
+Charged by how far the student stays from school, not by school campus.
 
 | Location          | Charge (GHS) |
 | ----------------- | -----------: |
