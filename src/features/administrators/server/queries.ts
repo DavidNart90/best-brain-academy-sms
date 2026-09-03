@@ -1,10 +1,16 @@
 import "server-only";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  permissionSchema,
+  roleSchema,
+  type Role,
+} from "@/lib/permissions/contracts";
 import { administratorListQuerySchema } from "../schemas";
 import type {
   AdministratorDirectoryRow,
   AdministratorPageResult,
+  RolePermissionMatrix,
 } from "../types";
 
 const first = (value: string | string[] | undefined) =>
@@ -83,4 +89,60 @@ export async function getMfaAssurance() {
     nextLevel: result.data?.nextLevel ?? null,
     verified: result.data?.currentLevel === "aal2",
   };
+}
+
+export async function getRolePermissionMatrix(): Promise<RolePermissionMatrix> {
+  const supabase = await createServerSupabaseClient();
+  const [rolesResult, permissionsResult, grantsResult] = await Promise.all([
+    supabase.from("roles").select("code,label").limit(10),
+    supabase.from("permissions").select("code,description").limit(100),
+    supabase
+      .from("role_permissions")
+      .select("role_code,permission_code")
+      .limit(500),
+  ]);
+  if (rolesResult.error || permissionsResult.error || grantsResult.error)
+    throw new Error("Role permissions could not be loaded.");
+
+  const roleOrder: Role[] = [
+    "SUPER_ADMIN",
+    "ADMINISTRATOR",
+    "ACCOUNTANT",
+    "MANAGEMENT",
+  ];
+  const roles = rolesResult.data
+    .flatMap((item) => {
+      const code = roleSchema.safeParse(item.code);
+      return code.success ? [{ code: code.data, label: item.label }] : [];
+    })
+    .sort(
+      (left, right) =>
+        roleOrder.indexOf(left.code) - roleOrder.indexOf(right.code),
+    );
+  const grants = new Map<string, Role[]>();
+  for (const item of grantsResult.data) {
+    const role = roleSchema.safeParse(item.role_code);
+    const permission = permissionSchema.safeParse(item.permission_code);
+    if (!role.success || !permission.success) continue;
+    const assigned = grants.get(permission.data) ?? [];
+    assigned.push(role.data);
+    grants.set(permission.data, assigned);
+  }
+
+  const permissions = permissionsResult.data
+    .flatMap((item) => {
+      const code = permissionSchema.safeParse(item.code);
+      return code.success
+        ? [
+            {
+              code: code.data,
+              description: item.description,
+              roleCodes: grants.get(code.data) ?? [],
+            },
+          ]
+        : [];
+    })
+    .sort((left, right) => left.code.localeCompare(right.code));
+
+  return { roles, permissions };
 }

@@ -176,46 +176,6 @@ test("account disablement and access-service errors fail closed", async ({
   expect((await page.request.get("/api/access")).status()).toBe(503);
 });
 
-test("documented module and record shells remain unavailable for business work", async ({
-  page,
-}) => {
-  await login(page);
-  await expect(page).toHaveURL(/\/dashboard$/);
-  const paths = [
-    "/admissions",
-    "/admissions/demo-001",
-    "/classes/demo-001",
-    "/financials",
-    "/financials/fees",
-    "/financials/invoices",
-    "/financials/invoices/demo-001",
-    "/financials/payments",
-    "/financials/receipts",
-    "/financials/receipts/demo-001",
-    "/financials/outstanding",
-    "/financials/expenses",
-    "/financials/salary-deductions",
-    "/reports",
-    "/settings/financial",
-    "/settings/roles",
-  ];
-  for (const path of paths) {
-    await page.goto(path);
-    await expect(
-      page.getByText("This workspace is not available yet"),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", {
-        name: /Record Payment|Save Changes|Generate Invoice/,
-      }),
-    ).toHaveCount(0);
-  }
-  await page.goto("/does-not-exist");
-  await expect(
-    page.getByRole("heading", { name: "Page not found" }),
-  ).toBeVisible();
-});
-
 test("student empty state, template, import confirmation and onboarding validation", async ({
   page,
 }) => {

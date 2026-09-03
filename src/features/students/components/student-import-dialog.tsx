@@ -4,12 +4,14 @@ import { SpreadsheetImportDialog } from "@/components/import/spreadsheet-import-
 
 export function StudentImportDialog({
   triggerVariant = "outline",
+  entityLabel = "Students",
 }: {
   triggerVariant?: "default" | "outline";
+  entityLabel?: "Students" | "Admissions";
 }) {
   return (
     <SpreadsheetImportDialog
-      entityLabel="Students"
+      entityLabel={entityLabel}
       endpoint="/api/students/import"
       triggerVariant={triggerVariant}
       columns={[

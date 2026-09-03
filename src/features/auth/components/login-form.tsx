@@ -35,6 +35,8 @@ export function LoginForm({ configured }: { configured: boolean }) {
   return (
     <form
       noValidate
+      method="post"
+      action="/api/auth/login"
       onSubmit={handleSubmit(async (values) => {
         setError(null);
         try {
