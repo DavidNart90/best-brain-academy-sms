@@ -31,6 +31,9 @@ const permissionLabels: Record<Permission, string> = {
   "reports.read": "View reports",
   "administrators.manage": "Manage administrator access",
   "settings.manage": "Manage school settings",
+  "finance.settings.manage": "Configure fee rates and finance categories",
+  "finance.transactions.manage":
+    "Generate invoices and process financial transactions",
   "audit.read": "View audit history",
 };
 
@@ -79,7 +82,7 @@ export default async function RolesAndPermissionsPage() {
           role="region"
           aria-label="Role permission matrix"
         >
-          <Table className="min-w-[920px]">
+          <Table className="min-w-230">
             <TableHeader>
               <TableRow className="bg-muted/70 hover:bg-muted/70">
                 <TableHead className="min-w-64 px-5">Permission</TableHead>

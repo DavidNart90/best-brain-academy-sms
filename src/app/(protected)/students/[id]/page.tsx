@@ -116,18 +116,22 @@ export default async function StudentProfilePage({
           <span className="rounded-md bg-card px-3 py-2 text-sm font-semibold text-primary shadow-xs">
             Profile
           </span>
-          {["Financial account", "Invoices", "Payments", "Receipts"].map(
-            (label) => (
-              <span
-                key={label}
-                className="inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm text-muted-foreground"
-                aria-disabled="true"
-              >
-                <LockKeyhole className="size-3.5" />
-                {label} · Phase 3
-              </span>
-            ),
-          )}
+          <Link
+            href={`/students/${student.id}/finance`}
+            className="rounded-md px-3 py-2 text-sm font-medium text-primary hover:bg-brand-subtle"
+          >
+            Financial account
+          </Link>
+          {["Invoices", "Payments", "Receipts"].map((label) => (
+            <span
+              key={label}
+              className="inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm text-muted-foreground"
+              aria-disabled="true"
+            >
+              <LockKeyhole className="size-3.5" />
+              {label} · Phase 3
+            </span>
+          ))}
         </nav>
       </section>
 
