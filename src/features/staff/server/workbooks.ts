@@ -1,5 +1,6 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import ExcelJS from "exceljs";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database";
@@ -14,6 +15,7 @@ import type {
 const MAX_IMPORT_ROWS = 250;
 const headers = [
   "Staff ID",
+  "Full Name",
   "First Name",
   "Middle Name",
   "Last Name",
@@ -21,64 +23,49 @@ const headers = [
   "Email",
   "Staff Type",
   "Position",
-  "Assigned Class",
   "Status",
+  "Date Joined",
+  "Known Subjects",
 ] as const;
-
-function textValue(cell: ExcelJS.Cell) {
-  if (cell.value === null || cell.value === undefined) return "";
-  if (typeof cell.value === "object" && "result" in cell.value)
-    return String(cell.value.result ?? "").trim();
-  return cell.text.trim();
-}
+const assignmentHeaders = [
+  "Staff Row",
+  "Academic Year",
+  "Term",
+  "Class",
+  "Role",
+  "Subject",
+  "Starts On",
+] as const;
 const normalize = (value: string) =>
   value.trim().toLowerCase().replace(/\s+/g, " ");
 const safeSpreadsheetText = (value: string) =>
-  /^[=+\-@]/.test(value) ? `'${value}` : value;
+  /^[=+\-@]/.test(value) ? "'" + value : value;
 
-export async function buildStaffTemplate(reference: StaffReferenceData) {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = "Best Brain Academy";
-  const instructions = workbook.addWorksheet("Instructions", {
-    views: [{ showGridLines: false }],
-  });
-  instructions.columns = [{ width: 24 }, { width: 82 }];
-  instructions.addRows([
-    [
-      "Staff import template",
-      "Complete the Staff sheet, preview it in the application, then explicitly confirm.",
-    ],
-    [
-      "Required",
-      "Staff ID, First Name, Last Name, Phone, Staff Type, Position and Status.",
-    ],
-    [
-      "Assigned Class",
-      "Optional. An assignment uses the current academic year and term.",
-    ],
-    [
-      "Login access",
-      "Importing staff never creates an administrator login account.",
-    ],
-    [
-      "Limit",
-      `Import up to ${MAX_IMPORT_ROWS} staff at a time. Every row must pass before saving.`,
-    ],
-  ]);
-  instructions.getRow(1).font = {
-    bold: true,
-    size: 15,
-    color: { argb: "FF1F2328" },
+function cellText(cell: ExcelJS.Cell) {
+  if (cell.value === null || cell.value === undefined) return "";
+  // Formulas are not evaluated or accepted as staff facts.
+  if (
+    typeof cell.value === "object" &&
+    ("formula" in cell.value || "sharedFormula" in cell.value)
+  )
+    throw new Error("Use plain values, not formulas, in staff workbooks.");
+  if (cell.value instanceof Date) return cell.value.toISOString().slice(0, 10);
+  return cell.text.trim();
+}
+function headerReader(sheet: ExcelJS.Worksheet) {
+  const columns = new Map<string, number>();
+  sheet
+    .getRow(1)
+    .eachCell((cell, column) => columns.set(normalize(cellText(cell)), column));
+  return {
+    has: (header: string) => columns.has(normalize(header)),
+    text: (row: ExcelJS.Row, header: string) => {
+      const column = columns.get(normalize(header));
+      return column ? cellText(row.getCell(column)) : "";
+    },
   };
-  instructions.getColumn(1).font = { bold: true, color: { argb: "FF475467" } };
-  instructions.eachRow((row) => {
-    row.alignment = { vertical: "top", wrapText: true };
-  });
-
-  const sheet = workbook.addWorksheet("Staff", {
-    views: [{ state: "frozen", ySplit: 1, showGridLines: false }],
-  });
-  sheet.addRow([...headers]);
+}
+function styleSheet(sheet: ExcelJS.Worksheet) {
   sheet.getRow(1).height = 28;
   sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
   sheet.getRow(1).fill = {
@@ -86,125 +73,259 @@ export async function buildStaffTemplate(reference: StaffReferenceData) {
     pattern: "solid",
     fgColor: { argb: "FFBD3B36" },
   };
-  [18, 18, 18, 18, 18, 28, 18, 24, 24, 14].forEach((width, index) => {
-    sheet.getColumn(index + 1).width = width;
+  sheet.columns.forEach((column) => {
+    column.width = 24;
   });
-  sheet.autoFilter = { from: "A1", to: "J1" };
-
+  sheet.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: 1, column: sheet.columnCount },
+  };
+}
+export async function buildStaffTemplate(reference: StaffReferenceData) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "Best Brain Academy";
+  const instructions = workbook.addWorksheet("Instructions");
+  instructions.columns = [{ width: 24 }, { width: 95 }];
+  instructions.addRows([
+    [
+      "Staff import",
+      "Fill Staff, optionally add Assignments, preview and confirm. Up to 250 people.",
+    ],
+    [
+      "Name",
+      "Use Full Name exactly as supplied, or First Name and Last Name. Do not guess name components.",
+    ],
+    [
+      "Staff ID",
+      "Optional expected ID, in BBS-Staff-001 format. The server allocates IDs in row order, across all staff types.",
+    ],
+    [
+      "Required",
+      "Name, Staff Type (Teaching / Non-Teaching), Position, Status (Active / Inactive).",
+    ],
+    [
+      "Missing details",
+      "Leave unknown Phone, Email and Date Joined blank. Dates use YYYY-MM-DD.",
+    ],
+    [
+      "Known Subjects",
+      "Separate with semicolons. A known subject alone does not imply a class assignment.",
+    ],
+    [
+      "Assignments",
+      "One row per class and subject. Staff Row refers to the actual row number in the Staff sheet (first person is row 2).",
+    ],
+    [
+      "Assignment Role",
+      "teaching requires Subject (All subjects is allowed). head means Head class teacher, with Subject blank. general is a class link with role unconfirmed.",
+    ],
+    [
+      "Academic context",
+      "Enter the exact academic year, term and class from Reference Data. Starts On is required; never use an employment date by assumption.",
+    ],
+    [
+      "Retry safety",
+      "Retry the same file if the save result is unknown. Do not edit the workbook and re-import until the directory has been checked.",
+    ],
+    ["Login access", "Staff imports never create login accounts."],
+  ]);
+  instructions.eachRow((row) => {
+    row.alignment = { vertical: "top", wrapText: true };
+  });
+  const staff = workbook.addWorksheet("Staff", {
+    views: [{ state: "frozen", ySplit: 1 }],
+  });
+  staff.addRow([...headers]);
+  styleSheet(staff);
+  const assignments = workbook.addWorksheet("Assignments", {
+    views: [{ state: "frozen", ySplit: 1 }],
+  });
+  assignments.addRow([...assignmentHeaders]);
+  styleSheet(assignments);
   const refs = workbook.addWorksheet("Reference Data");
-  refs.state = "veryHidden";
-  refs.addRow(["Staff Type", "Status", "Classes"]);
-  const longest = Math.max(2, reference.classes.length);
-  for (let index = 0; index < longest; index += 1)
+  refs.addRow(["Academic Year", "Term", "Class"]);
+  const contexts = reference.academicTerms.map((term) => [
+    reference.academicYears.find((year) => year.id === term.academicYearId)
+      ?.name ?? "",
+    term.name,
+  ]);
+  for (let i = 0; i < Math.max(contexts.length, reference.classes.length); i++)
     refs.addRow([
-      ["Teaching", "Non-Teaching"][index] ?? "",
-      ["Active", "Inactive"][index] ?? "",
-      reference.classes[index]?.name ?? "",
+      contexts[i]?.[0] ?? "",
+      contexts[i]?.[1] ?? "",
+      reference.classes[i]?.name ?? "",
     ]);
-  for (let row = 2; row <= MAX_IMPORT_ROWS + 1; row += 1) {
-    sheet.getCell(`G${row}`).dataValidation = {
-      type: "list",
-      allowBlank: false,
-      formulae: ["'Reference Data'!$A$2:$A$3"],
-    };
-    sheet.getCell(`I${row}`).dataValidation = {
-      type: "list",
-      allowBlank: true,
-      formulae: [`'Reference Data'!$C$2:$C$${reference.classes.length + 1}`],
-    };
-    sheet.getCell(`J${row}`).dataValidation = {
-      type: "list",
-      allowBlank: false,
-      formulae: ["'Reference Data'!$B$2:$B$3"],
-    };
-  }
+  styleSheet(refs);
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 
 export async function parseStaffWorkbook(
   file: File,
   reference: StaffReferenceData,
-): Promise<{ preview: ImportPreview; validRows: StaffInput[] }> {
+  checkExisting = true,
+): Promise<{
+  preview: ImportPreview;
+  validRows: StaffInput[];
+  requestKey: string;
+}> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const hash = createHash("sha256").update(bytes).digest("hex");
+  const requestKey = [
+    hash.slice(0, 8),
+    hash.slice(8, 12),
+    "5" + hash.slice(13, 16),
+    "8" + hash.slice(17, 20),
+    hash.slice(20, 32),
+  ].join("-");
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(
-    new Uint8Array(await file.arrayBuffer()) as unknown as ArrayBuffer,
-  );
-  const sheet = workbook.getWorksheet("Staff") ?? workbook.worksheets[0];
-  if (!sheet) throw new Error("The workbook does not contain a worksheet.");
-  const headerMap = new Map<string, number>();
-  sheet
-    .getRow(1)
-    .eachCell((cell, column) =>
-      headerMap.set(normalize(textValue(cell)), column),
+  try {
+    await workbook.xlsx.load(bytes as unknown as ArrayBuffer);
+  } catch {
+    throw new Error(
+      "This workbook format could not be read. Copy the values into the downloaded staff template and try again. No records were saved.",
     );
-  const missing = headers.filter((header) => !headerMap.has(normalize(header)));
+  }
+  const sheet = workbook.getWorksheet("Staff");
+  if (!sheet)
+    throw new Error("The workbook does not contain a Staff worksheet.");
+  const reader = headerReader(sheet);
+  const required = ["Staff Type", "Position", "Status"];
+  if (!reader.has("Full Name")) required.push("First Name", "Last Name");
+  const missing = required.filter((header) => !reader.has(header));
   if (missing.length)
-    throw new Error(`Missing columns: ${missing.join(", ")}.`);
-  const cell = (row: ExcelJS.Row, header: (typeof headers)[number]) =>
-    row.getCell(headerMap.get(normalize(header)) ?? 0);
-  const classMap = new Map(
-    reference.classes.map((item) => [normalize(item.name), item.id]),
-  );
-  const currentYear =
-    reference.academicYears.find((item) => item.isCurrent) ??
-    reference.academicYears[0];
-  const currentTerm =
-    reference.academicTerms.find(
-      (item) => item.isCurrent && item.academicYearId === currentYear?.id,
-    ) ??
-    reference.academicTerms.find(
-      (item) => item.academicYearId === currentYear?.id,
+    throw new Error("Missing columns: " + missing.join(", ") + ".");
+  const assignmentSheet = workbook.getWorksheet("Assignments");
+  const assignmentsByRow = new Map<number, StaffInput["assignments"]>();
+  const assignmentErrors = new Map<number, string[]>();
+  if (assignmentSheet) {
+    const fields = headerReader(assignmentSheet);
+    const missingAssignment = assignmentHeaders.filter(
+      (header) => !fields.has(header),
     );
+    if (missingAssignment.length)
+      throw new Error("Missing columns: " + missingAssignment.join(", ") + ".");
+    let assignmentCount = 0;
+    for (let n = 2; n <= assignmentSheet.rowCount; n++) {
+      const row = assignmentSheet.getRow(n);
+      if (assignmentHeaders.every((header) => !fields.text(row, header)))
+        continue;
+      if (++assignmentCount > 1000)
+        throw new Error("Import up to 1000 assignment rows at a time.");
+      const staffRow = Number(fields.text(row, "Staff Row"));
+      if (
+        !Number.isInteger(staffRow) ||
+        staffRow < 2 ||
+        staffRow > sheet.rowCount
+      )
+        throw new Error("Each assignment must refer to a populated Staff row.");
+      const year = reference.academicYears.find(
+        (item) =>
+          normalize(item.name) === normalize(fields.text(row, "Academic Year")),
+      );
+      const term = reference.academicTerms.find(
+        (item) =>
+          item.academicYearId === year?.id &&
+          normalize(item.name) === normalize(fields.text(row, "Term")),
+      );
+      const schoolClass = reference.classes.find(
+        (item) => normalize(item.name) === normalize(fields.text(row, "Class")),
+      );
+      const role = normalize(fields.text(row, "Role"));
+      if (
+        !year ||
+        !term ||
+        !schoolClass ||
+        !["teaching", "head", "general"].includes(role)
+      )
+        assignmentErrors.set(staffRow, [
+          ...(assignmentErrors.get(staffRow) ?? []),
+          "Assignment row " +
+            n +
+            ": choose an active academic period, class and valid role.",
+        ]);
+      assignmentsByRow.set(staffRow, [
+        ...(assignmentsByRow.get(staffRow) ?? []),
+        {
+          academicYearId: year?.id ?? 0,
+          academicTermId: term?.id ?? 0,
+          classId: schoolClass?.id ?? 0,
+          startedOn: fields.text(row, "Starts On"),
+          assignmentKind:
+            role === "head"
+              ? "head"
+              : role === "general"
+                ? "general"
+                : "teaching",
+          subjectName: fields.text(row, "Subject") || null,
+        },
+      ]);
+    }
+  }
   const rows: Array<{ parsed: StaffInput | null; preview: ImportPreviewRow }> =
     [];
-  for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber += 1) {
-    const row = sheet.getRow(rowNumber);
-    if (headers.every((header) => !textValue(cell(row, header)))) continue;
+  const populatedRows = new Set<number>();
+  for (let n = 2; n <= sheet.rowCount; n++) {
+    const row = sheet.getRow(n);
+    if (headers.every((header) => !reader.text(row, header))) continue;
+    populatedRows.add(n);
     if (rows.length >= MAX_IMPORT_ROWS)
-      throw new Error(`Import up to ${MAX_IMPORT_ROWS} staff at a time.`);
-    const assignedClass = textValue(cell(row, "Assigned Class"));
+      throw new Error("Import up to 250 staff at a time.");
     const input = {
-      staffNumber: textValue(cell(row, "Staff ID")),
-      firstName: textValue(cell(row, "First Name")),
-      middleName: textValue(cell(row, "Middle Name")),
-      lastName: textValue(cell(row, "Last Name")),
-      phone: textValue(cell(row, "Phone")),
-      email: textValue(cell(row, "Email")).toLowerCase(),
-      staffType: normalize(textValue(cell(row, "Staff Type"))).replace(
-        "-",
-        "_",
-      ),
-      position: textValue(cell(row, "Position")),
-      status: normalize(textValue(cell(row, "Status"))),
-      dateJoined: "",
-      academicYearId: assignedClass ? currentYear?.id : null,
-      academicTermId: assignedClass ? currentTerm?.id : null,
-      classId: assignedClass ? classMap.get(normalize(assignedClass)) : null,
-      assignmentStartedOn: assignedClass
-        ? new Date().toISOString().slice(0, 10)
-        : null,
+      staffNumber: reader.text(row, "Staff ID"),
+      fullName: reader.text(row, "Full Name"),
+      firstName: reader.text(row, "First Name"),
+      middleName: reader.text(row, "Middle Name"),
+      lastName: reader.text(row, "Last Name"),
+      phone: reader.text(row, "Phone"),
+      email: reader.text(row, "Email").toLowerCase(),
+      staffType: normalize(reader.text(row, "Staff Type")).replace("-", "_"),
+      position: reader.text(row, "Position"),
+      status: normalize(reader.text(row, "Status")),
+      dateJoined: reader.text(row, "Date Joined"),
+      knownSubjects: reader.text(row, "Known Subjects"),
+      assignments: assignmentsByRow.get(n) ?? [],
     };
     const parsed = staffInputSchema.safeParse(input);
-    const errors = parsed.success
-      ? []
-      : parsed.error.issues.map(
-          (issue) => `${String(issue.path[0] ?? "Row")}: ${issue.message}`,
-        );
-    if (assignedClass && !classMap.has(normalize(assignedClass)))
-      errors.push(`Assigned Class: “${assignedClass}” is not an active class.`);
+    const errors = [
+      ...(assignmentErrors.get(n) ?? []),
+      ...(parsed.success
+        ? []
+        : parsed.error.issues.map(
+            (issue) => issue.path.join(".") + ": " + issue.message,
+          )),
+    ];
+    if (reader.text(row, "Assigned Class"))
+      errors.push(
+        "Use the Assignments sheet with an explicit period, role, subject and start date.",
+      );
+    const descriptions = input.assignments.map((item) => {
+      const label =
+        reference.classes.find((entry) => entry.id === item.classId)?.name ??
+        "Unknown class";
+      return (
+        label +
+        ": " +
+        (item.assignmentKind === "head"
+          ? "Head class teacher"
+          : (item.subjectName ?? "Role unconfirmed"))
+      );
+    });
     rows.push({
       parsed: parsed.success ? parsed.data : null,
       preview: {
-        rowNumber,
+        rowNumber: n,
         values: {
-          staffNumber: String(input.staffNumber).toUpperCase(),
-          fullName: [input.firstName, input.middleName, input.lastName]
-            .filter(Boolean)
-            .join(" "),
-          staffType: String(input.staffType),
-          position: String(input.position),
-          assignedClass: assignedClass || "—",
-          status: String(input.status),
+          staffNumber: input.staffNumber || "Assigned on save",
+          fullName:
+            input.fullName ||
+            [input.firstName, input.middleName, input.lastName]
+              .filter(Boolean)
+              .join(" "),
+          staffType: input.staffType,
+          position: input.position,
+          assignedClass: descriptions.join("; ") || "Not supplied",
+          knownSubjects: input.knownSubjects || "Not supplied",
+          status: input.status,
         },
         errors,
       },
@@ -212,105 +333,102 @@ export async function parseStaffWorkbook(
   }
   if (!rows.length)
     throw new Error("The Staff sheet does not contain any records.");
-  const numbers = new Map<string, number[]>();
-  for (const row of rows)
-    if (row.parsed)
-      numbers.set(row.parsed.staffNumber, [
-        ...(numbers.get(row.parsed.staffNumber) ?? []),
-        row.preview.rowNumber,
-      ]);
-  for (const [number, rowNumbers] of numbers)
-    if (rowNumbers.length > 1)
-      for (const rowNumber of rowNumbers)
-        rows
-          .find((row) => row.preview.rowNumber === rowNumber)
-          ?.preview.errors.push(`Duplicate staff ID ${number} in this file.`);
-  const validRows = rows.flatMap((row) => (row.parsed ? [row.parsed] : []));
-  const supabase = await createServerSupabaseClient();
-  const existing = validRows.length
-    ? await supabase
-        .from("staff")
-        .select("staff_number")
-        .in(
-          "staff_number",
-          validRows.map((row) => row.staffNumber),
-        )
-        .limit(MAX_IMPORT_ROWS)
-    : { data: [], error: null };
-  if (existing.error)
-    throw new Error("Existing staff could not be checked for duplicates.");
-  const existingSet = new Set(
-    existing.data.map((row) => row.staff_number.toUpperCase()),
+  if ([...assignmentsByRow.keys()].some((n) => !populatedRows.has(n)))
+    throw new Error("Each assignment must refer to a populated Staff row.");
+  const numbers = rows.flatMap((row) =>
+    row.parsed?.staffNumber ? [row.parsed.staffNumber] : [],
   );
   for (const row of rows)
-    if (row.parsed && existingSet.has(row.parsed.staffNumber))
-      row.preview.errors.push("Duplicate: staff ID already exists.");
+    if (
+      row.parsed?.staffNumber &&
+      numbers.filter((value) => value === row.parsed?.staffNumber).length > 1
+    )
+      row.preview.errors.push("Duplicate staff ID in this file.");
+  const names = rows.map((row) => normalize(row.preview.values.fullName ?? ""));
+  rows.forEach((row, index) => {
+    if (names.filter((name) => name === names[index]).length > 1)
+      row.preview.errors.push(
+        "Duplicate name in this file; review these people separately before entry.",
+      );
+  });
+  if (checkExisting && numbers.length) {
+    const supabase = await createServerSupabaseClient();
+    const existing = await supabase
+      .from("staff")
+      .select("staff_number")
+      .in("staff_number", numbers)
+      .limit(MAX_IMPORT_ROWS);
+    if (existing.error)
+      throw new Error("Existing staff could not be checked for duplicates.");
+    const existingSet = new Set(existing.data.map((row) => row.staff_number));
+    rows.forEach((row) => {
+      if (row.parsed?.staffNumber && existingSet.has(row.parsed.staffNumber))
+        row.preview.errors.push(
+          "Duplicate staff ID already exists; check whether this file was previously imported.",
+        );
+    });
+  }
   const errorCount = rows.filter((row) => row.preview.errors.length).length;
-  const duplicateCount = rows.filter((row) =>
-    row.preview.errors.some((error) =>
-      error.toLowerCase().includes("duplicate"),
-    ),
-  ).length;
   return {
+    requestKey,
     preview: {
       fileName: file.name,
       rows: rows.map((row) => row.preview),
       validCount: rows.length - errorCount,
       errorCount,
-      duplicateCount,
-      canConfirm: errorCount === 0,
+      duplicateCount: rows.filter((row) =>
+        row.preview.errors.some((error) => error.includes("Duplicate")),
+      ).length,
+      canConfirm: !errorCount,
     },
-    validRows: errorCount === 0 ? validRows : [],
+    validRows: errorCount
+      ? []
+      : rows.flatMap((row) => (row.parsed ? [row.parsed] : [])),
   };
 }
-
-export async function importStaffRows(rows: StaffInput[]) {
+export async function importStaffRows(rows: StaffInput[], requestKey: string) {
   const supabase = await createServerSupabaseClient();
   const result = await supabase.rpc("import_staff", {
-    payload: rows as unknown as Json,
+    payload: { requestKey, rows } as unknown as Json,
   });
   if (result.error) throw result.error;
   return Number(
     (result.data as { createdCount?: unknown } | null)?.createdCount ?? 0,
   );
 }
-
 export async function buildStaffExport(rows: StaffDirectoryRow[]) {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Best Brain Academy";
   const sheet = workbook.addWorksheet("Staff", {
-    views: [{ state: "frozen", ySplit: 1, showGridLines: false }],
+    views: [{ state: "frozen", ySplit: 1 }],
   });
-  sheet.columns = [
-    { header: "Staff ID", key: "staffNumber", width: 18 },
-    { header: "Staff Name", key: "name", width: 28 },
-    { header: "Phone", key: "phone", width: 20 },
-    { header: "Email", key: "email", width: 28 },
-    { header: "Staff Type", key: "type", width: 18 },
-    { header: "Position", key: "position", width: 24 },
-    { header: "Assigned Classes", key: "classes", width: 32 },
-    { header: "Date Joined", key: "date", width: 16 },
-    { header: "Status", key: "status", width: 14 },
-  ];
+  sheet.addRow([
+    "Staff ID",
+    "Staff Name",
+    "Phone",
+    "Email",
+    "Staff Type",
+    "Position",
+    "Assigned Classes",
+    "Known Subjects",
+    "Date Joined",
+    "Status",
+  ]);
   for (const row of rows)
-    sheet.addRow({
-      staffNumber: safeSpreadsheetText(row.staffNumber),
-      name: safeSpreadsheetText(row.fullName),
-      phone: safeSpreadsheetText(row.phone),
-      email: safeSpreadsheetText(row.email ?? ""),
-      type: row.staffType === "teaching" ? "Teaching" : "Non-Teaching",
-      position: safeSpreadsheetText(row.position),
-      classes: safeSpreadsheetText(row.assignedClasses),
-      date: row.dateJoined ?? "",
-      status: `${row.status.charAt(0).toUpperCase()}${row.status.slice(1)}`,
-    });
-  sheet.getRow(1).height = 28;
-  sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
-  sheet.getRow(1).fill = {
-    type: "pattern",
-    pattern: "solid",
-    fgColor: { argb: "FFBD3B36" },
-  };
-  sheet.autoFilter = { from: "A1", to: "I1" };
+    sheet.addRow(
+      [
+        row.staffNumber,
+        row.fullName,
+        row.phone ?? "",
+        row.email ?? "",
+        row.staffType === "teaching" ? "Teaching" : "Non-Teaching",
+        row.position,
+        row.assignedClasses,
+        row.knownSubjects.join("; "),
+        row.dateJoined ?? "",
+        row.status,
+      ].map(safeSpreadsheetText),
+    );
+  styleSheet(sheet);
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }

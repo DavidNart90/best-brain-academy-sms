@@ -15,13 +15,14 @@ export type StaffDirectoryRow = {
   id: number;
   staffNumber: string;
   fullName: string;
-  phone: string;
+  phone: string | null;
   email: string | null;
   staffType: "teaching" | "non_teaching";
   position: string;
   status: "active" | "inactive" | "archived";
   dateJoined: string | null;
   assignedClasses: string;
+  knownSubjects: string[];
 };
 
 export type StaffPageResult = {
@@ -34,9 +35,10 @@ export type StaffPageResult = {
 };
 
 export type StaffProfile = StaffDirectoryRow & {
-  firstName: string;
+  firstName: string | null;
   middleName: string | null;
-  lastName: string;
+  lastName: string | null;
+  dateOfBirth: string | null;
   createdAt: string;
   updatedAt: string;
   createdBy: string;
@@ -46,6 +48,8 @@ export type StaffProfile = StaffDirectoryRow & {
     academicYearName: string;
     academicTermName: string;
     className: string;
+    assignmentKind: "teaching" | "head" | "general";
+    subjectName: string | null;
     status: "active" | "completed";
     startedOn: string;
     endedOn: string | null;

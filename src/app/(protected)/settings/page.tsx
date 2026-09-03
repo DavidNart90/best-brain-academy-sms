@@ -23,8 +23,8 @@ const settingsDestinations = [
     href: "/settings/school",
     title: "School settings",
     description:
-      "Manage the school identity, official crest, contact details and locations.",
-    detail: "Identity and locations",
+      "Manage the school identity, official crest, contact details and the transport locations used to charge students by how far they stay.",
+    detail: "Identity and transport locations",
     icon: Building2,
   },
   {
@@ -105,7 +105,7 @@ export default async function SettingsPage() {
               </div>
               <div>
                 <dt className="text-xs text-muted-foreground">
-                  School locations
+                  Transport locations
                 </dt>
                 <dd className="mt-1 text-sm font-semibold">
                   {summary.activeLocations}

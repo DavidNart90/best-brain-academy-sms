@@ -620,13 +620,16 @@ export type Database = {
           created_at: string;
           created_by: string;
           date_joined: string | null;
+          date_of_birth: string | null;
           email: string | null;
-          first_name: string;
+          first_name: string | null;
           id: number;
-          last_name: string;
+          known_subjects: string[];
+          last_name: string | null;
           middle_name: string | null;
-          phone: string;
+          phone: string | null;
           position: string;
+          recorded_name: string | null;
           staff_number: string;
           staff_type: string;
           status: string;
@@ -637,13 +640,16 @@ export type Database = {
           created_at?: string;
           created_by: string;
           date_joined?: string | null;
+          date_of_birth?: string | null;
           email?: string | null;
-          first_name: string;
+          first_name?: string | null;
           id?: never;
-          last_name: string;
+          known_subjects?: string[];
+          last_name?: string | null;
           middle_name?: string | null;
-          phone: string;
+          phone?: string | null;
           position: string;
+          recorded_name?: string | null;
           staff_number: string;
           staff_type: string;
           status?: string;
@@ -654,13 +660,16 @@ export type Database = {
           created_at?: string;
           created_by?: string;
           date_joined?: string | null;
+          date_of_birth?: string | null;
           email?: string | null;
-          first_name?: string;
+          first_name?: string | null;
           id?: never;
-          last_name?: string;
+          known_subjects?: string[];
+          last_name?: string | null;
           middle_name?: string | null;
-          phone?: string;
+          phone?: string | null;
           position?: string;
+          recorded_name?: string | null;
           staff_number?: string;
           staff_type?: string;
           status?: string;
@@ -688,6 +697,7 @@ export type Database = {
         Row: {
           academic_term_id: number;
           academic_year_id: number;
+          assignment_kind: string;
           class_id: number;
           created_at: string;
           created_by: string;
@@ -696,12 +706,14 @@ export type Database = {
           staff_id: number;
           started_on: string;
           status: string;
+          subject_name: string | null;
           updated_at: string;
           updated_by: string;
         };
         Insert: {
           academic_term_id: number;
           academic_year_id: number;
+          assignment_kind?: string;
           class_id: number;
           created_at?: string;
           created_by: string;
@@ -710,12 +722,14 @@ export type Database = {
           staff_id: number;
           started_on: string;
           status?: string;
+          subject_name?: string | null;
           updated_at?: string;
           updated_by: string;
         };
         Update: {
           academic_term_id?: number;
           academic_year_id?: number;
+          assignment_kind?: string;
           class_id?: number;
           created_at?: string;
           created_by?: string;
@@ -724,6 +738,7 @@ export type Database = {
           staff_id?: number;
           started_on?: string;
           status?: string;
+          subject_name?: string | null;
           updated_at?: string;
           updated_by?: string;
         };
@@ -1081,6 +1096,7 @@ export type Database = {
           first_name: string | null;
           full_name: string | null;
           id: number | null;
+          known_subjects: string[] | null;
           last_name: string | null;
           middle_name: string | null;
           phone: string | null;
@@ -1223,6 +1239,10 @@ export type Database = {
       };
       set_student_photo: {
         Args: { target_photo_path: string; target_student_id: number };
+        Returns: Json;
+      };
+      update_staff: {
+        Args: { payload: Json; target_staff_id: number };
         Returns: Json;
       };
     };

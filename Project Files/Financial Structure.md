@@ -2,13 +2,16 @@
 
 **Owner:** Chief Engineer  
 **Recorded:** 1 September 2026  
-**Status:** Authoritative business requirements for Phases 2–5; implementation is not authorized by this document alone.
+**Updated:** 2 September 2026
+
+**Status:** Authoritative business requirements for Phases 2–5. Phase 3 is authorized one section at a time, subject to the entry checkpoint and task order in [Plan.md](../Plan.md).
 
 ## 1. Authority and sources
 
 This document normalizes the Chief Engineer's financial requirements using the following reference data:
 
 - the Chief Engineer's written financial workflow;
+- the Chief Engineer's supplied daily cashflow notebook image, showing weekday school-fee, feeding-fee, admission-fee, daily-total, and weekly-total recording;
 - `E:/Downloads/fees_structure.md`;
 - the supplied handwritten fee schedule;
 - [school-configuration-2026-2027.md](../docs/requirements/school-configuration-2026-2027.md);
@@ -20,8 +23,9 @@ The attached fee document supplies school facts and fee values. Its prose is ref
 
 The system must let authorized accounts staff record daily money quickly while preserving a complete, understandable history. It must:
 
+- provide one simple daily cashflow workspace for both money received and money spent;
 - configure amounts and categories instead of embedding them in application code;
-- associate every student with a current class and school location before school fees are generated;
+- associate every student with a current class and transport location (how far the student stays from school, which sets the transport charge) before school fees are generated;
 - distinguish an amount charged from an amount actually collected;
 - identify who entered, approved, reversed, or corrected each record and when;
 - calculate daily, weekly, monthly, and term summaries from posted records;
@@ -53,9 +57,9 @@ Before generating a term school-fee invoice, a student must have an active enrol
 - academic year;
 - term;
 - class;
-- school location.
+- transport location (how far the student stays from school).
 
-The location is part of the student's enrollment/financial context because it determines the location/transport component. A later class or location change must not rewrite an already-posted invoice. The historical invoice keeps the exact student, class, location, component descriptions, and amounts used when it was generated.
+The transport location is part of the student's enrollment/financial context because it determines the location/transport component. A later class or transport location change must not rewrite an already-posted invoice. The historical invoice keeps the exact student, class, transport location, component descriptions, and amounts used when it was generated.
 
 ## 5. Term school fees
 
@@ -155,20 +159,26 @@ Use miscellaneous income only for approved receipts that are not school fees, fe
 
 The system must not use a generic miscellaneous entry to bypass student balances, expense controls, or required invoice/payment workflows.
 
-## 7. Daily entry experience
+## 7. Daily cashflow entry experience
 
-The accounts workspace should make frequent entry fast without weakening control:
+The supplied notebook demonstrates the school's current habit of recording school-fee, feeding-fee, and admission-fee income by weekday and then calculating a daily and weekly total. The application should preserve that speed and familiarity, but daily and weekly figures must be calculated from individually posted transactions rather than entered as unsupported aggregate totals.
+
+The accounts workspace should make frequent income and expense entry fast without weakening control:
 
 1. Select the business date, defaulting visibly to today.
-2. Choose School Fees, Feeding, Admission, or Miscellaneous.
-3. Search/select the student where required; feeding payments are entered manually and are never pre-posted automatically.
-4. Show the relevant class, location, invoice, outstanding balance, and default configured amount.
-5. Enter amount, payment method, reference, and notes.
-6. Preview the entries and category totals.
-7. Post once; prevent double submission with an idempotency key.
-8. Show an unambiguous success/failure result and generated receipt/reference.
+2. Choose money received or money spent.
+3. For money received, choose School Fees, Feeding, Admission, or Miscellaneous.
+4. For money spent, choose a configurable expense category and enter a positive amount and clear description.
+5. Search/select the student where required; feeding payments are entered manually and are never pre-posted automatically.
+6. Show the relevant class, location, invoice, outstanding balance, and default configured amount where applicable.
+7. Enter the amount, payment method, reference, and notes; the quick expense path always requires the amount and description.
+8. Preview entries plus receipt, expense, and net-cash totals for the selected business date.
+9. Post once; prevent double submission with an idempotency key.
+10. Show an unambiguous success/failure result and generated receipt, expense voucher, or transaction reference.
 
 For roster/batch entry, validation occurs before posting. If an atomic batch fails, none of its lines may be reported as collected. The UI must state clearly which records were or were not committed.
+
+The daily summary must keep the following figures distinct: gross receipts, expenses, and net cashflow. The interface must never make an expense look like negative income or make an invoice look like cash received.
 
 ## 8. Expenses
 
@@ -183,7 +193,11 @@ Expenses are outgoing amounts and are not negative income records. Every expense
 - recorder and audit timestamps;
 - posted, voided, or reversed status.
 
-The Chief Engineer will provide the official expense categories later. Until then, the system may support category configuration but must not invent production categories or seed fabricated expenses.
+The quick daily expense flow must be usable with only the selected business date, category, positive cash amount, description, and payment method. `Cash` may be the visibly selected default method when it is active, but the accountant can choose another configured method. Reference and attachment fields remain optional unless the selected method or category requires them.
+
+Posting an expense must atomically create the expense record, its unique server-generated number, and its audit event. A retry with the same idempotency key and request fingerprint returns the committed result; a changed payload using the same key is rejected. Expense document rendering happens after commit and cannot duplicate or roll back the expense.
+
+The Chief Engineer will confirm the official expense categories later. Phase 3 may install the configurable proposal in section 16 on the authorized test project, but the categories remain editable/disableable settings and no fabricated expense transactions may be seeded.
 
 Posted expenses cannot be edited or deleted. An authorized void/reversal records the reason, actor, and time and removes the amount from active totals while preserving the original entry.
 
@@ -216,7 +230,7 @@ Daily Gross Receipts
   + Admission Collections
   + Miscellaneous Collections
 
-Daily Operating Net
+Daily Operating Net / Net Cashflow
   = Daily Gross Receipts - Valid Daily Expenses
 
 Weekly Gross Receipts
@@ -285,34 +299,62 @@ The financial settings area must support authorized configuration of:
 - salary-deduction types;
 - payment methods;
 - invoice, payment, receipt, and expense prefixes;
+- invoice, receipt, and expense-voucher template settings, including school identity snapshot fields and print format;
 - active/inactive status without rewriting historical records.
 
 Future approved fee components such as books or prospectus can use the generic fee-component model. They are not included in current invoices until explicitly configured and approved.
 
-## 14. Delivery mapping
+## 14. Official invoice, receipt, and expense-voucher templates
+
+Official document templates are part of Phase 3, not a later reporting afterthought. They must use the school crest and red identity, remain legible in grayscale, and use stored document snapshots so a later change to school settings, fee configuration, student enrollment, or staff details does not rewrite history.
+
+The initial design proposal for Chief Engineer review is:
+
+- invoice: A4 portrait, itemized immutable invoice lines, totals, amount paid, and outstanding balance;
+- receipt: compact A5 portrait with `OFFICIAL RECEIPT`, prominent amount paid, receipt/payment numbers, payer or student context, payment method/date, collector, and previous/remaining balance when the receipt applies to an invoice;
+- feeding, admission, and miscellaneous receipts: the same receipt shell with category-specific context and no misleading invoice-balance fields when they do not apply;
+- reversed receipt: retained and reprintable with an unmistakable `VOID` state, reversal reference, reason, actor, and timestamp;
+- expense voucher: compact A5 portrait with expense number, category, amount, description, method/date, recorder, and reversal state.
+
+PDF/print generation occurs after the financial transaction commits and is safely retryable. A rendering failure cannot repeat, undo, or change the committed transaction. Final school-approved samples and printer/paper requirements remain an open D-04 review item.
+
+## 15. Delivery mapping
 
 | Plan phase | Financial responsibility |
 | --- | --- |
-| Phase 2 | Give each student an enrollment, class, and school location. Admission remains possible without generating an invoice. |
-| Phase 3 | Implement fee configuration, invoices, school-fee payments, feeding/admission/miscellaneous receipts, receipts, reversals, outstanding balances, and the daily income-entry workspace. |
-| Phase 4 | Implement expense categories/entries/reversals and monthly salary deductions. |
+| Phase 2 | Give each student an enrollment, class, and transport location (distance from school). Admission remains possible without generating an invoice. |
+| Phase 3 | Implement fee configuration, invoices, school-fee payments, feeding/admission/miscellaneous receipts, simple daily expenses, receipt/expense reversals, official document templates, outstanding balances, and the combined daily cashflow workspace. |
+| Phase 4 | Implement monthly salary deductions and any later-approved advanced operational-finance controls; do not rebuild the Phase 3 daily expense ledger. |
 | Phase 5 | Implement reconciled daily, weekly, monthly, term, class, location, income-category, expense, deduction, and outstanding reports. |
 | Phase 6 | Confirm production categories, numbering, payment methods, samples, opening-balance treatment, role ownership, and release acceptance. |
 
-## 15. Beta refinement decisions still required
+## 16. Configurable defaults proposed for Phase 3 review
+
+These are test-project defaults, not permanent code constants or final production approval. Every item is stored as configuration, can be activated/deactivated by an authorized user, and preserves its historical display value through transaction/document snapshots.
+
+| Area | Proposed configurable defaults |
+| --- | --- |
+| Payment methods | `Cash` (default), `Mobile Money`, `Bank Transfer`, and `Other`; require an external reference for Mobile Money and Bank Transfer. |
+| Expense categories | `Salaries`, `Feeding Supplies`, `Fuel`, `Electricity`, `Water`, `Stationery`, `Repairs & Maintenance`, `Teaching Materials`, `Transportation`, `Internet`, and `Miscellaneous`; description remains mandatory for every expense. |
+| Numbering | Independent yearly sequences: `BBA/INV/{YYYY}/{NNNNN}`, `BBA/PAY/{YYYY}/{NNNNN}`, `BBA/RCT/{YYYY}/{NNNNN}`, `BBA/EXP/{YYYY}/{NNNNN}`, and `BBA/REV/{YYYY}/{NNNNN}`. Numbers are unique and server-generated; gaps are allowed so rollback/retry safety is never weakened to force gapless numbering. |
+| Documents | A4 invoice and compact A5 receipt/expense voucher, with school identity and transaction context snapshotted at issue time. |
+
+No expense amount is defaulted or hard-coded. Existing supplied feeding and admission amounts are effective-dated database configuration, not application constants.
+
+## 17. Beta refinement decisions still required
 
 The following items remain deliberately configurable or unresolved:
 
 - official expense categories;
 - miscellaneous-income categories;
 - salary-deduction types and whether deductions represent retained cash, a liability, or another accounting treatment;
-- payment methods and required external references;
-- number prefixes and whether numbering may contain gaps;
+- final approval or revision of the proposed payment methods and external-reference rules;
+- final approval or revision of the proposed number prefixes and permitted gaps;
 - official weekly boundary and any day-close/reopen workflow;
 - discounts, waivers, adjustments, refunds, credits, and overpayment treatment;
 - admission-fee waiver/repeat-admission rules;
 - whether feeding non-payment needs a separate reason or only absence of a receipt;
 - existing/opening student balances when production starts;
-- invoice and receipt layouts/approval samples.
+- official invoice, receipt, and expense-voucher samples plus printer/paper requirements.
 
 These decisions must be recorded before their dependent production behavior is enabled. Until then, the safest behavior is configuration plus explicit validation—not fabricated accounting rules.

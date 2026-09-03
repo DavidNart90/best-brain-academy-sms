@@ -9,6 +9,8 @@ import {
   staffAssignmentSchema,
   staffIdSchema,
   staffInputSchema,
+  staffUpdateSchema,
+  requestKeySchema,
 } from "../schemas";
 
 export type StaffActionResult = {
@@ -33,9 +35,15 @@ function databaseMessage(error: { code?: string; message?: string }) {
   return "The staff record could not be saved. Review the details and try again.";
 }
 
-export async function createStaff(input: unknown): Promise<StaffActionResult> {
+export async function createStaff(
+  input: unknown,
+  requestKey: unknown,
+): Promise<StaffActionResult> {
   if (!(await requirePermission("staff.manage"))) return denied;
   const parsed = staffInputSchema.safeParse(input);
+  const key = requestKeySchema.safeParse(requestKey);
+  if (!key.success)
+    return { ok: false, message: "Refresh this form before saving." };
   if (!parsed.success)
     return {
       ok: false,
@@ -43,7 +51,7 @@ export async function createStaff(input: unknown): Promise<StaffActionResult> {
     };
   const supabase = await createServerSupabaseClient();
   const result = await supabase.rpc("create_staff", {
-    payload: parsed.data as unknown as Json,
+    payload: { ...parsed.data, requestKey: key.data } as unknown as Json,
   });
   if (result.error)
     return { ok: false, message: databaseMessage(result.error) };
@@ -78,6 +86,7 @@ export async function assignStaffClass(
     return { ok: false, message: databaseMessage(result.error) };
   revalidatePath("/staff");
   revalidatePath(`/staff/${staffId}`);
+  revalidatePath("/classes");
   return {
     ok: true,
     message: "Class assignment added and history preserved.",
@@ -108,6 +117,33 @@ export async function endStaffAssignment(
     ok: true,
     message: "Assignment ended; its history remains available.",
     staffId: parsed.data.staffId,
+  };
+}
+
+export async function updateStaff(
+  input: unknown,
+): Promise<StaffActionResult> {
+  if (!(await requirePermission("staff.manage"))) return denied;
+  const parsed = staffUpdateSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Check the staff details.",
+    };
+  const { staffId, ...payload } = parsed.data;
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase.rpc("update_staff", {
+    target_staff_id: staffId,
+    payload: payload as unknown as Json,
+  });
+  if (result.error)
+    return { ok: false, message: databaseMessage(result.error) };
+  revalidatePath("/staff");
+  revalidatePath(`/staff/${staffId}`);
+  return {
+    ok: true,
+    message: "Staff profile updated.",
+    staffId,
   };
 }
 

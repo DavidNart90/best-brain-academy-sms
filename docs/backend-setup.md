@@ -17,7 +17,7 @@ Applied through MCP, with matching local files and verified remote history:
 | `20260831200637_restrict_existing_rls_trigger_grants` | Revoke API execution of the existing RLS event-trigger function; preserve its owner and trigger  |
 | `20260831200843_verify_foundation_access_contracts`   | Executable SQL acceptance checks; all fixture writes roll back inside a subtransaction           |
 | `20260901100905_configure_phase0_test_actors`         | Resolve fixed synthetic emails and assign explicit test-only status/roles                        |
-| `20260901111519_academic_configuration`               | Academic cycles, terms, classes, school locations/settings, immutable audit, RLS and seed values |
+| `20260901111519_academic_configuration`               | Academic cycles, terms, classes, transport locations/settings, immutable audit, RLS and seed values |
 
 Do not reapply or edit applied migrations. Reverify the project, tables and migration
 history before new changes. MCP-generated types now represent the actual schema.

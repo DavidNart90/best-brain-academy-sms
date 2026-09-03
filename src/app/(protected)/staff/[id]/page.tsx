@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { StaffEditForm } from "@/features/staff/components/staff-edit-form";
 import { StaffProfileActions } from "@/features/staff/components/staff-profile-actions";
 import { staffIdSchema } from "@/features/staff/schemas";
 import {
@@ -122,7 +123,9 @@ export default async function StaffProfilePage({
                 <dt className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                   <Phone className="size-3.5" /> Phone
                 </dt>
-                <dd className="mt-1 text-sm">{staff.phone}</dd>
+                <dd className="mt-1 text-sm">
+                  {staff.phone ?? "Not recorded"}
+                </dd>
               </div>
               <div>
                 <dt className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -140,7 +143,27 @@ export default async function StaffProfilePage({
                   {staff.staffNumber}
                 </dd>
               </div>
+              <div>
+                <dt className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <CalendarDays className="size-3.5" /> Date of birth
+                </dt>
+                <dd className="mt-1 text-sm font-semibold">
+                  {date(staff.dateOfBirth)}
+                </dd>
+              </div>
             </dl>
+            {staff.staffType === "teaching" && (
+              <div className="mt-5 border-t pt-4">
+                <h3 className="text-sm font-medium">Known teaching subjects</h3>
+                <p className="mt-1 text-sm">
+                  {staff.knownSubjects.join("; ") || "Not recorded"}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Subject knowledge alone does not confirm a class assignment or
+                  head-teacher role.
+                </p>
+              </div>
+            )}
           </section>
           <section
             className="panel overflow-hidden"
@@ -168,6 +191,7 @@ export default async function StaffProfilePage({
                   <TableHeader>
                     <TableRow className="bg-muted/70 hover:bg-muted/70">
                       <TableHead className="px-5">Class</TableHead>
+                      <TableHead>Role / subject</TableHead>
                       <TableHead>Academic period</TableHead>
                       <TableHead>Started</TableHead>
                       <TableHead>Ended</TableHead>
@@ -179,6 +203,13 @@ export default async function StaffProfilePage({
                       <TableRow key={item.id}>
                         <TableCell className="px-5 font-semibold">
                           {item.className}
+                        </TableCell>
+                        <TableCell>
+                          {item.assignmentKind === "head"
+                            ? "Head class teacher"
+                            : item.assignmentKind === "teaching"
+                              ? item.subjectName
+                              : "Class link — role unconfirmed"}
                         </TableCell>
                         <TableCell>
                           {item.academicYearName} · {item.academicTermName}
@@ -209,6 +240,7 @@ export default async function StaffProfilePage({
               </div>
             )}
           </section>
+          {canManage && <StaffEditForm staff={staff} />}
           {canManage && (
             <StaffProfileActions staff={staff} reference={reference} />
           )}
@@ -223,8 +255,8 @@ export default async function StaffProfilePage({
                   Salary deductions
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Available in the finance phase. No salary or deduction records
-                  have been created.
+                  Available in Phase 4. No salary or deduction records have been
+                  created.
                 </p>
               </div>
             </div>
