@@ -6,6 +6,7 @@ import {
   CalendarRange,
   CheckCircle2,
   ShieldCheck,
+  Wallet,
 } from "lucide-react";
 import { PermissionDenied } from "@/components/data-display/page-state";
 import { PageHeader } from "@/components/layout/page-header";
@@ -42,6 +43,14 @@ const settingsDestinations = [
       "Review the live permission matrix and open administrator accounts when a role assignment must change.",
     detail: "Access matrix and roles",
     icon: ShieldCheck,
+  },
+  {
+    href: "/settings/financials",
+    title: "Financial settings",
+    description:
+      "Configure base class fees, transport charges, feeding/admission amounts, payment methods, and expense/income categories.",
+    detail: "Fees, charges and categories",
+    icon: Wallet,
   },
 ] as const;
 

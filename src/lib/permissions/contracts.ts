@@ -16,6 +16,8 @@ export const permissionSchema = z.enum([
   "reports.read",
   "administrators.manage",
   "settings.manage",
+  "finance.settings.manage",
+  "finance.transactions.manage",
   "audit.read",
 ]);
 export type Permission = z.infer<typeof permissionSchema>;

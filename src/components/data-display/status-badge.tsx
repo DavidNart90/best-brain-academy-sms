@@ -19,6 +19,8 @@ const styles = {
   Disabled: "bg-danger-soft text-destructive",
   Enrolled: "bg-success-soft text-success",
   Required: "bg-warning-soft text-warning",
+  Cancelled: "bg-danger-soft text-destructive",
+  Reversed: "bg-danger-soft text-destructive",
 };
 export type StatusLabel = keyof typeof styles;
 export type PaymentStatus = Extract<

@@ -262,6 +262,115 @@ export type Database = {
           },
         ];
       };
+      admission_receipts: {
+        Row: {
+          admission_number_snapshot: string;
+          amount: number;
+          business_date: string;
+          class_name_snapshot: string;
+          created_at: string;
+          created_by: string;
+          external_reference: string | null;
+          id: number;
+          notes: string | null;
+          payment_method_id: number;
+          receipt_number: string;
+          reversal_reason: string | null;
+          reversed_at: string | null;
+          reversed_by: string | null;
+          status: string;
+          student_id: number;
+          student_name_snapshot: string;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          admission_number_snapshot: string;
+          amount: number;
+          business_date: string;
+          class_name_snapshot: string;
+          created_at?: string;
+          created_by: string;
+          external_reference?: string | null;
+          id?: never;
+          notes?: string | null;
+          payment_method_id: number;
+          receipt_number: string;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          status?: string;
+          student_id: number;
+          student_name_snapshot: string;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          admission_number_snapshot?: string;
+          amount?: number;
+          business_date?: string;
+          class_name_snapshot?: string;
+          created_at?: string;
+          created_by?: string;
+          external_reference?: string | null;
+          id?: never;
+          notes?: string | null;
+          payment_method_id?: number;
+          receipt_number?: string;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          status?: string;
+          student_id?: number;
+          student_name_snapshot?: string;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admission_receipts_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "admission_receipts_payment_method_id_fkey";
+            columns: ["payment_method_id"];
+            isOneToOne: false;
+            referencedRelation: "payment_methods";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "admission_receipts_reversed_by_fkey";
+            columns: ["reversed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "admission_receipts_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "student_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "admission_receipts_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "admission_receipts_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       audit_logs: {
         Row: {
           action: string;
@@ -401,6 +510,102 @@ export type Database = {
           },
           {
             foreignKeyName: "expense_categories_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      expenses: {
+        Row: {
+          amount: number;
+          attachment_path: string | null;
+          business_date: string;
+          created_at: string;
+          created_by: string;
+          description: string;
+          expense_category_id: number;
+          expense_number: string;
+          external_reference: string | null;
+          id: number;
+          payment_method_id: number;
+          reversal_reason: string | null;
+          reversed_at: string | null;
+          reversed_by: string | null;
+          status: string;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          amount: number;
+          attachment_path?: string | null;
+          business_date: string;
+          created_at?: string;
+          created_by: string;
+          description: string;
+          expense_category_id: number;
+          expense_number: string;
+          external_reference?: string | null;
+          id?: never;
+          payment_method_id: number;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          status?: string;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          amount?: number;
+          attachment_path?: string | null;
+          business_date?: string;
+          created_at?: string;
+          created_by?: string;
+          description?: string;
+          expense_category_id?: number;
+          expense_number?: string;
+          external_reference?: string | null;
+          id?: never;
+          payment_method_id?: number;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "expenses_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expenses_expense_category_id_fkey";
+            columns: ["expense_category_id"];
+            isOneToOne: false;
+            referencedRelation: "expense_categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expenses_payment_method_id_fkey";
+            columns: ["payment_method_id"];
+            isOneToOne: false;
+            referencedRelation: "payment_methods";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expenses_reversed_by_fkey";
+            columns: ["reversed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expenses_updated_by_fkey";
             columns: ["updated_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
@@ -560,6 +765,115 @@ export type Database = {
           },
         ];
       };
+      feeding_receipts: {
+        Row: {
+          admission_number_snapshot: string;
+          amount: number;
+          business_date: string;
+          class_name_snapshot: string;
+          created_at: string;
+          created_by: string;
+          external_reference: string | null;
+          id: number;
+          notes: string | null;
+          payment_method_id: number;
+          receipt_number: string;
+          reversal_reason: string | null;
+          reversed_at: string | null;
+          reversed_by: string | null;
+          status: string;
+          student_id: number;
+          student_name_snapshot: string;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          admission_number_snapshot: string;
+          amount: number;
+          business_date: string;
+          class_name_snapshot: string;
+          created_at?: string;
+          created_by: string;
+          external_reference?: string | null;
+          id?: never;
+          notes?: string | null;
+          payment_method_id: number;
+          receipt_number: string;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          status?: string;
+          student_id: number;
+          student_name_snapshot: string;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          admission_number_snapshot?: string;
+          amount?: number;
+          business_date?: string;
+          class_name_snapshot?: string;
+          created_at?: string;
+          created_by?: string;
+          external_reference?: string | null;
+          id?: never;
+          notes?: string | null;
+          payment_method_id?: number;
+          receipt_number?: string;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          status?: string;
+          student_id?: number;
+          student_name_snapshot?: string;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "feeding_receipts_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "feeding_receipts_payment_method_id_fkey";
+            columns: ["payment_method_id"];
+            isOneToOne: false;
+            referencedRelation: "payment_methods";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "feeding_receipts_reversed_by_fkey";
+            columns: ["reversed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "feeding_receipts_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "student_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "feeding_receipts_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "feeding_receipts_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       guardians: {
         Row: {
           address: string | null;
@@ -617,6 +931,219 @@ export type Database = {
           },
         ];
       };
+      invoice_lines: {
+        Row: {
+          amount: number;
+          created_at: string;
+          created_by: string;
+          description: string;
+          fee_component_id: number;
+          id: number;
+          invoice_id: number;
+          sort_order: number;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          created_by: string;
+          description: string;
+          fee_component_id: number;
+          id?: never;
+          invoice_id: number;
+          sort_order: number;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          created_by?: string;
+          description?: string;
+          fee_component_id?: number;
+          id?: never;
+          invoice_id?: number;
+          sort_order?: number;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invoice_lines_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoice_lines_fee_component_id_fkey";
+            columns: ["fee_component_id"];
+            isOneToOne: false;
+            referencedRelation: "fee_components";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoice_lines_invoice_id_fkey";
+            columns: ["invoice_id"];
+            isOneToOne: false;
+            referencedRelation: "invoices";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoice_lines_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      invoices: {
+        Row: {
+          academic_term_id: number;
+          academic_year_id: number;
+          admission_number_snapshot: string;
+          amount_paid: number;
+          cancellation_reason: string | null;
+          cancelled_at: string | null;
+          cancelled_by: string | null;
+          class_id: number;
+          class_name_snapshot: string;
+          created_at: string;
+          created_by: string;
+          id: number;
+          invoice_number: string;
+          issued_on: string;
+          location_name_snapshot: string;
+          outstanding: number | null;
+          school_location_id: number;
+          status: string;
+          student_id: number;
+          student_name_snapshot: string;
+          subtotal: number;
+          total: number;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          academic_term_id: number;
+          academic_year_id: number;
+          admission_number_snapshot: string;
+          amount_paid?: number;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          class_id: number;
+          class_name_snapshot: string;
+          created_at?: string;
+          created_by: string;
+          id?: never;
+          invoice_number: string;
+          issued_on?: string;
+          location_name_snapshot: string;
+          outstanding?: number | null;
+          school_location_id: number;
+          status?: string;
+          student_id: number;
+          student_name_snapshot: string;
+          subtotal: number;
+          total: number;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          academic_term_id?: number;
+          academic_year_id?: number;
+          admission_number_snapshot?: string;
+          amount_paid?: number;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          class_id?: number;
+          class_name_snapshot?: string;
+          created_at?: string;
+          created_by?: string;
+          id?: never;
+          invoice_number?: string;
+          issued_on?: string;
+          location_name_snapshot?: string;
+          outstanding?: number | null;
+          school_location_id?: number;
+          status?: string;
+          student_id?: number;
+          student_name_snapshot?: string;
+          subtotal?: number;
+          total?: number;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invoices_academic_term_id_fkey";
+            columns: ["academic_term_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_terms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoices_academic_year_id_fkey";
+            columns: ["academic_year_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_years";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoices_cancelled_by_fkey";
+            columns: ["cancelled_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoices_class_id_fkey";
+            columns: ["class_id"];
+            isOneToOne: false;
+            referencedRelation: "classes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoices_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoices_school_location_id_fkey";
+            columns: ["school_location_id"];
+            isOneToOne: false;
+            referencedRelation: "school_locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoices_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "student_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoices_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoices_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       misc_income_categories: {
         Row: {
           code: string;
@@ -661,6 +1188,122 @@ export type Database = {
           },
           {
             foreignKeyName: "misc_income_categories_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      misc_receipts: {
+        Row: {
+          amount: number;
+          business_date: string;
+          created_at: string;
+          created_by: string;
+          description: string;
+          external_reference: string | null;
+          id: number;
+          misc_income_category_id: number;
+          notes: string | null;
+          payer_name: string | null;
+          payment_method_id: number;
+          receipt_number: string;
+          reversal_reason: string | null;
+          reversed_at: string | null;
+          reversed_by: string | null;
+          status: string;
+          student_id: number | null;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          amount: number;
+          business_date: string;
+          created_at?: string;
+          created_by: string;
+          description: string;
+          external_reference?: string | null;
+          id?: never;
+          misc_income_category_id: number;
+          notes?: string | null;
+          payer_name?: string | null;
+          payment_method_id: number;
+          receipt_number: string;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          status?: string;
+          student_id?: number | null;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          amount?: number;
+          business_date?: string;
+          created_at?: string;
+          created_by?: string;
+          description?: string;
+          external_reference?: string | null;
+          id?: never;
+          misc_income_category_id?: number;
+          notes?: string | null;
+          payer_name?: string | null;
+          payment_method_id?: number;
+          receipt_number?: string;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          status?: string;
+          student_id?: number | null;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "misc_receipts_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "misc_receipts_misc_income_category_id_fkey";
+            columns: ["misc_income_category_id"];
+            isOneToOne: false;
+            referencedRelation: "misc_income_categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "misc_receipts_payment_method_id_fkey";
+            columns: ["payment_method_id"];
+            isOneToOne: false;
+            referencedRelation: "payment_methods";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "misc_receipts_reversed_by_fkey";
+            columns: ["reversed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "misc_receipts_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "student_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "misc_receipts_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "misc_receipts_updated_by_fkey";
             columns: ["updated_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
@@ -722,6 +1365,99 @@ export type Database = {
           },
         ];
       };
+      payments: {
+        Row: {
+          amount: number;
+          business_date: string;
+          created_at: string;
+          created_by: string;
+          external_reference: string | null;
+          id: number;
+          invoice_id: number;
+          notes: string | null;
+          payment_method_id: number;
+          payment_number: string;
+          reversal_reason: string | null;
+          reversed_at: string | null;
+          reversed_by: string | null;
+          status: string;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          amount: number;
+          business_date: string;
+          created_at?: string;
+          created_by: string;
+          external_reference?: string | null;
+          id?: never;
+          invoice_id: number;
+          notes?: string | null;
+          payment_method_id: number;
+          payment_number: string;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          status?: string;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          amount?: number;
+          business_date?: string;
+          created_at?: string;
+          created_by?: string;
+          external_reference?: string | null;
+          id?: never;
+          invoice_id?: number;
+          notes?: string | null;
+          payment_method_id?: number;
+          payment_number?: string;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payments_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payments_invoice_id_fkey";
+            columns: ["invoice_id"];
+            isOneToOne: false;
+            referencedRelation: "invoices";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payments_payment_method_id_fkey";
+            columns: ["payment_method_id"];
+            isOneToOne: false;
+            referencedRelation: "payment_methods";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payments_reversed_by_fkey";
+            columns: ["reversed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payments_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       permissions: {
         Row: {
           code: string;
@@ -763,6 +1499,113 @@ export type Database = {
           status?: string;
         };
         Relationships: [];
+      };
+      receipts: {
+        Row: {
+          academic_term_name_snapshot: string;
+          academic_year_name_snapshot: string;
+          admission_number_snapshot: string;
+          amount: number;
+          business_date: string;
+          class_name_snapshot: string;
+          collected_by_snapshot: string;
+          created_at: string;
+          created_by: string;
+          id: number;
+          invoice_number_snapshot: string;
+          payment_id: number;
+          payment_method_name_snapshot: string;
+          previous_balance: number;
+          receipt_number: string;
+          remaining_balance: number;
+          reversal_reason: string | null;
+          reversed_at: string | null;
+          reversed_by: string | null;
+          status: string;
+          student_name_snapshot: string;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          academic_term_name_snapshot: string;
+          academic_year_name_snapshot: string;
+          admission_number_snapshot: string;
+          amount: number;
+          business_date: string;
+          class_name_snapshot: string;
+          collected_by_snapshot: string;
+          created_at?: string;
+          created_by: string;
+          id?: never;
+          invoice_number_snapshot: string;
+          payment_id: number;
+          payment_method_name_snapshot: string;
+          previous_balance: number;
+          receipt_number: string;
+          remaining_balance: number;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          status?: string;
+          student_name_snapshot: string;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          academic_term_name_snapshot?: string;
+          academic_year_name_snapshot?: string;
+          admission_number_snapshot?: string;
+          amount?: number;
+          business_date?: string;
+          class_name_snapshot?: string;
+          collected_by_snapshot?: string;
+          created_at?: string;
+          created_by?: string;
+          id?: never;
+          invoice_number_snapshot?: string;
+          payment_id?: number;
+          payment_method_name_snapshot?: string;
+          previous_balance?: number;
+          receipt_number?: string;
+          remaining_balance?: number;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          status?: string;
+          student_name_snapshot?: string;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "receipts_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "receipts_payment_id_fkey";
+            columns: ["payment_id"];
+            isOneToOne: false;
+            referencedRelation: "payments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "receipts_reversed_by_fkey";
+            columns: ["reversed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "receipts_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       role_permissions: {
         Row: {
@@ -1481,6 +2324,116 @@ export type Database = {
         Args: { payload: Json; target_staff_id: number };
         Returns: Json;
       };
+      cancel_invoice: {
+        Args: { target_invoice_id: number; target_reason: string };
+        Returns: Json;
+      };
+      reverse_admission_receipt: {
+        Args: {
+          request_fingerprint: string;
+          request_key: string;
+          target_reason: string;
+          target_receipt_id: number;
+        };
+        Returns: Json;
+      };
+      reverse_feeding_receipt: {
+        Args: {
+          request_fingerprint: string;
+          request_key: string;
+          target_reason: string;
+          target_receipt_id: number;
+        };
+        Returns: Json;
+      };
+      reverse_misc_receipt: {
+        Args: {
+          request_fingerprint: string;
+          request_key: string;
+          target_reason: string;
+          target_receipt_id: number;
+        };
+        Returns: Json;
+      };
+      reverse_school_fee_payment: {
+        Args: {
+          request_fingerprint: string;
+          request_key: string;
+          target_payment_id: number;
+          target_reason: string;
+        };
+        Returns: Json;
+      };
+      record_admission_receipt: {
+        Args: {
+          request_key: string;
+          request_fingerprint: string;
+          target_student_id: number;
+          receipt_amount: number;
+          target_business_date: string;
+          target_payment_method_id: number;
+          target_external_reference?: string;
+          target_notes?: string;
+        };
+        Returns: Json;
+      };
+      record_expense: {
+        Args: {
+          request_key: string;
+          request_fingerprint: string;
+          target_expense_category_id: number;
+          expense_amount: number;
+          target_business_date: string;
+          target_description: string;
+          target_payment_method_id: number;
+          target_external_reference?: string;
+          target_attachment_path?: string;
+          target_notes?: string;
+        };
+        Returns: Json;
+      };
+      record_feeding_receipt: {
+        Args: {
+          request_key: string;
+          request_fingerprint: string;
+          target_student_id: number;
+          receipt_amount: number;
+          target_business_date: string;
+          target_payment_method_id: number;
+          target_external_reference?: string;
+          target_notes?: string;
+        };
+        Returns: Json;
+      };
+      record_misc_receipt: {
+        Args: {
+          request_key: string;
+          request_fingerprint: string;
+          target_misc_income_category_id: number;
+          target_description: string;
+          receipt_amount: number;
+          target_business_date: string;
+          target_payment_method_id: number;
+          target_student_id?: number;
+          target_payer_name?: string;
+          target_external_reference?: string;
+          target_notes?: string;
+        };
+        Returns: Json;
+      };
+      record_school_fee_payment: {
+        Args: {
+          request_key: string;
+          request_fingerprint: string;
+          target_invoice_id: number;
+          payment_amount: number;
+          target_payment_method_id: number;
+          target_business_date: string;
+          target_external_reference?: string;
+          target_notes?: string;
+        };
+        Returns: Json;
+      };
       change_administrator_role: {
         Args: { target_role_code: string; target_user_id: string };
         Returns: Json;
@@ -1501,6 +2454,23 @@ export type Database = {
           request_id: string;
           succeeded: boolean;
           target_user_id: string;
+        };
+        Returns: Json;
+      };
+      generate_term_invoices: {
+        Args: {
+          target_academic_term_id: number;
+          target_academic_year_id: number;
+          target_student_id?: number;
+        };
+        Returns: Json;
+      };
+      void_expense: {
+        Args: {
+          request_fingerprint: string;
+          request_key: string;
+          target_expense_id: number;
+          target_reason: string;
         };
         Returns: Json;
       };

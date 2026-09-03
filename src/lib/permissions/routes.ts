@@ -62,6 +62,13 @@ export const appRoutes: AppRoute[] = [
     description: "Verified collections, expenses and outstanding balances.",
   },
   {
+    href: "/financials/cashflow",
+    title: "Daily Cashflow",
+    permission: "financials.read",
+    phase: 3,
+    description: "Posted receipts, expenses and net cashflow by business date.",
+  },
+  {
     href: "/financials/fees",
     title: "Fee Structure",
     permission: "financials.read",
