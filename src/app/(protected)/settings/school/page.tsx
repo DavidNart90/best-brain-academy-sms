@@ -41,9 +41,9 @@ export default async function SchoolSettingsPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             A location is not a school campus; it identifies how far a student
             stays from school and sets that student&apos;s transport charge.
-            These five approved locations are configuration only. Their
-            monetary transport charges will be implemented with fee
-            structures in Phase 3.
+            These five approved locations are configuration only. Their monetary
+            transport charges will be implemented with fee structures in Phase
+            3.
           </p>
         </div>
         <div className="mt-5 space-y-3">

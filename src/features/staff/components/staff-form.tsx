@@ -262,10 +262,7 @@ export function StaffForm({ reference }: { reference: StaffReferenceData }) {
                   {...form.register(`assignments.${index}.assignmentKind`, {
                     onChange: (event) => {
                       if (event.target.value !== "teaching")
-                        form.setValue(
-                          `assignments.${index}.subjectName`,
-                          "",
-                        );
+                        form.setValue(`assignments.${index}.subjectName`, "");
                     },
                   })}
                 >

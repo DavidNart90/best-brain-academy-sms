@@ -120,9 +120,7 @@ export async function endStaffAssignment(
   };
 }
 
-export async function updateStaff(
-  input: unknown,
-): Promise<StaffActionResult> {
+export async function updateStaff(input: unknown): Promise<StaffActionResult> {
   if (!(await requirePermission("staff.manage"))) return denied;
   const parsed = staffUpdateSchema.safeParse(input);
   if (!parsed.success)
