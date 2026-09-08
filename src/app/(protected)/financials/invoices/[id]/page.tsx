@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { CancelInvoiceForm } from "@/features/finance/components/invoice-actions";
 import { PrintInvoiceButton } from "@/features/finance/components/print-invoice-button";
+import { DocumentHeader } from "@/features/finance/components/document-header";
 import { invoiceIdSchema } from "@/features/finance/schemas";
 import { getInvoiceDetail } from "@/features/finance/server/queries";
 import { requirePermission } from "@/lib/auth/access";
@@ -56,28 +57,20 @@ export default async function InvoiceDetailPage({
       </PageHeader>
 
       <section
-        className="panel mx-auto max-w-[210mm] p-8 print:border-0 print:shadow-none"
-        aria-labelledby="invoice-title"
+        className="finance-document panel mx-auto max-w-[210mm] p-5 sm:p-8"
+        aria-label="Official invoice"
       >
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-5">
-          <div>
-            <h2 id="invoice-title" className="text-lg font-semibold">
-              Best Brain Academy
-            </h2>
-            <p className="text-sm text-muted-foreground">Official Invoice</p>
+        <DocumentHeader
+          title="Official invoice"
+          reference={invoice.invoiceNumber}
+        >
+          <p className="mt-1 text-sm text-muted-foreground">
+            Issued {date(invoice.issuedOn)}
+          </p>
+          <div className="mt-2">
+            <StatusBadge status={statusLabels[invoice.status]} />
           </div>
-          <div className="text-right">
-            <p className="font-mono text-sm font-semibold">
-              {invoice.invoiceNumber}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Issued {date(invoice.issuedOn)}
-            </p>
-            <div className="mt-2">
-              <StatusBadge status={statusLabels[invoice.status]} />
-            </div>
-          </div>
-        </div>
+        </DocumentHeader>
 
         <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
           <div>
@@ -169,9 +162,9 @@ export default async function InvoiceDetailPage({
         )}
 
         <p className="mt-6 text-xs text-muted-foreground">
-          Recorded by {invoice.createdByName}. This document reflects the fee
-          configuration in effect when the invoice was issued and does not
-          change if later settings are revised.
+          Please quote {invoice.invoiceNumber} when making a payment or
+          contacting the school about these fees. Keep your payment receipts for
+          your records.
         </p>
       </section>
 

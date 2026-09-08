@@ -146,8 +146,8 @@ export const schoolFeePaymentInputSchema = transactionBaseSchema.extend({
 export const studentReceiptInputSchema = transactionBaseSchema.extend({
   studentId: idSchema,
 });
+export const dailyCollectionInputSchema = transactionBaseSchema;
 export const miscReceiptInputSchema = transactionBaseSchema.extend({
-  categoryId: idSchema,
   description: z.string().trim().min(2).max(500),
   payerName: z.string().trim().max(160).optional(),
   studentId: optionalIdSchema,
@@ -159,5 +159,6 @@ export const expenseInputSchema = transactionBaseSchema.extend({
 });
 export type SchoolFeePaymentInput = z.infer<typeof schoolFeePaymentInputSchema>;
 export type StudentReceiptInput = z.infer<typeof studentReceiptInputSchema>;
+export type DailyCollectionInput = z.infer<typeof dailyCollectionInputSchema>;
 export type MiscReceiptInput = z.infer<typeof miscReceiptInputSchema>;
 export type ExpenseInput = z.infer<typeof expenseInputSchema>;

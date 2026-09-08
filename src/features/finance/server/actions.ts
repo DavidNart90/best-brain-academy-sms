@@ -14,10 +14,11 @@ import {
   miscReceiptInputSchema,
   reverseFinanceInputSchema,
   schoolFeePaymentInputSchema,
-  studentReceiptInputSchema,
+  dailyCollectionInputSchema,
   transportChargesInputSchema,
 } from "../schemas";
 import type { GenerateInvoicesResult } from "../types";
+import { postingError } from "./posting-error";
 
 export type FinanceActionResult = {
   ok: boolean;
@@ -47,6 +48,7 @@ function databaseMessage(error: { code?: string; message?: string } | null) {
 
 function refreshFinanceSettings() {
   revalidatePath("/settings/financials");
+  revalidatePath("/financials/fees");
 }
 
 function refreshInvoices(invoiceId?: number) {
@@ -385,15 +387,29 @@ export async function reverseFinanceAction(
     reverse_misc_receipt: "reverse_misc_receipt",
     void_expense: "void_expense",
   } as const;
+  if (!Object.hasOwn(rpc, operation))
+    return { ok: false, message: "Choose a valid reversal operation." };
   const rpcName = rpc[operation];
-  const rpcResult = await supabase.rpc(rpcName, {
+  const reversalArgs = {
     request_key: parsed.data.requestKey,
     request_fingerprint: parsed.data.requestFingerprint,
-    target_receipt_id: parsed.data.recordId,
-    target_payment_id: parsed.data.recordId,
-    target_expense_id: parsed.data.recordId,
     target_reason: parsed.data.reason,
-  });
+  };
+  const rpcResult =
+    rpcName === "reverse_school_fee_payment"
+      ? await supabase.rpc(rpcName, {
+          ...reversalArgs,
+          target_payment_id: parsed.data.recordId,
+        })
+      : rpcName === "void_expense"
+        ? await supabase.rpc(rpcName, {
+            ...reversalArgs,
+            target_expense_id: parsed.data.recordId,
+          })
+        : await supabase.rpc(rpcName, {
+            ...reversalArgs,
+            target_receipt_id: parsed.data.recordId,
+          });
   if (rpcResult.error)
     return { ok: false, message: databaseMessage(rpcResult.error) };
 
@@ -402,6 +418,8 @@ export async function reverseFinanceAction(
   revalidatePath("/financials/receipts");
   revalidatePath("/financials/expenses");
   revalidatePath("/financials/outstanding");
+  revalidatePath("/financials/cashflow");
+  revalidatePath("/financials/invoices");
   return {
     ok: true,
     message:
@@ -424,6 +442,16 @@ export async function recordFinanceAction(
 ): Promise<FinanceActionResult> {
   const context = await requirePermission("finance.transactions.manage");
   if (!context) return transactionsDenied;
+  if (
+    ![
+      "school_fee_payment",
+      "feeding_receipt",
+      "admission_receipt",
+      "misc_receipt",
+      "expense",
+    ].includes(operation)
+  )
+    return { ok: false, message: "Choose a valid transaction type." };
   const parsed =
     operation === "school_fee_payment"
       ? schoolFeePaymentInputSchema.safeParse(input)
@@ -431,7 +459,7 @@ export async function recordFinanceAction(
         ? miscReceiptInputSchema.safeParse(input)
         : operation === "expense"
           ? expenseInputSchema.safeParse(input)
-          : studentReceiptInputSchema.safeParse(input);
+          : dailyCollectionInputSchema.safeParse(input);
   if (!parsed.success)
     return {
       ok: false,
@@ -452,47 +480,35 @@ export async function recordFinanceAction(
       target_external_reference: value.externalReference || undefined,
       target_notes: value.notes || undefined,
     });
-    if (result.error)
-      return { ok: false, message: databaseMessage(result.error) };
+    if (result.error) return postingError(result.error, operation);
   } else if (
     operation === "feeding_receipt" ||
     operation === "admission_receipt"
   ) {
-    const value = parsed.data as import("../schemas").StudentReceiptInput;
-    const result = await supabase.rpc(
-      operation === "feeding_receipt"
-        ? "record_feeding_receipt"
-        : "record_admission_receipt",
-      {
-        request_key: value.requestKey,
-        request_fingerprint: value.requestFingerprint,
-        target_student_id: value.studentId,
-        receipt_amount: Number(value.amount),
-        target_business_date: value.businessDate,
-        target_payment_method_id: value.paymentMethodId,
-        target_external_reference: value.externalReference || undefined,
-        target_notes: value.notes || undefined,
-      },
-    );
-    if (result.error)
-      return { ok: false, message: databaseMessage(result.error) };
-  } else if (operation === "misc_receipt") {
-    const value = parsed.data as import("../schemas").MiscReceiptInput;
-    const result = await supabase.rpc("record_misc_receipt", {
+    const value = parsed.data as import("../schemas").DailyCollectionInput;
+    const result = await supabase.rpc("record_daily_collection", {
       request_key: value.requestKey,
-      request_fingerprint: value.requestFingerprint,
-      target_misc_income_category_id: value.categoryId,
-      target_description: value.description,
+      collection_type: operation,
       receipt_amount: Number(value.amount),
       target_business_date: value.businessDate,
       target_payment_method_id: value.paymentMethodId,
-      target_student_id: value.studentId ?? undefined,
+      target_external_reference: value.externalReference || undefined,
+      target_notes: value.notes || undefined,
+    });
+    if (result.error) return postingError(result.error, operation);
+  } else if (operation === "misc_receipt") {
+    const value = parsed.data as import("../schemas").MiscReceiptInput;
+    const result = await supabase.rpc("record_named_misc_receipt", {
+      request_key: value.requestKey,
+      income_name: value.description,
+      receipt_amount: Number(value.amount),
+      target_business_date: value.businessDate,
+      target_payment_method_id: value.paymentMethodId,
       target_payer_name: value.payerName || undefined,
       target_external_reference: value.externalReference || undefined,
       target_notes: value.notes || undefined,
     });
-    if (result.error)
-      return { ok: false, message: databaseMessage(result.error) };
+    if (result.error) return postingError(result.error, operation);
   } else {
     const value = parsed.data as import("../schemas").ExpenseInput;
     const result = await supabase.rpc("record_expense", {
@@ -507,11 +523,16 @@ export async function recordFinanceAction(
       target_attachment_path: value.attachmentPath || undefined,
       target_notes: value.notes || undefined,
     });
-    if (result.error)
-      return { ok: false, message: databaseMessage(result.error) };
+    if (result.error) return postingError(result.error, operation);
   }
 
   revalidatePath("/financials/cashflow");
   revalidatePath("/financials/invoices");
+  revalidatePath("/financials/receipts");
+  revalidatePath("/financials/payments");
+  revalidatePath("/financials/expenses");
+  revalidatePath("/financials/outstanding");
+  revalidatePath("/financials/invoices/[id]", "page");
+  revalidatePath("/students/[id]/finance", "page");
   return { ok: true, message: "Transaction posted successfully." };
 }

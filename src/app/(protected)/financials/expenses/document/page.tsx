@@ -8,6 +8,7 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { PrintInvoiceButton } from "@/features/finance/components/print-invoice-button";
+import { DocumentHeader } from "@/features/finance/components/document-header";
 import { getExpenseDocument } from "@/features/finance/server/queries";
 import { requirePermission } from "@/lib/auth/access";
 
@@ -52,21 +53,15 @@ export default async function ExpenseDocumentPage({
           <PrintInvoiceButton />
         </div>
       </PageHeader>
-      <section className="panel mx-auto max-w-[180mm] p-8 print:border-0 print:shadow-none">
-        <div className="flex items-start justify-between border-b pb-5">
-          <div>
-            <h2 className="text-lg font-semibold">Best Brain Academy</h2>
-            <p className="text-sm text-muted-foreground">Expense voucher</p>
-          </div>
-          <div className="text-right">
-            <p className="font-mono text-sm font-semibold">
-              {expense.expense_number}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {expense.business_date}
-            </p>
-          </div>
-        </div>
+      <section className="finance-document panel mx-auto max-w-[210mm] p-5 sm:p-8">
+        <DocumentHeader
+          title="Expense voucher"
+          reference={expense.expense_number}
+        >
+          <p className="mt-1 text-sm text-muted-foreground">
+            {expense.business_date}
+          </p>
+        </DocumentHeader>
         <dl className="mt-6 grid gap-4 sm:grid-cols-2">
           <Detail label="Category" value={expense.categoryName} />
           <Detail label="Payment method" value={expense.paymentMethodName} />

@@ -86,6 +86,7 @@ export const appRoutes: AppRoute[] = [
     href: "/financials/payments",
     title: "Payments",
     permission: "financials.read",
+    // Introduced in Phase 3 and also used by Phase 4 operations.
     phase: 3,
     description: "Full and partial fee payments.",
   },

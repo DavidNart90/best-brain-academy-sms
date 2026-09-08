@@ -16,10 +16,11 @@ import { requirePermission } from "@/lib/auth/access";
 import { hasPermission } from "@/lib/permissions/contracts";
 
 const dateSchema = /^\d{4}-\d{2}-\d{2}$/;
+const businessDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "full",
+});
 const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("en-GB", { dateStyle: "full" }).format(
-    new Date(`${value}T00:00:00Z`),
-  );
+  businessDateFormatter.format(new Date(`${value}T00:00:00Z`));
 
 export default async function CashflowPage({
   searchParams,
@@ -62,6 +63,7 @@ export default async function CashflowPage({
       <div className="space-y-5">
         {entryOptions && (
           <CashflowEntryForm
+            key={businessDate}
             options={entryOptions}
             businessDate={businessDate}
           />
@@ -151,7 +153,7 @@ export default async function CashflowPage({
                 count={cashflow.admissionCount}
               />
               <CashflowRow
-                label="Miscellaneous collections"
+                label="Miscellaneous income"
                 value={cashflow.miscellaneous}
                 count={cashflow.miscellaneousCount}
               />
@@ -191,7 +193,7 @@ export default async function CashflowPage({
           <PageState
             kind="empty"
             title="No posted cashflow entries"
-            description="There are no active receipts or expenses recorded for this business date. Entry controls will appear here when the daily posting workflow is enabled."
+            description="There are no active receipts or expenses recorded for this business date."
           >
             <Button asChild variant="outline" className="mt-2">
               <Link href="/financials/invoices">
