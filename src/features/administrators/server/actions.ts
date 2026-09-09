@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth/access";
+import { requireRateLimitedPermission } from "@/lib/security/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   administratorInvitationBatchSchema,
@@ -69,7 +70,11 @@ export async function inviteAdministrators(
 export async function changeAdministratorRole(
   input: unknown,
 ): Promise<AdministratorActionResult> {
-  if (!(await requirePermission("administrators.manage"))) return denied;
+  const access = await requireRateLimitedPermission(
+    "administrators.manage",
+    "administrator-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = administratorRoleChangeSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Choose a valid role." };
   const supabase = await createServerSupabaseClient();
@@ -90,7 +95,11 @@ export async function changeAdministratorRole(
 export async function changeAdministratorStatus(
   input: unknown,
 ): Promise<AdministratorActionResult> {
-  if (!(await requirePermission("administrators.manage"))) return denied;
+  const access = await requireRateLimitedPermission(
+    "administrators.manage",
+    "administrator-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = administratorStatusChangeSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Choose a valid status." };
   const supabase = await createServerSupabaseClient();

@@ -11,7 +11,7 @@ export function PrintInvoiceButton() {
       variant="outline"
       onClick={() => window.print()}
     >
-      <Printer /> Print
+      <Printer /> Print / save PDF
     </Button>
   );
 }

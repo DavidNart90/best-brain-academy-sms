@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requirePermission } from "@/lib/auth/access";
+import { requireRateLimitedPermission } from "@/lib/security/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database";
 import {
@@ -35,8 +35,11 @@ function studentDatabaseMessage(error: { code?: string; message?: string }) {
 export async function createStudent(
   input: unknown,
 ): Promise<StudentActionResult> {
-  const context = await requirePermission("students.manage");
-  if (!context) return denied;
+  const access = await requireRateLimitedPermission(
+    "students.manage",
+    "people-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = studentInputSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -62,8 +65,11 @@ export async function createStudent(
 export async function linkStudentGuardian(
   input: unknown,
 ): Promise<StudentActionResult> {
-  const context = await requirePermission("students.manage");
-  if (!context) return denied;
+  const access = await requireRateLimitedPermission(
+    "students.manage",
+    "people-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = guardianLinkSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -85,8 +91,11 @@ export async function linkStudentGuardian(
 export async function changeStudentEnrollment(
   input: unknown,
 ): Promise<StudentActionResult> {
-  const context = await requirePermission("students.manage");
-  if (!context) return denied;
+  const access = await requireRateLimitedPermission(
+    "students.manage",
+    "people-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = enrollmentChangeSchema.safeParse(input);
   if (!parsed.success)
     return {

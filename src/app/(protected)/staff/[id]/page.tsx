@@ -3,11 +3,11 @@ import {
   ArrowLeft,
   BriefcaseBusiness,
   CalendarDays,
-  LockKeyhole,
   Mail,
   Phone,
 } from "lucide-react";
 import { notFound } from "next/navigation";
+import { Money } from "@/components/data-display/money";
 import { PermissionDenied } from "@/components/data-display/page-state";
 import { StatusBadge } from "@/components/data-display/status-badge";
 import { PageHeader } from "@/components/layout/page-header";
@@ -27,6 +27,7 @@ import {
   getStaffProfile,
   getStaffReferenceData,
 } from "@/features/staff/server/queries";
+import { getStaffSalaryHistory } from "@/features/finance/server/salary-queries";
 import { requirePermission } from "@/lib/auth/access";
 import { hasPermission } from "@/lib/permissions/contracts";
 
@@ -53,6 +54,10 @@ export default async function StaffProfilePage({
   ]);
   if (!staff) notFound();
   const canManage = hasPermission(context, "staff.manage");
+  const canReadFinancials = hasPermission(context, "financials.read");
+  const salaryHistory = canReadFinancials
+    ? await getStaffSalaryHistory(staff.id)
+    : [];
   const notice = (await searchParams).notice;
   return (
     <>
@@ -244,23 +249,84 @@ export default async function StaffProfilePage({
           {canManage && (
             <StaffProfileActions staff={staff} reference={reference} />
           )}
-          <section
-            className="panel border-dashed p-5"
-            aria-labelledby="salary-title"
-          >
-            <div className="flex items-start gap-3">
-              <LockKeyhole className="mt-0.5 size-5 text-muted-foreground" />
-              <div>
-                <h2 id="salary-title" className="text-sm font-semibold">
-                  Salary deductions
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Available in Phase 4. No salary or deduction records have been
-                  created.
-                </p>
+          {canReadFinancials && (
+            <section
+              className="panel overflow-hidden"
+              aria-labelledby="salary-title"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b p-5">
+                <div>
+                  <h2 id="salary-title" className="text-base font-semibold">
+                    Salary history
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Monthly gross salary, deductions and net position.
+                  </p>
+                </div>
+                <Button asChild variant="outline" size="sm">
+                  <Link
+                    href={`/financials/salary-deductions?month=${salaryHistory[0]?.payrollMonth ?? ""}&q=${encodeURIComponent(staff.staffNumber)}`}
+                  >
+                    Open salary register
+                  </Link>
+                </Button>
               </div>
-            </div>
-          </section>
+              {salaryHistory.length === 0 ? (
+                <p className="p-5 text-sm text-muted-foreground">
+                  No salary records have been posted for this staff member.
+                </p>
+              ) : (
+                <div
+                  className="table-scroll"
+                  tabIndex={0}
+                  role="region"
+                  aria-label="Staff salary history"
+                >
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/70 hover:bg-muted/70">
+                        <TableHead className="px-5">Month</TableHead>
+                        <TableHead className="text-right">Gross</TableHead>
+                        <TableHead className="text-right">Deductions</TableHead>
+                        <TableHead className="text-right">Net</TableHead>
+                        <TableHead className="pr-5">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {salaryHistory.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="px-5">
+                            <Link
+                              className="font-semibold text-primary hover:underline"
+                              href={`/financials/salary-deductions/${item.id}`}
+                            >
+                              {date(item.payrollMonth)}
+                            </Link>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Money value={item.grossSalary} />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Money value={item.totalDeductions} />
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">
+                            <Money value={item.netSalary} />
+                          </TableCell>
+                          <TableCell className="pr-5">
+                            <StatusBadge
+                              status={
+                                item.status === "active" ? "Active" : "Reversed"
+                              }
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </section>
+          )}
         </div>
         <aside className="space-y-4" aria-label="Staff record context">
           <section className="panel p-5">

@@ -19,6 +19,13 @@ const sources = [
   "Miscellaneous",
 ] as const;
 
+const dateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+const dateTime = (value: unknown) =>
+  value ? dateTimeFormatter.format(new Date(String(value))) : "Not recorded";
+
 export default async function ReceiptDocumentPage({
   searchParams,
 }: {
@@ -50,6 +57,16 @@ export default async function ReceiptDocumentPage({
     );
   const record = receipt as Record<string, unknown>;
   const field = (name: string) => String(record[name] ?? "Not recorded");
+  const optionalField = (name: string) =>
+    record[name] ? String(record[name]) : null;
+  const identity = {
+    schoolName: field("school_name_snapshot"),
+    schoolAddress: optionalField("school_address_snapshot"),
+    schoolPhone: optionalField("school_phone_snapshot"),
+    schoolEmail: optionalField("school_email_snapshot"),
+    schoolMotto: optionalField("school_motto_snapshot"),
+    schoolLogoPath: optionalField("school_logo_path_snapshot"),
+  };
 
   return (
     <>
@@ -66,10 +83,11 @@ export default async function ReceiptDocumentPage({
           <PrintInvoiceButton />
         </div>
       </PageHeader>
-      <section className="finance-document panel mx-auto max-w-[210mm] p-5 sm:p-8">
+      <section className="finance-document receipt-document panel mx-auto max-w-[148mm] p-5 sm:p-8">
         <DocumentHeader
           title="Official receipt"
           reference={field("receipt_number")}
+          identity={identity}
         >
           <p className="mt-1 text-sm text-muted-foreground">
             {field("business_date")}
@@ -107,6 +125,13 @@ export default async function ReceiptDocumentPage({
             value={field("payment_method_name_snapshot")}
           />
           <Detail label="Business date" value={field("business_date")} />
+          <Detail label="Received by" value={field("recorded_by_snapshot")} />
+          {Boolean(record.external_reference) && (
+            <Detail
+              label="External reference"
+              value={field("external_reference")}
+            />
+          )}
           {source === "School fee" && (
             <>
               <Detail
@@ -162,7 +187,12 @@ export default async function ReceiptDocumentPage({
         {record.status === "reversed" && (
           <div className="mt-6 rounded-lg border border-destructive/30 bg-danger-soft p-4 text-sm text-destructive">
             <p className="font-semibold">REVERSED</p>
-            <p className="mt-1">{field("reversal_reason")}</p>
+            <p className="mt-1">
+              Reference {field("reversal_number")} · Reversed by{" "}
+              {field("reversed_by_name_snapshot")} on{" "}
+              {dateTime(record.reversed_at)}
+            </p>
+            <p className="mt-1">Reason: {field("reversal_reason")}</p>
           </div>
         )}
         <p className="mt-8 border-t pt-4 text-xs text-muted-foreground">

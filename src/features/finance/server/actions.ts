@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requirePermission } from "@/lib/auth/access";
+import { requireRateLimitedPermission } from "@/lib/security/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   baseClassFeesInputSchema,
@@ -29,11 +29,6 @@ const denied: FinanceActionResult = {
   ok: false,
   message: "Your account cannot change financial settings.",
 };
-const transactionsDenied: FinanceActionResult = {
-  ok: false,
-  message: "Your account cannot process financial transactions.",
-};
-
 function databaseMessage(error: { code?: string; message?: string } | null) {
   if (!error) return "The change could not be saved.";
   if (error.code === "23505")
@@ -57,7 +52,10 @@ function refreshInvoices(invoiceId?: number) {
 }
 
 async function canManageFinance() {
-  return requirePermission("finance.settings.manage");
+  return requireRateLimitedPermission(
+    "finance.settings.manage",
+    "finance-settings",
+  );
 }
 
 async function feeComponentId(
@@ -83,8 +81,9 @@ function toRateAmount(amount: string) {
 export async function saveBaseClassFees(
   input: unknown,
 ): Promise<FinanceActionResult> {
-  const context = await canManageFinance();
-  if (!context) return denied;
+  const access = await canManageFinance();
+  if (!access.ok) return { ok: false, message: access.message };
+  const context = access.context;
   const parsed = baseClassFeesInputSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -118,8 +117,9 @@ export async function saveBaseClassFees(
 export async function saveTransportCharges(
   input: unknown,
 ): Promise<FinanceActionResult> {
-  const context = await canManageFinance();
-  if (!context) return denied;
+  const access = await canManageFinance();
+  if (!access.ok) return { ok: false, message: access.message };
+  const context = access.context;
   const parsed = transportChargesInputSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -157,8 +157,9 @@ export async function saveTransportCharges(
 export async function saveFlatFees(
   input: unknown,
 ): Promise<FinanceActionResult> {
-  const context = await canManageFinance();
-  if (!context) return denied;
+  const access = await canManageFinance();
+  if (!access.ok) return { ok: false, message: access.message };
+  const context = access.context;
   const parsed = flatFeesInputSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -209,8 +210,9 @@ export async function saveFlatFees(
 export async function savePaymentMethod(
   input: unknown,
 ): Promise<FinanceActionResult> {
-  const context = await canManageFinance();
-  if (!context) return denied;
+  const access = await canManageFinance();
+  if (!access.ok) return { ok: false, message: access.message };
+  const context = access.context;
   const parsed = paymentMethodInputSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -249,8 +251,9 @@ async function saveFinanceCategory(
   table: "expense_categories" | "misc_income_categories",
   input: unknown,
 ): Promise<FinanceActionResult> {
-  const context = await canManageFinance();
-  if (!context) return denied;
+  const access = await canManageFinance();
+  if (!access.ok) return { ok: false, message: access.message };
+  const context = access.context;
   const parsed = financeCategoryInputSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -296,8 +299,11 @@ export type GenerateInvoicesActionResult = FinanceActionResult & {
 export async function generateTermInvoices(
   input: unknown,
 ): Promise<GenerateInvoicesActionResult> {
-  const context = await requirePermission("finance.transactions.manage");
-  if (!context) return transactionsDenied;
+  const access = await requireRateLimitedPermission(
+    "finance.transactions.manage",
+    "finance-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = generateInvoicesInputSchema.safeParse(input);
   if (!parsed.success)
     return { ok: false, message: "Check the student selection." };
@@ -339,8 +345,11 @@ export async function generateTermInvoices(
 export async function cancelInvoiceAction(
   input: unknown,
 ): Promise<FinanceActionResult> {
-  const context = await requirePermission("finance.transactions.manage");
-  if (!context) return transactionsDenied;
+  const access = await requireRateLimitedPermission(
+    "finance.transactions.manage",
+    "finance-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = cancelInvoiceInputSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -370,8 +379,11 @@ export async function reverseFinanceAction(
   operation: ReversalOperation,
   input: unknown,
 ): Promise<FinanceActionResult> {
-  const context = await requirePermission("finance.transactions.manage");
-  if (!context) return transactionsDenied;
+  const access = await requireRateLimitedPermission(
+    "finance.transactions.manage",
+    "finance-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = reverseFinanceInputSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -440,8 +452,11 @@ export async function recordFinanceAction(
   operation: PostingOperation,
   input: unknown,
 ): Promise<FinanceActionResult> {
-  const context = await requirePermission("finance.transactions.manage");
-  if (!context) return transactionsDenied;
+  const access = await requireRateLimitedPermission(
+    "finance.transactions.manage",
+    "finance-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   if (
     ![
       "school_fee_payment",

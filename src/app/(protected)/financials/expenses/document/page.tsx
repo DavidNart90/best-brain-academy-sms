@@ -12,6 +12,13 @@ import { DocumentHeader } from "@/features/finance/components/document-header";
 import { getExpenseDocument } from "@/features/finance/server/queries";
 import { requirePermission } from "@/lib/auth/access";
 
+const dateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+const dateTime = (value: string | null) =>
+  value ? dateTimeFormatter.format(new Date(value)) : "Not recorded";
+
 export default async function ExpenseDocumentPage({
   searchParams,
 }: {
@@ -53,10 +60,18 @@ export default async function ExpenseDocumentPage({
           <PrintInvoiceButton />
         </div>
       </PageHeader>
-      <section className="finance-document panel mx-auto max-w-[210mm] p-5 sm:p-8">
+      <section className="finance-document receipt-document panel mx-auto max-w-[148mm] p-5 sm:p-8">
         <DocumentHeader
           title="Expense voucher"
           reference={expense.expense_number}
+          identity={{
+            schoolName: expense.school_name_snapshot,
+            schoolAddress: expense.school_address_snapshot,
+            schoolPhone: expense.school_phone_snapshot,
+            schoolEmail: expense.school_email_snapshot,
+            schoolMotto: expense.school_motto_snapshot,
+            schoolLogoPath: expense.school_logo_path_snapshot,
+          }}
         >
           <p className="mt-1 text-sm text-muted-foreground">
             {expense.business_date}
@@ -66,6 +81,7 @@ export default async function ExpenseDocumentPage({
           <Detail label="Category" value={expense.categoryName} />
           <Detail label="Payment method" value={expense.paymentMethodName} />
           <Detail label="Description" value={expense.description} />
+          <Detail label="Recorded by" value={expense.recorded_by_snapshot} />
           <Detail
             label="External reference"
             value={expense.external_reference ?? "Not recorded"}
@@ -78,7 +94,12 @@ export default async function ExpenseDocumentPage({
         {expense.status === "reversed" && (
           <div className="mt-6 rounded-lg border border-destructive/30 bg-danger-soft p-4 text-sm text-destructive">
             <p className="font-semibold">VOIDED</p>
-            <p className="mt-1">{expense.reversal_reason}</p>
+            <p className="mt-1">
+              Reference {expense.reversal_number} · Voided by{" "}
+              {expense.reversed_by_name_snapshot} on{" "}
+              {dateTime(expense.reversed_at)}
+            </p>
+            <p className="mt-1">Reason: {expense.reversal_reason}</p>
           </div>
         )}
         <p className="mt-8 border-t pt-4 text-xs text-muted-foreground">

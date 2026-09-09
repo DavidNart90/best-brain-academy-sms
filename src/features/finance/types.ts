@@ -95,8 +95,15 @@ export type InvoiceLineRow = {
 export type InvoiceDetail = InvoiceListRow & {
   studentId: number;
   subtotal: string;
+  schoolName: string;
+  schoolAddress: string | null;
+  schoolPhone: string | null;
+  schoolEmail: string | null;
+  schoolMotto: string | null;
+  schoolLogoPath: string | null;
   cancelledAt: string | null;
   cancelledByName: string | null;
+  cancellationNumber: string | null;
   cancellationReason: string | null;
   createdByName: string;
   createdAt: string;
@@ -117,4 +124,64 @@ export type OpenInvoiceOption = {
   invoiceNumber: string;
   studentName: string;
   outstanding: string;
+};
+
+export type DeductionType = {
+  id: number;
+  code: string;
+  name: string;
+  calculationType: "percentage" | "fixed";
+  defaultValue: string | null;
+  autoApply: boolean;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  notes: string | null;
+  sortOrder: number;
+  status: "active" | "archived";
+};
+
+export type SalaryStaffOption = {
+  id: number;
+  staffNumber: string;
+  name: string;
+  position: string;
+};
+
+export type SalaryListRow = {
+  id: number;
+  salaryNumber: string;
+  staffId: number;
+  staffNumber: string;
+  staffName: string;
+  position: string;
+  payrollMonth: string;
+  grossSalary: string;
+  totalDeductions: string;
+  netSalary: string;
+  status: "active" | "reversed";
+  reversalNumber: string | null;
+};
+
+export type SalaryDeductionRow = {
+  id: number;
+  deductionNumber: string;
+  deductionTypeId: number;
+  deductionTypeName: string;
+  calculationType: "percentage" | "fixed";
+  configuredValue: string;
+  grossSalary: string;
+  amount: string;
+  reason: string | null;
+  status: "active" | "reversed";
+  reversalNumber: string | null;
+  reversalReason: string | null;
+};
+
+export type SalaryDetail = SalaryListRow & {
+  recordedBy: string;
+  createdAt: string;
+  reversalReason: string | null;
+  reversedAt: string | null;
+  reversedBy: string | null;
+  deductions: SalaryDeductionRow[];
 };

@@ -1,15 +1,12 @@
-import { hasApiPermission } from "@/lib/auth/api-access";
+import { guardApiRequest } from "@/lib/auth/api-access";
 import { getStudentExportRows } from "@/features/students/server/queries";
 import { buildStudentExport } from "@/features/students/server/workbooks";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  if (!(await hasApiPermission("students.export")))
-    return Response.json(
-      { message: "Student export access is required." },
-      { status: 403 },
-    );
+  const access = await guardApiRequest("students.export", "data-export");
+  if (!access.ok) return access.response;
   try {
     const params = Object.fromEntries(
       new URL(request.url).searchParams.entries(),

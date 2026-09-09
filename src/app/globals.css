@@ -154,6 +154,11 @@
   margin: 12mm;
 }
 
+@page compact-finance-document {
+  size: A5;
+  margin: 10mm;
+}
+
 @media print {
   .app-sidebar,
   .app-topbar,
@@ -181,17 +186,29 @@
     border-radius: 0;
     box-shadow: none;
   }
+  .receipt-document {
+    page: compact-finance-document;
+  }
   .finance-document dl {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .finance-document tr,
-  .finance-document dl > div {
+  .finance-document dl > div,
+  .report-document tr,
+  .report-document section {
     break-inside: avoid;
   }
   thead {
     display: table-header-group;
   }
   .finance-document .table-scroll {
+    overflow: visible;
+  }
+  .report-document {
+    border: 0;
+    border-radius: 0;
+  }
+  .report-document .table-scroll {
     overflow: visible;
   }
   .fee-schedule {

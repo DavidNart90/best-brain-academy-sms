@@ -1,8 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { passwordChangeSchema } from "@/features/auth/schemas";
 import { getPublicEnvironment } from "@/lib/env";
-import { isSameOriginAsHost } from "@/lib/auth/origin";
 import { parseAccessContext } from "@/lib/permissions/contracts";
+import { consumeAuthenticatedRateLimit } from "@/lib/security/rate-limit";
+import {
+  hasContentType,
+  InvalidRequestBodyError,
+  isTrustedMutationRequest,
+  readBoundedJson,
+  RequestBodyTooLargeError,
+} from "@/lib/security/request";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const noStore = { "Cache-Control": "private, no-store" };
@@ -12,16 +19,24 @@ function json(body: unknown, status = 200) {
 }
 
 export async function POST(request: NextRequest) {
-  const origin = request.headers.get("origin");
-  const host = request.headers.get("host");
-  if (origin && (!host || !isSameOriginAsHost(origin, host)))
+  if (!isTrustedMutationRequest(request))
     return json({ error: "This password request was blocked." }, 403);
-  if (!request.headers.get("content-type")?.startsWith("application/json"))
+  if (!hasContentType(request, "application/json"))
     return json({ error: "Review the password fields and try again." }, 415);
-  if (Number(request.headers.get("content-length") ?? 0) > 4096)
-    return json({ error: "Review the password fields and try again." }, 413);
 
-  const input = await request.json().catch(() => null);
+  let input: unknown;
+  try {
+    input = await readBoundedJson(request, 4096);
+  } catch (error) {
+    return json(
+      { error: "Review the password fields and try again." },
+      error instanceof RequestBodyTooLargeError
+        ? 413
+        : error instanceof InvalidRequestBodyError
+          ? 400
+          : 400,
+    );
+  }
   const parsed = passwordChangeSchema.safeParse(input);
   if (!parsed.success)
     return json(
@@ -50,6 +65,21 @@ export async function POST(request: NextRequest) {
     return json({ error: "This account setup step is already complete." }, 409);
   if (!user.email)
     return json({ error: "Your account cannot be verified." }, 400);
+
+  const limit = await consumeAuthenticatedRateLimit("password-change");
+  if (limit.status === "unavailable")
+    return json(
+      { error: "Password changes are temporarily unavailable." },
+      503,
+    );
+  if (limit.status === "denied")
+    return NextResponse.json(
+      { error: "Too many attempts. Please wait before trying again." },
+      {
+        status: 429,
+        headers: { ...noStore, "Retry-After": String(limit.retryAfter) },
+      },
+    );
 
   const { data: verified, error: verificationError } =
     await supabase.auth.signInWithPassword({

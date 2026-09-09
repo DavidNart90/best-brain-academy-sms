@@ -9,15 +9,33 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { demoTrend } from "../demo-data";
 import { formatMoney } from "@/utils/money";
+import type { FinancialTrendPoint } from "@/features/reports/types";
 
-export default function CollectionChart() {
+const compactMoney = new Intl.NumberFormat("en-GH", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+const shortMonth = new Intl.DateTimeFormat("en-GH", {
+  month: "short",
+  timeZone: "UTC",
+});
+const longMonth = new Intl.DateTimeFormat("en-GH", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+export default function CollectionChart({
+  data,
+}: {
+  data: FinancialTrendPoint[];
+}) {
   return (
     <div
       className="h-[248px] min-w-0"
       role="img"
-      aria-label="Synthetic monthly collections from January to August. Accessible figures follow the chart."
+      aria-label="Monthly gross receipts for the selected reporting period. Accessible figures follow the chart."
     >
       <ResponsiveContainer
         width="100%"
@@ -26,8 +44,8 @@ export default function CollectionChart() {
         initialDimension={{ width: 600, height: 248 }}
       >
         <AreaChart
-          data={demoTrend}
-          margin={{ top: 16, right: 10, left: -14, bottom: 0 }}
+          data={data}
+          margin={{ top: 16, right: 10, left: -8, bottom: 0 }}
           accessibilityLayer
         >
           <CartesianGrid
@@ -36,26 +54,31 @@ export default function CollectionChart() {
             strokeDasharray="3 4"
           />
           <XAxis
-            dataKey="month"
+            dataKey="periodStart"
             axisLine={false}
             tickLine={false}
             tick={{ fill: "var(--text-secondary)", fontSize: 12 }}
+            tickFormatter={(value: string) =>
+              shortMonth.format(new Date(`${value}T00:00:00Z`))
+            }
             dy={8}
           />
           <YAxis
             axisLine={false}
             tickLine={false}
             tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
-            tickFormatter={(value: number) => `${value / 1000}k`}
-            domain={[0, 30000]}
-            tickCount={4}
+            tickFormatter={(value: number) => compactMoney.format(value)}
+            width={52}
           />
           <Tooltip
+            labelFormatter={(value) =>
+              longMonth.format(new Date(`${String(value)}T00:00:00Z`))
+            }
             formatter={(value) => [
               typeof value === "number"
                 ? formatMoney(value.toFixed(2))
                 : "Unavailable",
-              "Demo collections",
+              "Gross receipts",
             ]}
             contentStyle={{
               border: "1px solid var(--border-default)",
@@ -65,7 +88,7 @@ export default function CollectionChart() {
           />
           <Area
             type="monotone"
-            dataKey="amount"
+            dataKey="grossReceipts"
             stroke="var(--brand-primary)"
             strokeWidth={2}
             fill="var(--brand-primary)"

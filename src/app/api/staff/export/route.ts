@@ -1,14 +1,11 @@
-import { hasApiPermission } from "@/lib/auth/api-access";
+import { guardApiRequest } from "@/lib/auth/api-access";
 import { getStaffExportRows } from "@/features/staff/server/queries";
 import { buildStaffExport } from "@/features/staff/server/workbooks";
 
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
-  if (!(await hasApiPermission("staff.export")))
-    return Response.json(
-      { message: "Staff export access is required." },
-      { status: 403 },
-    );
+  const access = await guardApiRequest("staff.export", "data-export");
+  if (!access.ok) return access.response;
   try {
     const params = Object.fromEntries(
       new URL(request.url).searchParams.entries(),

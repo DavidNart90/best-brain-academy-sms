@@ -6,6 +6,14 @@ const { rpc, permission } = vi.hoisted(() => ({
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/auth/access", () => ({ requirePermission: permission }));
+vi.mock("@/lib/security/rate-limit", () => ({
+  requireRateLimitedPermission: async (permissionName: string) => {
+    const context = await permission(permissionName);
+    return context
+      ? { ok: true, context }
+      : { ok: false, message: "Permission denied." };
+  },
+}));
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: async () => ({ rpc }),
 }));

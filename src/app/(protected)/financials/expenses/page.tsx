@@ -122,6 +122,11 @@ export default async function ExpensesPage({
                             row.status === "active" ? "Active" : "Reversed"
                           }
                         />
+                        {row.reversalNumber && (
+                          <p className="mt-1 font-mono text-xs text-muted-foreground">
+                            {row.reversalNumber}
+                          </p>
+                        )}
                       </td>
                       <td className="px-5 py-4 text-right">
                         {canVoid && row.status === "active" && (

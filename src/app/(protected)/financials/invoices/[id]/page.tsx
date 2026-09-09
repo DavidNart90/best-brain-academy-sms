@@ -63,6 +63,14 @@ export default async function InvoiceDetailPage({
         <DocumentHeader
           title="Official invoice"
           reference={invoice.invoiceNumber}
+          identity={{
+            schoolName: invoice.schoolName,
+            schoolAddress: invoice.schoolAddress,
+            schoolPhone: invoice.schoolPhone,
+            schoolEmail: invoice.schoolEmail,
+            schoolMotto: invoice.schoolMotto,
+            schoolLogoPath: invoice.schoolLogoPath,
+          }}
         >
           <p className="mt-1 text-sm text-muted-foreground">
             Issued {date(invoice.issuedOn)}
@@ -98,6 +106,14 @@ export default async function InvoiceDetailPage({
             </dt>
             <dd className="mt-1 text-sm font-semibold">
               {invoice.academicYearName} · {invoice.academicTermName}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-muted-foreground">
+              Issued by
+            </dt>
+            <dd className="mt-1 text-sm font-semibold">
+              {invoice.createdByName}
             </dd>
           </div>
         </dl>
@@ -156,7 +172,8 @@ export default async function InvoiceDetailPage({
             <p className="font-semibold">VOID — cancelled invoice</p>
             <p className="mt-1">
               Cancelled {date(invoice.cancelledAt)} by {invoice.cancelledByName}
-              . Reason: {invoice.cancellationReason}
+              . Reference: {invoice.cancellationNumber}. Reason:{" "}
+              {invoice.cancellationReason}
             </p>
           </div>
         )}

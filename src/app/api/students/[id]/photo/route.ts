@@ -1,11 +1,20 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { hasApiPermission } from "@/lib/auth/api-access";
+import { guardApiRequest } from "@/lib/auth/api-access";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { studentIdSchema } from "@/features/students/schemas";
 import { studentPhotoExtension } from "@/features/students/photo";
+import {
+  hasContentType,
+  InvalidRequestBodyError,
+  isTrustedMutationRequest,
+  readBoundedFormData,
+  RequestBodyTooLargeError,
+} from "@/lib/security/request";
 
 export const dynamic = "force-dynamic";
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_BODY_BYTES = MAX_FILE_BYTES + 256 * 1024;
 
 async function parsedId(params: Promise<{ id: string }>) {
   return studentIdSchema.safeParse((await params).id);
@@ -15,11 +24,8 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await hasApiPermission("students.read")))
-    return Response.json(
-      { message: "Student access is required." },
-      { status: 403 },
-    );
+  const access = await guardApiRequest("students.read");
+  if (!access.ok) return access.response;
   const id = await parsedId(params);
   if (!id.success)
     return Response.json({ message: "Student not found." }, { status: 404 });
@@ -55,15 +61,38 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await hasApiPermission("students.manage")))
+  if (!isTrustedMutationRequest(request))
     return Response.json(
-      { message: "Student management access is required." },
+      { message: "Request origin is not allowed." },
       { status: 403 },
+    );
+  const access = await guardApiRequest("students.manage", "file-upload");
+  if (!access.ok) return access.response;
+  if (!hasContentType(request, "multipart/form-data"))
+    return Response.json(
+      { message: "Send a student photo upload." },
+      { status: 415 },
     );
   const id = await parsedId(params);
   if (!id.success)
     return Response.json({ message: "Student not found." }, { status: 404 });
-  const file = (await request.formData()).get("photo");
+  let formData: FormData;
+  try {
+    formData = await readBoundedFormData(request, MAX_BODY_BYTES);
+  } catch (error) {
+    return Response.json(
+      {
+        message:
+          error instanceof RequestBodyTooLargeError
+            ? "Use a JPG, PNG or WebP image no larger than 5 MB."
+            : error instanceof InvalidRequestBodyError
+              ? "The photo upload could not be read."
+              : "The photo upload could not be read.",
+      },
+      { status: error instanceof RequestBodyTooLargeError ? 413 : 400 },
+    );
+  }
+  const file = formData.get("photo");
   if (!(file instanceof File))
     return Response.json(
       { message: "Use a JPG, PNG or WebP image no larger than 5 MB." },

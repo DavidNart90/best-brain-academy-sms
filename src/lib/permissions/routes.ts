@@ -113,10 +113,10 @@ export const appRoutes: AppRoute[] = [
   },
   {
     href: "/financials/salary-deductions",
-    title: "Salary Deductions",
+    title: "Salaries & Deductions",
     permission: "financials.read",
     phase: 4,
-    description: "Staff deduction records. Full payroll is outside scope.",
+    description: "Monthly gross salary, approved deductions and net position.",
   },
   {
     href: "/reports",
@@ -154,7 +154,7 @@ export const appRoutes: AppRoute[] = [
     description: "Academic years and terms.",
   },
   {
-    href: "/settings/financial",
+    href: "/settings/financials",
     title: "Financial Settings",
     permission: "settings.manage",
     phase: 3,

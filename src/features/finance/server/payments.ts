@@ -12,7 +12,7 @@ export async function getPaymentsPage(
   let request = supabase
     .from("receipts")
     .select(
-      "payment_id,receipt_number,student_name_snapshot,admission_number_snapshot,invoice_number_snapshot,payment_method_name_snapshot,amount,business_date,status,reversal_reason",
+      "payment_id,receipt_number,student_name_snapshot,admission_number_snapshot,invoice_number_snapshot,payment_method_name_snapshot,amount,business_date,status,reversal_number,reversal_reason",
       { count: "exact" },
     );
   if (query.q) {

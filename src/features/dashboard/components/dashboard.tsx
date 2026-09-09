@@ -3,66 +3,83 @@ import {
   HandCoins,
   CircleAlert,
   ArrowUpFromLine,
-  Info,
 } from "lucide-react";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/data-display/stat-card";
 import { PageState } from "@/components/data-display/page-state";
+import { Button } from "@/components/ui/button";
 import { ChartPanel } from "./chart-panel";
-import { CollectionsTable } from "./collections-table";
-import { demoMetrics } from "../demo-data";
+import { OutstandingFeesTable } from "./outstanding-fees-table";
+import type { FinancialSnapshot, ReportTable } from "@/features/reports/types";
 
-const icons = [CircleDollarSign, HandCoins, CircleAlert, ArrowUpFromLine];
-
-export function Dashboard({ showFinancials }: { showFinancials: boolean }) {
+export function Dashboard({
+  showFinancials,
+  snapshot,
+  periodLabel,
+  outstanding,
+  classes,
+  classId,
+}: {
+  showFinancials: boolean;
+  snapshot: FinancialSnapshot | null;
+  periodLabel: string;
+  outstanding: ReportTable | null;
+  classes: Array<{ id: number; name: string }>;
+  classId?: number;
+}) {
   return (
     <>
       <PageHeader
         title="Dashboard"
-        description="A clear view of school administration and finances."
+        description="Reconciled school finance activity and outstanding fee balances."
       >
-        <span className="rounded-md border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
-          Foundation preview
-        </span>
+        <Button variant="outline" asChild>
+          <Link href="/reports">Open reports</Link>
+        </Button>
       </PageHeader>
-      <div
-        role="note"
-        className="mb-6 flex items-start gap-3 rounded-lg border border-border bg-brand-subtle px-4 py-3 text-sm"
-      >
-        <Info className="mt-0.5 size-4 shrink-0 text-primary" />
-        <p>
-          <strong className="font-semibold">Demo data only.</strong>
-          <span className="text-muted-foreground">
-            {" "}
-            These figures and records are synthetic. No live school data or
-            financial transactions are available.
-          </span>
-        </p>
-      </div>
-      {showFinancials ? (
+      {showFinancials && snapshot && outstanding ? (
         <>
-          <div className="mb-6 grid min-w-0 gap-5 2xl:grid-cols-[minmax(0,1.85fr)_minmax(390px,1fr)] xl:grid-cols-[minmax(0,1.65fr)_minmax(360px,1fr)]">
-            <ChartPanel />
+          <div className="mb-6 grid min-w-0 gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(330px,1fr)] 2xl:grid-cols-[minmax(0,1.9fr)_minmax(390px,1fr)]">
+            <ChartPanel trend={snapshot.monthly} periodLabel={periodLabel} />
             <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2">
-              {demoMetrics.map((metric, index) => {
-                const Icon = icons[index] ?? CircleDollarSign;
-                return (
-                  <StatCard
-                    key={metric.label}
-                    {...metric}
-                    icon={Icon}
-                    accent={index === 1}
-                  />
-                );
-              })}
+              <StatCard
+                label="Expected fees"
+                amount={snapshot.summary.expectedFees}
+                note="Valid invoices issued"
+                icon={CircleDollarSign}
+              />
+              <StatCard
+                label="Fees collected"
+                amount={snapshot.summary.schoolFeesCollected}
+                note="Active school-fee payments"
+                icon={HandCoins}
+                accent
+              />
+              <StatCard
+                label="Outstanding fees"
+                amount={snapshot.summary.outstandingFees}
+                note="Current invoice balances"
+                icon={CircleAlert}
+              />
+              <StatCard
+                label="Total expenses"
+                amount={snapshot.summary.totalExpenses}
+                note="Active expenses in period"
+                icon={ArrowUpFromLine}
+              />
             </div>
           </div>
-          <CollectionsTable />
+          <OutstandingFeesTable
+            table={outstanding}
+            classes={classes}
+            classId={classId}
+          />
         </>
       ) : (
         <PageState
           title="Your workspace is ready"
-          description="Use the sidebar to explore the pages available to your account. Financial visibility requires a separate permission; business workflows open in later phases."
+          description="Use the sidebar to open the pages available to your account. Financial dashboard figures require financial visibility."
         />
       )}
     </>
