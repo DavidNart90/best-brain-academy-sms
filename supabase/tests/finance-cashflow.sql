@@ -17,8 +17,16 @@ begin
       (select id from public.academic_terms where is_current limit 1),
       (select id from public.classes where status='active' order by id limit 1),
       (select id from public.school_locations where status='active' order by id limit 1),
-      'Original Student Snapshot','SYN-SNAPSHOT','Original Class','Original Location',1000.01,1000.01,actor,actor)
+    'Original Student Snapshot','SYN-SNAPSHOT','Original Class','Original Location',1000.01,1000.01,actor,actor)
     returning id into invoice;
+  if not exists (
+    select 1 from public.invoices
+    where id = invoice
+      and academic_year_name_snapshot is not null
+      and academic_term_name_snapshot is not null
+      and school_name_snapshot is not null
+      and recorded_by_snapshot = 'Synthetic Accountant'
+  ) then raise exception 'Invoice document snapshots failed'; end if;
   perform set_config('test.finance_invoice',invoice::text,true);
   perform set_config('test.finance_actor',actor::text,true);
 end $$;
@@ -30,6 +38,7 @@ declare
   key1 uuid:=gen_random_uuid(); key2 uuid:=gen_random_uuid(); daily_key uuid:=gen_random_uuid();
   misc_key uuid:=gen_random_uuid(); expense_key uuid:=gen_random_uuid();
   r1 jsonb; r2 jsonb; daily jsonb; misc jsonb; expense jsonb;
+  payment_reversal text; receipt_reversal text;
   before_count bigint; before_audit bigint;
 begin
   select id into method from public.payment_methods where status='active' and not requires_reference order by id limit 1;
@@ -39,7 +48,8 @@ begin
   if (r1->>'remainingOutstanding')::numeric<>500 then raise exception 'Partial balance failed'; end if;
   if not exists(select 1 from public.receipts where id=(r1->>'receiptId')::bigint
     and student_name_snapshot='Original Student Snapshot' and class_name_snapshot='Original Class'
-    and collected_by_snapshot='Synthetic Accountant') then raise exception 'Receipt snapshots failed'; end if;
+    and collected_by_snapshot='Synthetic Accountant' and recorded_by_snapshot='Synthetic Accountant'
+    and school_name_snapshot is not null) then raise exception 'Receipt snapshots failed'; end if;
   if public.record_school_fee_payment(key1,'different client label',invoice,500.01,method,'2099-01-01')<>r1 then raise exception 'Partial replay failed'; end if;
   begin
     perform public.record_school_fee_payment(key1,'ignored',invoice,499,method,'2099-01-01');
@@ -59,6 +69,11 @@ begin
   if (select count(*) from public.payments where invoice_id=invoice)<>2 then raise exception 'Replay duplicated payment'; end if;
   perform public.reverse_school_fee_payment(gen_random_uuid(),'reverse-test',(r2->>'paymentId')::bigint,'Synthetic test reversal');
   if (select outstanding from public.invoices where id=invoice)<>500 then raise exception 'Reversal balance failed'; end if;
+  select reversal_number into payment_reversal from public.payments where id=(r2->>'paymentId')::bigint;
+  select reversal_number into receipt_reversal from public.receipts where id=(r2->>'receiptId')::bigint;
+  if payment_reversal is null or receipt_reversal is distinct from payment_reversal then
+    raise exception 'Payment and receipt reversal reference failed';
+  end if;
   select count(*) into before_count from public.payments where invoice_id=invoice;
   select count(*) into before_audit from public.audit_logs;
   -- Receipt/payments and audit rows must roll back if reference validation fails.
@@ -71,7 +86,9 @@ begin
 
   daily:=public.record_daily_collection(daily_key,'feeding_receipt',125.50,'2099-01-01',method);
   if not exists(select 1 from public.feeding_receipts where id=(daily->>'receiptId')::bigint
-    and student_id is null and collection_scope='daily_total' and amount=125.50) then raise exception 'Daily feeding total failed'; end if;
+    and student_id is null and collection_scope='daily_total' and amount=125.50
+    and payment_method_name_snapshot is not null and school_name_snapshot is not null
+    and recorded_by_snapshot='Synthetic Accountant') then raise exception 'Daily feeding total failed'; end if;
   if public.record_daily_collection(daily_key,'feeding_receipt',125.50,'2099-01-01',method)<>daily then raise exception 'Daily replay failed'; end if;
   begin
     perform public.record_daily_collection(gen_random_uuid(),'feeding_receipt',125.50,'2099-01-01',method);
@@ -82,6 +99,10 @@ begin
     raise exception 'Changed notes replay allowed';
   exception when unique_violation then null; end;
   perform public.reverse_feeding_receipt(gen_random_uuid(),'x',(daily->>'receiptId')::bigint,'Synthetic correction');
+  if not exists(select 1 from public.feeding_receipts where id=(daily->>'receiptId')::bigint
+    and reversal_number is not null and reversed_by_name_snapshot='Synthetic Accountant') then
+    raise exception 'Daily reversal audit snapshot failed';
+  end if;
   perform public.record_daily_collection(gen_random_uuid(),'feeding_receipt',150,'2099-01-01',method);
   perform public.record_daily_collection(gen_random_uuid(),'admission_receipt',250,'2099-01-01',method);
   begin
@@ -91,11 +112,20 @@ begin
 
   misc:=public.record_named_misc_receipt(misc_key,'Synthetic exercise book sales',25.25,'2099-01-01',method);
   if not exists(select 1 from public.misc_receipts where id=(misc->>'receiptId')::bigint
-    and misc_income_category_id is null and description='Synthetic exercise book sales') then raise exception 'Named income failed'; end if;
+    and misc_income_category_id is null and description='Synthetic exercise book sales'
+    and income_name_snapshot='Synthetic exercise book sales'
+    and payment_method_name_snapshot is not null) then raise exception 'Named income failed'; end if;
   if public.record_named_misc_receipt(misc_key,'Synthetic exercise book sales',25.25,'2099-01-01',method)<>misc then raise exception 'Named income replay failed'; end if;
   expense:=public.record_expense(expense_key,'x',category,12.25,'2099-01-01','Synthetic other expense name',method);
   if public.record_expense(expense_key,'x',category,12.25,'2099-01-01','Synthetic other expense name',method)<>expense then raise exception 'Expense replay failed'; end if;
+  if not exists(select 1 from public.expenses where id=(expense->>'expenseId')::bigint
+    and expense_category_name_snapshot is not null and payment_method_name_snapshot is not null
+    and recorded_by_snapshot='Synthetic Accountant') then raise exception 'Expense document snapshots failed'; end if;
   perform public.void_expense(gen_random_uuid(),'x',(expense->>'expenseId')::bigint,'Synthetic void');
+  if not exists(select 1 from public.expenses where id=(expense->>'expenseId')::bigint
+    and reversal_number is not null and reversed_by_name_snapshot='Synthetic Accountant') then
+    raise exception 'Expense void audit snapshot failed';
+  end if;
   begin
     update public.feeding_receipts set amount=1 where id=(daily->>'receiptId')::bigint;
     raise exception 'Direct posted mutation allowed';
@@ -123,5 +153,5 @@ begin
   exception when insufficient_privilege then null; end;
 end $$;
 reset role;
-select 'PASS: partial/full payment, snapshots, replay, changed payload, overpayment, decimals, daily aggregates, duplicate prevention, reversals, named income, expenses, rollback and access boundaries' as result;
+select 'PASS: partial/full payment, immutable document snapshots, replay, changed payload, overpayment, decimals, daily aggregates, duplicate prevention, reversal references, named income, expenses, rollback and access boundaries' as result;
 rollback;

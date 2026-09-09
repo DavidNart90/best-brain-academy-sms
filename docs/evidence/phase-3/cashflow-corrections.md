@@ -1,6 +1,6 @@
 # Phase 3 cashflow corrections
 
-Date: 8 September 2026. Scope: P3-04/P3-05, PAY-01, OPS-01, SEC-01 and affected QA-01 checks. Phase 3 remains in progress.
+Date: 8 September 2026. Scope: P3-04/P3-05, PAY-01, OPS-01, SEC-01 and affected QA-01 checks. This records the original correction pass; the remaining Phase 3 gates were subsequently closed on 9 September 2026.
 
 ## Changes
 
@@ -66,6 +66,12 @@ Used the existing localhost server on port 3000. After the user signed in, inspe
 
 The development log contained zero `recordFinanceAction(` argument traces both before and after the invalid browser submission. Built configuration confirms `logging.serverFunctions=false`. No valid financial records were posted from the user's browser. Restored the normal viewport and left the cleared School Fees form available.
 
-## Remaining phase-level gates
+## Closure follow-up
 
-This is not Phase 3 closure. Overlapping-writer concurrency, the complete phase-wide reconciliation/reversal matrix, and final print/PDF acceptance remain P3-06 work. The separate `pnpm test:db` harness still requires its configured `TEST_*` environment; focused database verification here ran through MCP, not that harness. Production release and password-policy acceptance remain under the existing release decisions.
+The remaining overlapping-writer, reconciliation/reversal, immutable-document,
+access, and print/PDF gates were closed on 9 September 2026. See
+[Phase 3 closure verification](phase-3-closure-verification.md). This original
+8 September evidence is retained to preserve the cashflow-correction history.
+The separate `pnpm test:db` harness still requires its configured `TEST_*`
+environment; focused database verification ran through MCP. Production release
+and password-policy acceptance remain under the existing release decisions.

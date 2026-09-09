@@ -1,25 +1,34 @@
 import { revalidatePath } from "next/cache";
-import { hasApiPermission } from "@/lib/auth/api-access";
+import { guardApiRequest } from "@/lib/auth/api-access";
 import { administratorImportModeSchema } from "@/features/administrators/schemas";
 import { inviteAdministrators } from "@/features/administrators/server/actions";
 import { parseAdministratorWorkbook } from "@/features/administrators/server/workbooks";
+import {
+  hasContentType,
+  InvalidRequestBodyError,
+  isTrustedMutationRequest,
+  readBoundedFormData,
+  RequestBodyTooLargeError,
+} from "@/lib/security/request";
 
 export const dynamic = "force-dynamic";
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
+const MAX_BODY_BYTES = MAX_FILE_BYTES + 256 * 1024;
 export async function POST(request: Request) {
-  const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin)
+  if (!isTrustedMutationRequest(request))
     return Response.json(
       { message: "Request origin is not allowed." },
       { status: 403 },
     );
-  if (!(await hasApiPermission("administrators.manage")))
+  const access = await guardApiRequest("administrators.manage", "data-import");
+  if (!access.ok) return access.response;
+  if (!hasContentType(request, "multipart/form-data"))
     return Response.json(
-      { message: "Administrator management access is required." },
-      { status: 403 },
+      { message: "Send an Excel workbook upload." },
+      { status: 415 },
     );
   try {
-    const formData = await request.formData();
+    const formData = await readBoundedFormData(request, MAX_BODY_BYTES);
     const mode = administratorImportModeSchema.parse(formData.get("mode"));
     const file = formData.get("file");
     if (!(file instanceof File))
@@ -60,6 +69,16 @@ export async function POST(request: Request) {
       message: result.message,
     });
   } catch (error) {
+    if (error instanceof RequestBodyTooLargeError)
+      return Response.json(
+        { message: "Use an .xlsx workbook no larger than 2 MB." },
+        { status: 413 },
+      );
+    if (error instanceof InvalidRequestBodyError)
+      return Response.json(
+        { message: "The workbook upload could not be read." },
+        { status: 400 },
+      );
     const message =
       error instanceof Error &&
       /^(Missing columns:|Import up to 100|The Administrators sheet|The workbook)/.test(

@@ -1,14 +1,11 @@
-import { hasApiPermission } from "@/lib/auth/api-access";
+import { guardApiRequest } from "@/lib/auth/api-access";
 import { getStaffReferenceData } from "@/features/staff/server/queries";
 import { buildStaffTemplate } from "@/features/staff/server/workbooks";
 
 export const dynamic = "force-dynamic";
 export async function GET() {
-  if (!(await hasApiPermission("staff.import")))
-    return Response.json(
-      { message: "Staff import access is required." },
-      { status: 403 },
-    );
+  const access = await guardApiRequest("staff.import", "data-export");
+  if (!access.ok) return access.response;
   try {
     const workbook = await buildStaffTemplate(await getStaffReferenceData());
     return new Response(workbook, {

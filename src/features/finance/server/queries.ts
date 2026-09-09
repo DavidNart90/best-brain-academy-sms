@@ -221,7 +221,7 @@ export async function getFinanceSettings(
 }
 
 const invoiceListColumns =
-  "id,invoice_number,student_name_snapshot,admission_number_snapshot,class_name_snapshot,location_name_snapshot,total,amount_paid,outstanding,status,issued_on,academic_year_id,academic_term_id";
+  "id,invoice_number,student_name_snapshot,admission_number_snapshot,class_name_snapshot,location_name_snapshot,academic_year_name_snapshot,academic_term_name_snapshot,total,amount_paid,outstanding,status,issued_on,academic_year_id,academic_term_id";
 const invoiceError =
   "Invoices could not be loaded. Try again or contact an administrator.";
 
@@ -232,6 +232,8 @@ type InvoiceRow = {
   admission_number_snapshot: string;
   class_name_snapshot: string;
   location_name_snapshot: string;
+  academic_year_name_snapshot: string;
+  academic_term_name_snapshot: string;
   total: number;
   amount_paid: number;
   outstanding: number;
@@ -241,11 +243,7 @@ type InvoiceRow = {
   academic_term_id: number;
 };
 
-function mapInvoiceRow(
-  row: InvoiceRow,
-  yearNameById: Map<number, string>,
-  termNameById: Map<number, string>,
-): InvoiceListRow {
+function mapInvoiceRow(row: InvoiceRow): InvoiceListRow {
   return {
     id: row.id,
     invoiceNumber: row.invoice_number,
@@ -253,33 +251,13 @@ function mapInvoiceRow(
     admissionNumber: row.admission_number_snapshot,
     className: row.class_name_snapshot,
     locationName: row.location_name_snapshot,
-    academicYearName: yearNameById.get(row.academic_year_id) ?? "",
-    academicTermName: termNameById.get(row.academic_term_id) ?? "",
+    academicYearName: row.academic_year_name_snapshot,
+    academicTermName: row.academic_term_name_snapshot,
     total: formatRateAmount(row.total),
     amountPaid: formatRateAmount(row.amount_paid),
     outstanding: formatRateAmount(row.outstanding),
     status: row.status as InvoiceListRow["status"],
     issuedOn: row.issued_on,
-  };
-}
-
-async function periodNameMaps(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  yearIds: number[],
-  termIds: number[],
-) {
-  const [years, terms] = await Promise.all([
-    yearIds.length
-      ? supabase.from("academic_years").select("id,name").in("id", yearIds)
-      : Promise.resolve({ data: [], error: null }),
-    termIds.length
-      ? supabase.from("academic_terms").select("id,name").in("id", termIds)
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-  if (years.error || terms.error) throw new Error(invoiceError);
-  return {
-    yearNameById: new Map(years.data.map((row) => [row.id, row.name])),
-    termNameById: new Map(terms.data.map((row) => [row.id, row.name])),
   };
 }
 
@@ -313,13 +291,8 @@ export async function getInvoicesPage(
     .range(offset, offset + pageSize - 1);
   if (result.error) throw new Error(invoiceError);
   const rows = result.data as unknown as InvoiceRow[];
-  const { yearNameById, termNameById } = await periodNameMaps(
-    supabase,
-    [...new Set(rows.map((row) => row.academic_year_id))],
-    [...new Set(rows.map((row) => row.academic_term_id))],
-  );
   return {
-    rows: rows.map((row) => mapInvoiceRow(row, yearNameById, termNameById)),
+    rows: rows.map((row) => mapInvoiceRow(row)),
     total: result.count ?? 0,
     page: query.page,
     pageSize,
@@ -446,6 +419,7 @@ export type FinanceReceiptRow = {
   amount: string;
   businessDate: string;
   status: string;
+  reversalNumber: string | null;
   sourceId: number;
   reversalOperation:
     | "reverse_school_fee_payment"
@@ -480,7 +454,7 @@ export async function getReceiptsPage(
       supabase
         .from("receipts")
         .select(
-          "id,receipt_number,student_name_snapshot,amount,business_date,status,payment_id",
+          "id,receipt_number,student_name_snapshot,amount,business_date,status,reversal_number,payment_id",
         )
         .order("business_date", { ascending: false })
         .limit(25),
@@ -489,7 +463,7 @@ export async function getReceiptsPage(
       supabase
         .from("feeding_receipts")
         .select(
-          "id,receipt_number,student_name_snapshot,amount,business_date,status",
+          "id,receipt_number,student_name_snapshot,amount,business_date,status,reversal_number",
         )
         .order("business_date", { ascending: false })
         .limit(25),
@@ -498,7 +472,7 @@ export async function getReceiptsPage(
       supabase
         .from("admission_receipts")
         .select(
-          "id,receipt_number,student_name_snapshot,amount,business_date,status",
+          "id,receipt_number,student_name_snapshot,amount,business_date,status,reversal_number",
         )
         .order("business_date", { ascending: false })
         .limit(25),
@@ -507,7 +481,7 @@ export async function getReceiptsPage(
       supabase
         .from("misc_receipts")
         .select(
-          "id,receipt_number,payer_name,description,amount,business_date,status",
+          "id,receipt_number,payer_name,description,amount,business_date,status,reversal_number",
         )
         .order("business_date", { ascending: false })
         .limit(25),
@@ -527,6 +501,7 @@ export async function getReceiptsPage(
       amount: formatRateAmount(row.amount),
       businessDate: row.business_date,
       status: row.status,
+      reversalNumber: row.reversal_number,
       sourceId: row.payment_id,
       reversalOperation: "reverse_school_fee_payment" as const,
     })),
@@ -541,6 +516,7 @@ export async function getReceiptsPage(
       amount: formatRateAmount(row.amount),
       businessDate: row.business_date,
       status: row.status,
+      reversalNumber: row.reversal_number,
       sourceId: row.id,
       reversalOperation: "reverse_feeding_receipt" as const,
     })),
@@ -555,6 +531,7 @@ export async function getReceiptsPage(
       amount: formatRateAmount(row.amount),
       businessDate: row.business_date,
       status: row.status,
+      reversalNumber: row.reversal_number,
       sourceId: row.id,
       reversalOperation: "reverse_admission_receipt" as const,
     })),
@@ -567,6 +544,7 @@ export async function getReceiptsPage(
       amount: formatRateAmount(row.amount),
       businessDate: row.business_date,
       status: row.status,
+      reversalNumber: row.reversal_number,
       sourceId: row.id,
       reversalOperation: "reverse_misc_receipt" as const,
     })),
@@ -595,7 +573,7 @@ export async function getExpensesPage(
   let request = supabase
     .from("expenses")
     .select(
-      "id,expense_number,description,amount,business_date,status,expense_category_id,payment_method_id",
+      "id,expense_number,description,amount,business_date,status,reversal_number,expense_category_name_snapshot,payment_method_name_snapshot",
     )
     .order("business_date", { ascending: false })
     .order("id", { ascending: false })
@@ -607,41 +585,17 @@ export async function getExpensesPage(
     throw new Error(
       "Expenses could not be loaded. Try again or contact an administrator.",
     );
-  const categoryIds = [
-    ...new Set(result.data.map((row) => row.expense_category_id)),
-  ];
-  const methodIds = [
-    ...new Set(result.data.map((row) => row.payment_method_id)),
-  ];
-  const [categories, methods] = await Promise.all([
-    categoryIds.length
-      ? supabase
-          .from("expense_categories")
-          .select("id,name")
-          .in("id", categoryIds)
-      : Promise.resolve({ data: [], error: null }),
-    methodIds.length
-      ? supabase.from("payment_methods").select("id,name").in("id", methodIds)
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-  if (categories.error || methods.error)
-    throw new Error(
-      "Expense details could not be loaded. Try again or contact an administrator.",
-    );
-  const categoryNames = new Map(
-    categories.data.map((row) => [row.id, row.name]),
-  );
-  const methodNames = new Map(methods.data.map((row) => [row.id, row.name]));
   return {
     rows: result.data.map((row) => ({
       id: row.id,
       expenseNumber: row.expense_number,
       description: row.description,
-      category: categoryNames.get(row.expense_category_id) ?? "Uncategorised",
-      paymentMethod: methodNames.get(row.payment_method_id) ?? "Unknown method",
+      category: row.expense_category_name_snapshot,
+      paymentMethod: row.payment_method_name_snapshot,
       amount: formatRateAmount(row.amount),
       businessDate: row.business_date,
       status: row.status,
+      reversalNumber: row.reversal_number,
     })),
     date,
     status: statusFilter,
@@ -764,7 +718,7 @@ export async function getReceiptDocument(
     const result = await supabase
       .from("receipts")
       .select(
-        "receipt_number,student_name_snapshot,admission_number_snapshot,class_name_snapshot,academic_year_name_snapshot,academic_term_name_snapshot,invoice_number_snapshot,payment_method_name_snapshot,collected_by_snapshot,amount,previous_balance,remaining_balance,business_date,status,reversal_reason,reversed_at",
+        "receipt_number,student_name_snapshot,admission_number_snapshot,class_name_snapshot,academic_year_name_snapshot,academic_term_name_snapshot,invoice_number_snapshot,payment_method_name_snapshot,collected_by_snapshot,amount,previous_balance,remaining_balance,business_date,payment:payments(external_reference),status,reversal_number,reversal_reason,reversed_at,reversed_by_name_snapshot,school_name_snapshot,school_address_snapshot,school_phone_snapshot,school_email_snapshot,school_motto_snapshot,school_logo_path_snapshot,recorded_by_snapshot",
       )
       .eq("payment_id", sourceId)
       .maybeSingle();
@@ -776,6 +730,7 @@ export async function getReceiptDocument(
           amount: formatRateAmount(result.data.amount),
           previous_balance: formatRateAmount(result.data.previous_balance),
           remaining_balance: formatRateAmount(result.data.remaining_balance),
+          external_reference: result.data.payment?.external_reference ?? null,
         }
       : null;
   }
@@ -792,22 +747,10 @@ export async function getReceiptDocument(
     .maybeSingle();
   if (result.error) throw new Error("Receipt could not be loaded.");
   if (!result.data) return null;
-  const method = await supabase
-    .from("payment_methods")
-    .select("name")
-    .eq("id", result.data.payment_method_id)
-    .maybeSingle();
-  if (method.error) throw new Error("Payment method could not be loaded.");
   return {
     source,
     ...result.data,
     amount: formatRateAmount(result.data.amount),
-    payment_method_name_snapshot:
-      ("payment_method_name_snapshot" in result.data
-        ? result.data.payment_method_name_snapshot
-        : null) ??
-      method.data?.name ??
-      "Not recorded",
   };
 }
 
@@ -816,29 +759,15 @@ export async function getExpenseDocument(expenseId: number) {
   const result = await supabase
     .from("expenses")
     .select(
-      "id,expense_number,expense_category_id,amount,business_date,description,payment_method_id,external_reference,attachment_path,status,reversal_reason,reversed_at",
+      "id,expense_number,amount,business_date,description,external_reference,attachment_path,status,reversal_number,reversal_reason,reversed_at,reversed_by_name_snapshot,expense_category_name_snapshot,payment_method_name_snapshot,school_name_snapshot,school_address_snapshot,school_phone_snapshot,school_email_snapshot,school_motto_snapshot,school_logo_path_snapshot,recorded_by_snapshot",
     )
     .eq("id", expenseId)
     .maybeSingle();
   if (result.error || !result.data) return null;
-  const [category, method] = await Promise.all([
-    supabase
-      .from("expense_categories")
-      .select("name")
-      .eq("id", result.data.expense_category_id)
-      .maybeSingle(),
-    supabase
-      .from("payment_methods")
-      .select("name")
-      .eq("id", result.data.payment_method_id)
-      .maybeSingle(),
-  ]);
-  if (category.error || method.error)
-    throw new Error("Expense details could not be loaded.");
   return {
     ...result.data,
-    categoryName: category.data?.name ?? "Uncategorised",
-    paymentMethodName: method.data?.name ?? "Unknown method",
+    categoryName: result.data.expense_category_name_snapshot,
+    paymentMethodName: result.data.payment_method_name_snapshot,
   };
 }
 
@@ -849,7 +778,7 @@ export async function getInvoiceDetail(
   const invoice = await supabase
     .from("invoices")
     .select(
-      `${invoiceListColumns},student_id,subtotal,cancelled_at,cancellation_reason,created_by,updated_by,created_at,cancelled_by`,
+      `${invoiceListColumns},student_id,subtotal,cancelled_at,cancellation_number,cancellation_reason,cancelled_by_name_snapshot,created_at,school_name_snapshot,school_address_snapshot,school_phone_snapshot,school_email_snapshot,school_motto_snapshot,school_logo_path_snapshot,recorded_by_snapshot`,
     )
     .eq("id", invoiceId)
     .maybeSingle();
@@ -860,46 +789,38 @@ export async function getInvoiceDetail(
     subtotal: number;
     cancelled_at: string | null;
     cancellation_reason: string | null;
-    created_by: string;
-    updated_by: string;
     created_at: string;
-    cancelled_by: string | null;
+    cancellation_number: string | null;
+    cancelled_by_name_snapshot: string | null;
+    school_name_snapshot: string;
+    school_address_snapshot: string | null;
+    school_phone_snapshot: string | null;
+    school_email_snapshot: string | null;
+    school_motto_snapshot: string | null;
+    school_logo_path_snapshot: string | null;
+    recorded_by_snapshot: string;
   };
-  const [lines, profiles] = await Promise.all([
-    supabase
-      .from("invoice_lines")
-      .select("id,description,amount,sort_order")
-      .eq("invoice_id", invoiceId)
-      .order("sort_order"),
-    supabase
-      .from("profiles")
-      .select("id,display_name")
-      .in(
-        "id",
-        [row.created_by, row.cancelled_by].filter((id): id is string =>
-          Boolean(id),
-        ),
-      ),
-  ]);
-  if (lines.error || profiles.error) throw new Error(invoiceError);
-  const { yearNameById, termNameById } = await periodNameMaps(
-    supabase,
-    [row.academic_year_id],
-    [row.academic_term_id],
-  );
-  const nameFor = (id: string | null) =>
-    id
-      ? (profiles.data.find((p) => p.id === id)?.display_name ??
-        "Authorized administrator")
-      : null;
+  const lines = await supabase
+    .from("invoice_lines")
+    .select("id,description,amount,sort_order")
+    .eq("invoice_id", invoiceId)
+    .order("sort_order");
+  if (lines.error) throw new Error(invoiceError);
   return {
-    ...mapInvoiceRow(row, yearNameById, termNameById),
+    ...mapInvoiceRow(row),
     studentId: row.student_id,
     subtotal: formatRateAmount(row.subtotal),
+    schoolName: row.school_name_snapshot,
+    schoolAddress: row.school_address_snapshot,
+    schoolPhone: row.school_phone_snapshot,
+    schoolEmail: row.school_email_snapshot,
+    schoolMotto: row.school_motto_snapshot,
+    schoolLogoPath: row.school_logo_path_snapshot,
     cancelledAt: row.cancelled_at,
-    cancelledByName: nameFor(row.cancelled_by),
+    cancelledByName: row.cancelled_by_name_snapshot,
+    cancellationNumber: row.cancellation_number,
     cancellationReason: row.cancellation_reason,
-    createdByName: nameFor(row.created_by) ?? "Authorized administrator",
+    createdByName: row.recorded_by_snapshot,
     createdAt: row.created_at,
     lines: lines.data.map((line) => ({
       id: line.id,

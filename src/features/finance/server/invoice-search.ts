@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requirePermission } from "@/lib/auth/access";
+import { requireRateLimitedPermission } from "@/lib/security/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { OpenInvoiceOption } from "../types";
 
@@ -9,10 +9,14 @@ export async function searchOpenInvoicesAction(input: unknown): Promise<{
   invoices: OpenInvoiceOption[];
   message: string;
 }> {
-  if (!(await requirePermission("finance.transactions.manage")))
+  const access = await requireRateLimitedPermission(
+    "finance.transactions.manage",
+    "invoice-search",
+  );
+  if (!access.ok)
     return {
       invoices: [],
-      message: "Your account cannot search payment invoices.",
+      message: access.message,
     };
   const query = z.string().trim().min(2).max(80).safeParse(input);
   if (!query.success)

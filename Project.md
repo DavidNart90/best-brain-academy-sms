@@ -2,7 +2,7 @@
 
 **Owner:** Chief Engineer (the user)  
 **Research baseline:** 31 August 2026  
-**Status:** Phase 3 Finance Core is in progress. The Chief Engineer reconfirmed the active phase on 8 September 2026.
+**Status:** Phase 5 Dashboards, Reports, and Performance is verified complete through P5-05 as of 9 September 2026. Phase 6 was opened by the Chief Engineer on 9 September 2026; P6-01 security hardening is verified, while D-05 hosting, backup/recovery, and monitoring work keeps P6-01 in progress. Use the current Plan.md handover.
 **Execution plan:** [Plan.md](Plan.md) contains current task statuses, verification evidence, and handover. Earlier phase and baseline descriptions below are historical scope definitions, not the current implementation status.
 
 ## 1. Purpose and Engineering Ownership

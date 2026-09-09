@@ -14,6 +14,18 @@ function logoRedirect(request: Request, target: string) {
 export async function GET(request: Request) {
   try {
     const supabase = await createServerSupabaseClient();
+    const requestedPath = new URL(request.url).searchParams.get("path");
+    if (
+      requestedPath &&
+      /^school\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.png$/.test(
+        requestedPath,
+      )
+    ) {
+      const { data } = supabase.storage
+        .from("school-branding")
+        .getPublicUrl(requestedPath);
+      return logoRedirect(request, data.publicUrl);
+    }
     const branding = await supabase
       .from("school_settings")
       .select("logo_path")

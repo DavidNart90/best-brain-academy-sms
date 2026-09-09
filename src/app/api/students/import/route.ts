@@ -1,14 +1,22 @@
 import { revalidatePath } from "next/cache";
-import { hasApiPermission } from "@/lib/auth/api-access";
+import { guardApiRequest } from "@/lib/auth/api-access";
 import { importModeSchema } from "@/features/students/schemas";
 import { getStudentReferenceData } from "@/features/students/server/queries";
 import {
   importStudentRows,
   parseStudentWorkbook,
 } from "@/features/students/server/workbooks";
+import {
+  hasContentType,
+  InvalidRequestBodyError,
+  isTrustedMutationRequest,
+  readBoundedFormData,
+  RequestBodyTooLargeError,
+} from "@/lib/security/request";
 
 export const dynamic = "force-dynamic";
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
+const MAX_BODY_BYTES = MAX_FILE_BYTES + 256 * 1024;
 
 function safeImportMessage(error: unknown) {
   if (!(error instanceof Error)) return null;
@@ -24,13 +32,20 @@ function safeImportMessage(error: unknown) {
 }
 
 export async function POST(request: Request) {
-  if (!(await hasApiPermission("students.import")))
+  if (!isTrustedMutationRequest(request))
     return Response.json(
-      { message: "Student import access is required." },
+      { message: "Request origin is not allowed." },
       { status: 403 },
     );
+  const access = await guardApiRequest("students.import", "data-import");
+  if (!access.ok) return access.response;
+  if (!hasContentType(request, "multipart/form-data"))
+    return Response.json(
+      { message: "Send an Excel workbook upload." },
+      { status: 415 },
+    );
   try {
-    const formData = await request.formData();
+    const formData = await readBoundedFormData(request, MAX_BODY_BYTES);
     const mode = importModeSchema.parse(formData.get("mode"));
     const file = formData.get("file");
     if (!(file instanceof File))
@@ -69,6 +84,16 @@ export async function POST(request: Request) {
       message: `${createdCount} ${createdCount === 1 ? "student" : "students"} imported successfully.`,
     });
   } catch (error) {
+    if (error instanceof RequestBodyTooLargeError)
+      return Response.json(
+        { message: "Use an .xlsx workbook no larger than 2 MB." },
+        { status: 413 },
+      );
+    if (error instanceof InvalidRequestBodyError)
+      return Response.json(
+        { message: "The workbook upload could not be read." },
+        { status: 400 },
+      );
     const message =
       safeImportMessage(error) ??
       "The workbook could not be imported. Preview it again and resolve any duplicate or validation errors.";

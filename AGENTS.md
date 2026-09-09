@@ -18,7 +18,7 @@ The user is Chief Engineer. Follow authorized scope autonomously; escalate conse
 
 ## Project Structure & Module Organization
 
-**Current phase: Phase 3 Finance Core**, reconfirmed by the Chief Engineer on 8 September 2026. Daily cashflow, payment/receipt posting and corrections are authorized scope; older Phase 0 descriptions below describe the foundation only. Use the current handover in Plan.md.
+**Current phase status:** Phase 5 Dashboards, Reports, and Performance is verified complete through P5-05 as of 9 September 2026. The Chief Engineer opened Phase 6 on 9 September 2026; P6-01 security hardening evidence is complete, while its hosting, backup/recovery, and monitoring decisions remain active under D-05. Use the current handover in Plan.md and do not import client data or claim release approval before the remaining gates are satisfied.
 
 The repository contains the Phase 0 application foundation and planning documents. `Project.md` defines module boundaries; `Plan.md` records verified progress and backend blockers.
 

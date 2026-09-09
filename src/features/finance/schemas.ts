@@ -162,3 +162,109 @@ export type StudentReceiptInput = z.infer<typeof studentReceiptInputSchema>;
 export type DailyCollectionInput = z.infer<typeof dailyCollectionInputSchema>;
 export type MiscReceiptInput = z.infer<typeof miscReceiptInputSchema>;
 export type ExpenseInput = z.infer<typeof expenseInputSchema>;
+
+const deductionValueSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{1,10}(\.\d{1,4})?$/, "Enter a valid deduction value.")
+  .refine((value) => Number(value) > 0, "Value must be greater than zero.");
+
+export const deductionTypeInputSchema = z
+  .object({
+    id: optionalIdSchema,
+    code: codeSchema,
+    name: z.string().trim().min(2).max(80),
+    calculationType: z.enum(["percentage", "fixed"]),
+    defaultValue: z.string().trim().max(17).optional(),
+    autoApply: z
+      .union([z.boolean(), z.enum(["true", "false"])])
+      .transform((value) =>
+        typeof value === "boolean" ? value : value === "true",
+      ),
+    effectiveFrom: z.iso.date(),
+    effectiveTo: z.union([z.iso.date(), z.literal("")]).optional(),
+    notes: z.string().trim().max(500).optional(),
+    sortOrder: sortOrderSchema,
+    status: statusSchema,
+  })
+  .superRefine((value, context) => {
+    if (value.autoApply && !value.defaultValue) {
+      context.addIssue({
+        code: "custom",
+        path: ["defaultValue"],
+        message: "Automatic deductions need a default value.",
+      });
+    }
+    if (value.defaultValue) {
+      const parsed = deductionValueSchema.safeParse(value.defaultValue);
+      if (!parsed.success) {
+        context.addIssue({
+          code: "custom",
+          path: ["defaultValue"],
+          message: parsed.error.issues[0]?.message ?? "Enter a valid value.",
+        });
+      } else if (
+        value.calculationType === "percentage" &&
+        Number(value.defaultValue) > 100
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["defaultValue"],
+          message: "A percentage cannot exceed 100.",
+        });
+      } else if (
+        value.calculationType === "fixed" &&
+        !/^\d{1,12}(\.\d{1,2})?$/.test(value.defaultValue)
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["defaultValue"],
+          message: "A fixed amount can have no more than two decimal places.",
+        });
+      }
+    }
+    if (value.effectiveTo && value.effectiveTo < value.effectiveFrom) {
+      context.addIssue({
+        code: "custom",
+        path: ["effectiveTo"],
+        message: "The end date cannot be before the start date.",
+      });
+    }
+  });
+
+export const salaryRecordInputSchema = z.object({
+  requestKey: z.uuid(),
+  staffId: idSchema,
+  payrollMonth: z
+    .string()
+    .regex(/^\d{4}-\d{2}(-01)?$/, "Choose a salary month.")
+    .transform((value) => (value.length === 7 ? `${value}-01` : value)),
+  grossSalary: moneyAmountSchema,
+});
+export const salaryDeductionInputSchema = z.object({
+  requestKey: z.uuid(),
+  salaryRecordId: idSchema,
+  deductionTypeId: idSchema,
+  configuredValue: deductionValueSchema,
+  reason: z.string().trim().max(500).optional(),
+});
+export const salaryReversalInputSchema = z.object({
+  requestKey: z.uuid(),
+  recordId: idSchema,
+  reason: z.string().trim().min(2, "A reversal reason is required.").max(500),
+});
+export const salaryListQuerySchema = z.object({
+  month: z
+    .string()
+    .regex(/^\d{4}-\d{2}(-01)?$/)
+    .transform((value) => (value.length === 7 ? `${value}-01` : value))
+    .catch(""),
+  q: z.string().trim().max(80).catch(""),
+  status: z.enum(["all", "active", "reversed"]).catch("all"),
+  page: z.coerce.number().int().min(1).catch(1),
+});
+export type DeductionTypeInput = z.infer<typeof deductionTypeInputSchema>;
+export type DeductionTypeFormValues = z.input<typeof deductionTypeInputSchema>;
+export type SalaryRecordInput = z.infer<typeof salaryRecordInputSchema>;
+export type SalaryDeductionInput = z.infer<typeof salaryDeductionInputSchema>;
+export type SalaryReversalInput = z.infer<typeof salaryReversalInputSchema>;

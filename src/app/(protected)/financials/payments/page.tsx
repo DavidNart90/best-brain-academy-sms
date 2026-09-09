@@ -195,6 +195,11 @@ export default async function PaymentsPage({
                           {row.reversal_reason}
                         </p>
                       )}
+                      {row.reversal_number && (
+                        <p className="mt-1 font-mono text-xs text-muted-foreground">
+                          {row.reversal_number}
+                        </p>
+                      )}
                     </td>
                     <td className="px-4 py-4">
                       <Link

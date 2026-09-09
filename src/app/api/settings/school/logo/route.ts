@@ -1,26 +1,41 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { isValidSchoolLogo } from "@/features/academics/logo";
-import { hasApiPermission } from "@/lib/auth/api-access";
+import { guardApiRequest } from "@/lib/auth/api-access";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  hasContentType,
+  isTrustedMutationRequest,
+  readBoundedFormData,
+  RequestBodyTooLargeError,
+} from "@/lib/security/request";
 
 export const dynamic = "force-dynamic";
 
 const uploadGuidance =
   "Use a valid PNG between 128 and 4,096 pixels, no larger than 2 MB.";
+const MAX_FILE_BYTES = 2 * 1024 * 1024;
+const MAX_BODY_BYTES = MAX_FILE_BYTES + 256 * 1024;
 
 export async function POST(request: Request) {
-  if (!(await hasApiPermission("settings.manage")))
+  if (!isTrustedMutationRequest(request))
     return Response.json(
-      { message: "School settings access is required." },
+      { message: "Request origin is not allowed." },
       { status: 403 },
     );
+  const access = await guardApiRequest("settings.manage", "file-upload");
+  if (!access.ok) return access.response;
+  if (!hasContentType(request, "multipart/form-data"))
+    return Response.json({ message: uploadGuidance }, { status: 415 });
 
   let file: FormDataEntryValue | null;
   try {
-    file = (await request.formData()).get("logo");
-  } catch {
-    return Response.json({ message: uploadGuidance }, { status: 400 });
+    file = (await readBoundedFormData(request, MAX_BODY_BYTES)).get("logo");
+  } catch (error) {
+    return Response.json(
+      { message: uploadGuidance },
+      { status: error instanceof RequestBodyTooLargeError ? 413 : 400 },
+    );
   }
   if (!(file instanceof File))
     return Response.json({ message: uploadGuidance }, { status: 400 });

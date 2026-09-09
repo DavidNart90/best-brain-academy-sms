@@ -1,7 +1,8 @@
 # Staff onboarding requirements
 
 **Source:** Chief Engineer's staff image and follow-up instructions, 2 September 2026.
-**Status:** Compatibility applied and 18 known-details staff verified; class assignments and overlapping concurrency verification pending.
+**Status:** Complete on the authorized test project; 18 known-details staff,
+12 confirmed headships, and overlapping counter serialization verified.
 
 ## Confirmed scope
 
@@ -51,18 +52,28 @@ Migration 20260902185750_staff_known_details_and_teaching_assignments was applie
 
 The server allocates one case-preserved number sequence under a row lock. Create/import requests have payload-bound idempotency keys; staff, assignments, numbering, request result and audit succeed or roll back together. Existing assignment history remains intact. Explicit teaching pairs and independent head-class-teacher appointments are supported. Direct writes remain closed; all tables have RLS, including private deny-all request/counter tables.
 
-MCP is connected and test project cefwopisbgfctzdloequ is verified. All 18 staff were saved using the existing Super Administrator's authenticated Add Staff forms, not an impersonated SQL identity. Private reconciliation passed for IDs 001-018, corrected source names, types, positions, known subjects and absent unknown details. Counts: 14 teaching, four non-teaching, 18 requests, 18 staff audit entries, zero assignments, next number 019. No staff Auth accounts were created.
+MCP is connected and test project cefwopisbgfctzdloequ is verified. All 18 staff were saved using the existing Super Administrator's authenticated Add Staff forms, not an impersonated SQL identity. Private reconciliation passed for IDs 001-018, corrected source names, types, positions, known subjects and absent unknown details. At that onboarding checkpoint the counts were 14 teaching, four non-teaching, 18 requests, 18 staff audit entries, zero assignments, and next number 019. No staff Auth accounts were created.
 
 The generated private workbook could not be read by ExcelJS (namespace-prefixed workbook XML); it failed before writes. Onboarding used forms instead. Do not re-import it. Tests using the app's own template pass; a live spreadsheet import roundtrip remains unverified. Unreadable formats now receive an explicit no-records-saved message.
 
-Focused MCP tests passed for optional details, number casing, replay/changed payload, duplicate pairs, independent headship, history, invalid-batch rollback including audit, direct-write denial and disabled/anonymous access. All synthetic actors and staff rolled back. Two dispatched concurrency probes did not demonstrate simultaneous execution; overlapping allocation/retry verification is not complete.
+Focused MCP tests passed for optional details, number casing, replay/changed payload, duplicate pairs, independent headship, history, invalid-batch rollback including audit, direct-write denial and disabled/anonymous access. All synthetic actors and staff rolled back. The initial dispatch did not demonstrate simultaneous execution; the later two-session closure probe below supplies the required overlapping allocation evidence.
 
-## Remaining decisions and entry gate
+## Closure verification (9 September 2026)
 
-- Confirm Lower/Upper Nursery as Nursery 1/2.
-- Confirm 2026/2027 Term 1 and 8 September 2026 as assignment context/start, or supply the correct dates.
-- Identify head/class teachers and additional teaching pairs when known; the two specialists without classes remain unassigned.
+- Lower/Upper Nursery are represented by the existing Nursery 1/2 classes.
+- The 12 supplied class links are saved as separate head-teacher appointments
+  for 12 distinct staff and 12 distinct classes.
+- Every active appointment uses 2026/2027 Term 1 with 8 September 2026 as its
+  effective start; the live context-mismatch count is zero.
+- The two specialists without supplied classes remain unassigned. No additional
+  teaching pair or leadership role was inferred.
+- A two-session, rollback-only create probe verified serialization on the staff
+  number counter. Both writers rolled back, the next number remains 019, and no
+  synthetic staff/request residue exists.
 
-Unspecified leadership/specialist classes must not be guessed. Supplied class links still need effective context before saving. Reconcile the resulting assignments and finish focused concurrency verification before closing STAFF-01. P3-01 remains the only authorized finance section; Phases 4/5 remain untouched.
+STAFF-01 is complete. Unspecified specialist classes must still not be guessed;
+future additions should be recorded only when the Chief Engineer supplies them.
 
-See [verification evidence](../evidence/phase-2/staff-known-details-verification.md) for commands, advisors, UI checks and limitations.
+See [onboarding evidence](../evidence/phase-2/staff-known-details-verification.md)
+and [Phase 3 closure evidence](../evidence/phase-3/phase-3-closure-verification.md)
+for commands, advisors, UI checks, and closure details.

@@ -202,8 +202,8 @@ export function FlatFeesForm({
     <form onSubmit={submit} noValidate className="panel p-5 sm:p-6">
       <h3 className="text-sm font-semibold">Feeding and admission fees</h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        These amounts are never auto-charged; accounts staff record each feeding
-        or admission payment individually.
+        These reference amounts are never auto-charged. Accounts staff post the
+        actual feeding or admission total collected for each business date.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <FormField

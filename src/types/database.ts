@@ -275,11 +275,20 @@ export type Database = {
           id: number;
           notes: string | null;
           payment_method_id: number;
-          payment_method_name_snapshot: string | null;
+          payment_method_name_snapshot: string;
           receipt_number: string;
+          recorded_by_snapshot: string;
+          reversal_number: string | null;
           reversal_reason: string | null;
           reversed_at: string | null;
           reversed_by: string | null;
+          reversed_by_name_snapshot: string | null;
+          school_address_snapshot: string | null;
+          school_email_snapshot: string | null;
+          school_logo_path_snapshot: string | null;
+          school_motto_snapshot: string | null;
+          school_name_snapshot: string;
+          school_phone_snapshot: string | null;
           status: string;
           student_id: number | null;
           student_name_snapshot: string | null;
@@ -298,11 +307,20 @@ export type Database = {
           id?: never;
           notes?: string | null;
           payment_method_id: number;
-          payment_method_name_snapshot?: string | null;
+          payment_method_name_snapshot: string;
           receipt_number: string;
+          recorded_by_snapshot: string;
+          reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot: string;
+          school_phone_snapshot?: string | null;
           status?: string;
           student_id?: number | null;
           student_name_snapshot?: string | null;
@@ -321,11 +339,20 @@ export type Database = {
           id?: never;
           notes?: string | null;
           payment_method_id?: number;
-          payment_method_name_snapshot?: string | null;
+          payment_method_name_snapshot?: string;
           receipt_number?: string;
+          recorded_by_snapshot?: string;
+          reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot?: string;
+          school_phone_snapshot?: string | null;
           status?: string;
           student_id?: number | null;
           student_name_snapshot?: string | null;
@@ -532,13 +559,24 @@ export type Database = {
           created_by: string;
           description: string;
           expense_category_id: number;
+          expense_category_name_snapshot: string;
           expense_number: string;
           external_reference: string | null;
           id: number;
           payment_method_id: number;
+          payment_method_name_snapshot: string;
+          recorded_by_snapshot: string;
+          reversal_number: string | null;
           reversal_reason: string | null;
           reversed_at: string | null;
           reversed_by: string | null;
+          reversed_by_name_snapshot: string | null;
+          school_address_snapshot: string | null;
+          school_email_snapshot: string | null;
+          school_logo_path_snapshot: string | null;
+          school_motto_snapshot: string | null;
+          school_name_snapshot: string;
+          school_phone_snapshot: string | null;
           status: string;
           updated_at: string;
           updated_by: string;
@@ -551,13 +589,24 @@ export type Database = {
           created_by: string;
           description: string;
           expense_category_id: number;
+          expense_category_name_snapshot: string;
           expense_number: string;
           external_reference?: string | null;
           id?: never;
           payment_method_id: number;
+          payment_method_name_snapshot: string;
+          recorded_by_snapshot: string;
+          reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot: string;
+          school_phone_snapshot?: string | null;
           status?: string;
           updated_at?: string;
           updated_by: string;
@@ -570,13 +619,24 @@ export type Database = {
           created_by?: string;
           description?: string;
           expense_category_id?: number;
+          expense_category_name_snapshot?: string;
           expense_number?: string;
           external_reference?: string | null;
           id?: never;
           payment_method_id?: number;
+          payment_method_name_snapshot?: string;
+          recorded_by_snapshot?: string;
+          reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot?: string;
+          school_phone_snapshot?: string | null;
           status?: string;
           updated_at?: string;
           updated_by?: string;
@@ -784,11 +844,20 @@ export type Database = {
           id: number;
           notes: string | null;
           payment_method_id: number;
-          payment_method_name_snapshot: string | null;
+          payment_method_name_snapshot: string;
           receipt_number: string;
+          recorded_by_snapshot: string;
+          reversal_number: string | null;
           reversal_reason: string | null;
           reversed_at: string | null;
           reversed_by: string | null;
+          reversed_by_name_snapshot: string | null;
+          school_address_snapshot: string | null;
+          school_email_snapshot: string | null;
+          school_logo_path_snapshot: string | null;
+          school_motto_snapshot: string | null;
+          school_name_snapshot: string;
+          school_phone_snapshot: string | null;
           status: string;
           student_id: number | null;
           student_name_snapshot: string | null;
@@ -807,11 +876,20 @@ export type Database = {
           id?: never;
           notes?: string | null;
           payment_method_id: number;
-          payment_method_name_snapshot?: string | null;
+          payment_method_name_snapshot: string;
           receipt_number: string;
+          recorded_by_snapshot: string;
+          reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot: string;
+          school_phone_snapshot?: string | null;
           status?: string;
           student_id?: number | null;
           student_name_snapshot?: string | null;
@@ -830,11 +908,20 @@ export type Database = {
           id?: never;
           notes?: string | null;
           payment_method_id?: number;
-          payment_method_name_snapshot?: string | null;
+          payment_method_name_snapshot?: string;
           receipt_number?: string;
+          recorded_by_snapshot?: string;
+          reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot?: string;
+          school_phone_snapshot?: string | null;
           status?: string;
           student_id?: number | null;
           student_name_snapshot?: string | null;
@@ -1014,12 +1101,16 @@ export type Database = {
       invoices: {
         Row: {
           academic_term_id: number;
+          academic_term_name_snapshot: string;
           academic_year_id: number;
+          academic_year_name_snapshot: string;
           admission_number_snapshot: string;
           amount_paid: number;
+          cancellation_number: string | null;
           cancellation_reason: string | null;
           cancelled_at: string | null;
           cancelled_by: string | null;
+          cancelled_by_name_snapshot: string | null;
           class_id: number;
           class_name_snapshot: string;
           created_at: string;
@@ -1029,7 +1120,14 @@ export type Database = {
           issued_on: string;
           location_name_snapshot: string;
           outstanding: number | null;
+          recorded_by_snapshot: string;
+          school_address_snapshot: string | null;
+          school_email_snapshot: string | null;
           school_location_id: number;
+          school_logo_path_snapshot: string | null;
+          school_motto_snapshot: string | null;
+          school_name_snapshot: string;
+          school_phone_snapshot: string | null;
           status: string;
           student_id: number;
           student_name_snapshot: string;
@@ -1040,12 +1138,16 @@ export type Database = {
         };
         Insert: {
           academic_term_id: number;
+          academic_term_name_snapshot: string;
           academic_year_id: number;
+          academic_year_name_snapshot: string;
           admission_number_snapshot: string;
           amount_paid?: number;
+          cancellation_number?: string | null;
           cancellation_reason?: string | null;
           cancelled_at?: string | null;
           cancelled_by?: string | null;
+          cancelled_by_name_snapshot?: string | null;
           class_id: number;
           class_name_snapshot: string;
           created_at?: string;
@@ -1055,7 +1157,14 @@ export type Database = {
           issued_on?: string;
           location_name_snapshot: string;
           outstanding?: number | null;
+          recorded_by_snapshot: string;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
           school_location_id: number;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot: string;
+          school_phone_snapshot?: string | null;
           status?: string;
           student_id: number;
           student_name_snapshot: string;
@@ -1066,12 +1175,16 @@ export type Database = {
         };
         Update: {
           academic_term_id?: number;
+          academic_term_name_snapshot?: string;
           academic_year_id?: number;
+          academic_year_name_snapshot?: string;
           admission_number_snapshot?: string;
           amount_paid?: number;
+          cancellation_number?: string | null;
           cancellation_reason?: string | null;
           cancelled_at?: string | null;
           cancelled_by?: string | null;
+          cancelled_by_name_snapshot?: string | null;
           class_id?: number;
           class_name_snapshot?: string;
           created_at?: string;
@@ -1081,7 +1194,14 @@ export type Database = {
           issued_on?: string;
           location_name_snapshot?: string;
           outstanding?: number | null;
+          recorded_by_snapshot?: string;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
           school_location_id?: number;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot?: string;
+          school_phone_snapshot?: string | null;
           status?: string;
           student_id?: number;
           student_name_snapshot?: string;
@@ -1216,14 +1336,25 @@ export type Database = {
           description: string;
           external_reference: string | null;
           id: number;
+          income_name_snapshot: string;
           misc_income_category_id: number | null;
           notes: string | null;
           payer_name: string | null;
           payment_method_id: number;
+          payment_method_name_snapshot: string;
           receipt_number: string;
+          recorded_by_snapshot: string;
+          reversal_number: string | null;
           reversal_reason: string | null;
           reversed_at: string | null;
           reversed_by: string | null;
+          reversed_by_name_snapshot: string | null;
+          school_address_snapshot: string | null;
+          school_email_snapshot: string | null;
+          school_logo_path_snapshot: string | null;
+          school_motto_snapshot: string | null;
+          school_name_snapshot: string;
+          school_phone_snapshot: string | null;
           status: string;
           student_id: number | null;
           updated_at: string;
@@ -1237,14 +1368,25 @@ export type Database = {
           description: string;
           external_reference?: string | null;
           id?: never;
+          income_name_snapshot: string;
           misc_income_category_id?: number | null;
           notes?: string | null;
           payer_name?: string | null;
           payment_method_id: number;
+          payment_method_name_snapshot: string;
           receipt_number: string;
+          recorded_by_snapshot: string;
+          reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot: string;
+          school_phone_snapshot?: string | null;
           status?: string;
           student_id?: number | null;
           updated_at?: string;
@@ -1258,14 +1400,25 @@ export type Database = {
           description?: string;
           external_reference?: string | null;
           id?: never;
+          income_name_snapshot?: string;
           misc_income_category_id?: number | null;
           notes?: string | null;
           payer_name?: string | null;
           payment_method_id?: number;
+          payment_method_name_snapshot?: string;
           receipt_number?: string;
+          recorded_by_snapshot?: string;
+          reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot?: string;
+          school_phone_snapshot?: string | null;
           status?: string;
           student_id?: number | null;
           updated_at?: string;
@@ -1389,9 +1542,11 @@ export type Database = {
           notes: string | null;
           payment_method_id: number;
           payment_number: string;
+          reversal_number: string | null;
           reversal_reason: string | null;
           reversed_at: string | null;
           reversed_by: string | null;
+          reversed_by_name_snapshot: string | null;
           status: string;
           updated_at: string;
           updated_by: string;
@@ -1407,9 +1562,11 @@ export type Database = {
           notes?: string | null;
           payment_method_id: number;
           payment_number: string;
+          reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
           status?: string;
           updated_at?: string;
           updated_by: string;
@@ -1425,9 +1582,11 @@ export type Database = {
           notes?: string | null;
           payment_method_id?: number;
           payment_number?: string;
+          reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
           status?: string;
           updated_at?: string;
           updated_by?: string;
@@ -1529,10 +1688,19 @@ export type Database = {
           payment_method_name_snapshot: string;
           previous_balance: number;
           receipt_number: string;
+          recorded_by_snapshot: string;
           remaining_balance: number;
+          reversal_number: string | null;
           reversal_reason: string | null;
           reversed_at: string | null;
           reversed_by: string | null;
+          reversed_by_name_snapshot: string | null;
+          school_address_snapshot: string | null;
+          school_email_snapshot: string | null;
+          school_logo_path_snapshot: string | null;
+          school_motto_snapshot: string | null;
+          school_name_snapshot: string;
+          school_phone_snapshot: string | null;
           status: string;
           student_name_snapshot: string;
           updated_at: string;
@@ -1554,10 +1722,19 @@ export type Database = {
           payment_method_name_snapshot: string;
           previous_balance: number;
           receipt_number: string;
+          recorded_by_snapshot: string;
           remaining_balance: number;
+          reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot: string;
+          school_phone_snapshot?: string | null;
           status?: string;
           student_name_snapshot: string;
           updated_at?: string;
@@ -1579,10 +1756,19 @@ export type Database = {
           payment_method_name_snapshot?: string;
           previous_balance?: number;
           receipt_number?: string;
+          recorded_by_snapshot?: string;
           remaining_balance?: number;
+          reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot?: string;
+          school_phone_snapshot?: string | null;
           status?: string;
           student_name_snapshot?: string;
           updated_at?: string;
@@ -1663,6 +1849,249 @@ export type Database = {
           label?: string;
         };
         Relationships: [];
+      };
+      salary_deduction_types: {
+        Row: {
+          auto_apply: boolean;
+          calculation_type: string;
+          code: string;
+          created_at: string;
+          created_by: string | null;
+          default_value: number | null;
+          effective_from: string;
+          effective_to: string | null;
+          id: number;
+          name: string;
+          notes: string | null;
+          sort_order: number;
+          status: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          auto_apply?: boolean;
+          calculation_type: string;
+          code: string;
+          created_at?: string;
+          created_by?: string | null;
+          default_value?: number | null;
+          effective_from: string;
+          effective_to?: string | null;
+          id?: never;
+          name: string;
+          notes?: string | null;
+          sort_order: number;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          auto_apply?: boolean;
+          calculation_type?: string;
+          code?: string;
+          created_at?: string;
+          created_by?: string | null;
+          default_value?: number | null;
+          effective_from?: string;
+          effective_to?: string | null;
+          id?: never;
+          name?: string;
+          notes?: string | null;
+          sort_order?: number;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "salary_deduction_types_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "salary_deduction_types_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      salary_deductions: {
+        Row: {
+          amount: number;
+          calculation_type_snapshot: string;
+          configured_value_snapshot: number;
+          created_at: string;
+          created_by: string;
+          deduction_number: string;
+          deduction_type_id: number;
+          deduction_type_name_snapshot: string;
+          gross_salary_snapshot: number;
+          id: number;
+          reason: string | null;
+          recorded_by_snapshot: string;
+          reversal_number: string | null;
+          reversal_reason: string | null;
+          reversed_at: string | null;
+          reversed_by: string | null;
+          reversed_by_name_snapshot: string | null;
+          salary_record_id: number;
+          status: string;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          amount: number;
+          calculation_type_snapshot: string;
+          configured_value_snapshot: number;
+          created_at?: string;
+          created_by: string;
+          deduction_number: string;
+          deduction_type_id: number;
+          deduction_type_name_snapshot: string;
+          gross_salary_snapshot: number;
+          id?: never;
+          reason?: string | null;
+          recorded_by_snapshot: string;
+          reversal_number?: string | null;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          salary_record_id: number;
+          status?: string;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          amount?: number;
+          calculation_type_snapshot?: string;
+          configured_value_snapshot?: number;
+          created_at?: string;
+          created_by?: string;
+          deduction_number?: string;
+          deduction_type_id?: number;
+          deduction_type_name_snapshot?: string;
+          gross_salary_snapshot?: number;
+          id?: never;
+          reason?: string | null;
+          recorded_by_snapshot?: string;
+          reversal_number?: string | null;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          salary_record_id?: number;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "salary_deductions_deduction_type_id_fkey";
+            columns: ["deduction_type_id"];
+            isOneToOne: false;
+            referencedRelation: "salary_deduction_types";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "salary_deductions_salary_record_id_fkey";
+            columns: ["salary_record_id"];
+            isOneToOne: false;
+            referencedRelation: "salary_records";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      salary_records: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          gross_salary: number;
+          id: number;
+          net_salary: number;
+          payroll_month: string;
+          recorded_by_snapshot: string;
+          reversal_number: string | null;
+          reversal_reason: string | null;
+          reversed_at: string | null;
+          reversed_by: string | null;
+          reversed_by_name_snapshot: string | null;
+          salary_number: string;
+          staff_id: number;
+          staff_name_snapshot: string;
+          staff_number_snapshot: string;
+          staff_position_snapshot: string;
+          status: string;
+          total_deductions: number;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          gross_salary: number;
+          id?: never;
+          net_salary?: never;
+          payroll_month: string;
+          recorded_by_snapshot: string;
+          reversal_number?: string | null;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          salary_number: string;
+          staff_id: number;
+          staff_name_snapshot: string;
+          staff_number_snapshot: string;
+          staff_position_snapshot: string;
+          status?: string;
+          total_deductions?: number;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          gross_salary?: number;
+          id?: never;
+          net_salary?: never;
+          payroll_month?: string;
+          recorded_by_snapshot?: string;
+          reversal_number?: string | null;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          salary_number?: string;
+          staff_id?: number;
+          staff_name_snapshot?: string;
+          staff_number_snapshot?: string;
+          staff_position_snapshot?: string;
+          status?: string;
+          total_deductions?: number;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "salary_records_staff_id_fkey";
+            columns: ["staff_id"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "salary_records_staff_id_fkey";
+            columns: ["staff_id"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       school_locations: {
         Row: {
@@ -2250,6 +2679,34 @@ export type Database = {
       };
     };
     Views: {
+      financial_activity_report: {
+        Row: {
+          academic_term_id: number | null;
+          academic_year_id: number | null;
+          amount: number | null;
+          business_date: string | null;
+          category: string | null;
+          class_id: number | null;
+          class_name: string | null;
+          created_at: string | null;
+          deduction_type_id: number | null;
+          document_reference: string | null;
+          expense_category_id: number | null;
+          payment_method: string | null;
+          payment_method_id: number | null;
+          person_name: string | null;
+          record_id: number | null;
+          record_kind: string | null;
+          reference: string | null;
+          reversal_reason: string | null;
+          reversal_reference: string | null;
+          source: string | null;
+          staff_id: number | null;
+          status: string | null;
+          student_id: number | null;
+        };
+        Relationships: [];
+      };
       staff_directory: {
         Row: {
           assigned_classes: string | null;
@@ -2348,6 +2805,10 @@ export type Database = {
         Args: { payload: Json; target_student_id: number };
         Returns: Json;
       };
+      consume_rate_limit: {
+        Args: { rate_limit_bucket: string };
+        Returns: Json;
+      };
       create_staff: { Args: { payload: Json }; Returns: Json };
       create_student: { Args: { payload: Json }; Returns: Json };
       end_staff_assignment: {
@@ -2372,6 +2833,26 @@ export type Database = {
         Returns: Json;
       };
       get_access_context: { Args: never; Returns: Json };
+      get_financial_reporting_snapshot: {
+        Args: {
+          report_end: string;
+          report_start: string;
+          target_academic_term_id?: number;
+          target_academic_year_id?: number;
+        };
+        Returns: Json;
+      };
+      get_financial_weekly_totals: {
+        Args: { report_end: string; report_start: string };
+        Returns: {
+          expenses: number;
+          final_position: number;
+          gross_receipts: number;
+          operating_net: number;
+          period_start: string;
+          salary_deductions: number;
+        }[];
+      };
       get_administrator_directory: {
         Args: {
           page_number?: number;
@@ -2486,6 +2967,25 @@ export type Database = {
         };
         Returns: Json;
       };
+      record_salary_deduction: {
+        Args: {
+          request_key: string;
+          target_configured_value: number;
+          target_deduction_type_id: number;
+          target_reason?: string;
+          target_salary_record_id: number;
+        };
+        Returns: Json;
+      };
+      record_salary_record: {
+        Args: {
+          request_key: string;
+          target_gross_salary: number;
+          target_payroll_month: string;
+          target_staff_id: number;
+        };
+        Returns: Json;
+      };
       record_school_fee_payment: {
         Args: {
           payment_amount: number;
@@ -2523,6 +3023,22 @@ export type Database = {
           request_key: string;
           target_reason: string;
           target_receipt_id: number;
+        };
+        Returns: Json;
+      };
+      reverse_salary_deduction: {
+        Args: {
+          request_key: string;
+          target_deduction_id: number;
+          target_reason: string;
+        };
+        Returns: Json;
+      };
+      reverse_salary_record: {
+        Args: {
+          request_key: string;
+          target_reason: string;
+          target_salary_record_id: number;
         };
         Returns: Json;
       };

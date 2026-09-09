@@ -1,13 +1,10 @@
-import { hasApiPermission } from "@/lib/auth/api-access";
+import { guardApiRequest } from "@/lib/auth/api-access";
 import { buildAdministratorTemplate } from "@/features/administrators/server/workbooks";
 
 export const dynamic = "force-dynamic";
 export async function GET() {
-  if (!(await hasApiPermission("administrators.manage")))
-    return Response.json(
-      { message: "Administrator management access is required." },
-      { status: 403 },
-    );
+  const access = await guardApiRequest("administrators.manage", "data-export");
+  if (!access.ok) return access.response;
   const workbook = await buildAdministratorTemplate();
   return new Response(workbook, {
     headers: {

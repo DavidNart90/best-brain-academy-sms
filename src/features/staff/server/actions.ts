@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requirePermission } from "@/lib/auth/access";
+import { requireRateLimitedPermission } from "@/lib/security/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database";
 import {
@@ -39,7 +39,11 @@ export async function createStaff(
   input: unknown,
   requestKey: unknown,
 ): Promise<StaffActionResult> {
-  if (!(await requirePermission("staff.manage"))) return denied;
+  const access = await requireRateLimitedPermission(
+    "staff.manage",
+    "people-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = staffInputSchema.safeParse(input);
   const key = requestKeySchema.safeParse(requestKey);
   if (!key.success)
@@ -69,7 +73,11 @@ export async function createStaff(
 export async function assignStaffClass(
   input: unknown,
 ): Promise<StaffActionResult> {
-  if (!(await requirePermission("staff.manage"))) return denied;
+  const access = await requireRateLimitedPermission(
+    "staff.manage",
+    "people-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = staffAssignmentSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -97,7 +105,11 @@ export async function assignStaffClass(
 export async function endStaffAssignment(
   input: unknown,
 ): Promise<StaffActionResult> {
-  if (!(await requirePermission("staff.manage"))) return denied;
+  const access = await requireRateLimitedPermission(
+    "staff.manage",
+    "people-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = endStaffAssignmentSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -121,7 +133,11 @@ export async function endStaffAssignment(
 }
 
 export async function updateStaff(input: unknown): Promise<StaffActionResult> {
-  if (!(await requirePermission("staff.manage"))) return denied;
+  const access = await requireRateLimitedPermission(
+    "staff.manage",
+    "people-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = staffUpdateSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -146,7 +162,11 @@ export async function updateStaff(input: unknown): Promise<StaffActionResult> {
 }
 
 export async function archiveStaff(input: unknown): Promise<StaffActionResult> {
-  if (!(await requirePermission("staff.manage"))) return denied;
+  const access = await requireRateLimitedPermission(
+    "staff.manage",
+    "people-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = staffIdSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Staff record not found." };
   const supabase = await createServerSupabaseClient();

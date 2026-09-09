@@ -1,8 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { loginSchema } from "@/features/auth/schemas";
 import { getPublicEnvironment } from "@/lib/env";
-import { isSameOriginAsHost } from "@/lib/auth/origin";
 import { parseAccessContext } from "@/lib/permissions/contracts";
+import {
+  consumeLocalRateLimit,
+  hasContentType,
+  InvalidRequestBodyError,
+  isTrustedMutationRequest,
+  readBoundedJson,
+  RequestBodyTooLargeError,
+} from "@/lib/security/request";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const noStore = { "Cache-Control": "private, no-store" };
@@ -12,19 +19,58 @@ function json(body: unknown, status = 200) {
 }
 
 export async function POST(request: NextRequest) {
-  const origin = request.headers.get("origin");
-  const host = request.headers.get("host");
-  if (origin && (!host || !isSameOriginAsHost(origin, host)))
+  if (!isTrustedMutationRequest(request))
     return json({ error: "This sign-in request was blocked." }, 403);
-  if (!request.headers.get("content-type")?.startsWith("application/json"))
+  if (!hasContentType(request, "application/json"))
     return json({ error: "Enter a valid email and password." }, 415);
-  if (Number(request.headers.get("content-length") ?? 0) > 4096)
-    return json({ error: "Enter a valid email and password." }, 413);
+  const globalLimit = consumeLocalRateLimit({
+    scope: "login-global",
+    identifier: "application",
+    maxRequests: 100,
+    windowSeconds: 300,
+  });
+  if (!globalLimit.allowed)
+    return NextResponse.json(
+      { error: "Too many sign-in attempts. Please wait before trying again." },
+      {
+        status: 429,
+        headers: { ...noStore, "Retry-After": String(globalLimit.retryAfter) },
+      },
+    );
 
-  const input = await request.json().catch(() => null);
+  let input: unknown;
+  try {
+    input = await readBoundedJson(request, 4096);
+  } catch (error) {
+    return json(
+      { error: "Enter a valid email and password." },
+      error instanceof RequestBodyTooLargeError
+        ? 413
+        : error instanceof InvalidRequestBodyError
+          ? 400
+          : 400,
+    );
+  }
   const parsed = loginSchema.safeParse(input);
   if (!parsed.success)
     return json({ error: "Enter a valid email and password." }, 400);
+  const accountLimit = consumeLocalRateLimit({
+    scope: "login-account",
+    identifier: parsed.data.email.trim().toLowerCase(),
+    maxRequests: 10,
+    windowSeconds: 600,
+  });
+  if (!accountLimit.allowed)
+    return NextResponse.json(
+      { error: "Too many sign-in attempts. Please wait before trying again." },
+      {
+        status: 429,
+        headers: {
+          ...noStore,
+          "Retry-After": String(accountLimit.retryAfter),
+        },
+      },
+    );
   if (!getPublicEnvironment())
     return json(
       {

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requirePermission } from "@/lib/auth/access";
+import { requireRateLimitedPermission } from "@/lib/security/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   academicTermInputSchema,
@@ -43,14 +43,15 @@ function refreshConfiguration() {
 }
 
 async function canManageConfiguration() {
-  return requirePermission("settings.manage");
+  return requireRateLimitedPermission("settings.manage", "configuration-write");
 }
 
 export async function saveAcademicYear(
   input: unknown,
 ): Promise<ConfigurationActionResult> {
-  const context = await canManageConfiguration();
-  if (!context) return denied;
+  const access = await canManageConfiguration();
+  if (!access.ok) return { ok: false, message: access.message };
+  const context = access.context;
   const parsed = academicYearInputSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -87,8 +88,9 @@ export async function saveAcademicYear(
 export async function saveAcademicTerm(
   input: unknown,
 ): Promise<ConfigurationActionResult> {
-  const context = await canManageConfiguration();
-  if (!context) return denied;
+  const access = await canManageConfiguration();
+  if (!access.ok) return { ok: false, message: access.message };
+  const context = access.context;
   const parsed = academicTermInputSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -126,8 +128,9 @@ export async function saveAcademicTerm(
 export async function saveClass(
   input: unknown,
 ): Promise<ConfigurationActionResult> {
-  const context = await canManageConfiguration();
-  if (!context) return denied;
+  const access = await canManageConfiguration();
+  if (!access.ok) return { ok: false, message: access.message };
+  const context = access.context;
   const parsed = classInputSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -160,8 +163,9 @@ export async function saveClass(
 export async function saveLocation(
   input: unknown,
 ): Promise<ConfigurationActionResult> {
-  const context = await canManageConfiguration();
-  if (!context) return denied;
+  const access = await canManageConfiguration();
+  if (!access.ok) return { ok: false, message: access.message };
+  const context = access.context;
   const parsed = locationInputSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -196,8 +200,9 @@ export async function saveLocation(
 export async function saveSchoolSettings(
   input: unknown,
 ): Promise<ConfigurationActionResult> {
-  const context = await canManageConfiguration();
-  if (!context) return denied;
+  const access = await canManageConfiguration();
+  if (!access.ok) return { ok: false, message: access.message };
+  const context = access.context;
   const parsed = schoolSettingsInputSchema.safeParse(input);
   if (!parsed.success)
     return {
@@ -227,8 +232,8 @@ export async function saveSchoolSettings(
 export async function setCurrentAcademicContext(
   input: unknown,
 ): Promise<ConfigurationActionResult> {
-  const context = await canManageConfiguration();
-  if (!context) return denied;
+  const access = await canManageConfiguration();
+  if (!access.ok) return { ok: false, message: access.message };
   const parsed = currentAcademicContextSchema.safeParse(input);
   if (!parsed.success)
     return { ok: false, message: "Choose a scheduled academic year and term." };

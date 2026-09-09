@@ -1,15 +1,12 @@
-import { hasApiPermission } from "@/lib/auth/api-access";
+import { guardApiRequest } from "@/lib/auth/api-access";
 import { getStudentReferenceData } from "@/features/students/server/queries";
 import { buildStudentTemplate } from "@/features/students/server/workbooks";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  if (!(await hasApiPermission("students.import")))
-    return Response.json(
-      { message: "Student import access is required." },
-      { status: 403 },
-    );
+  const access = await guardApiRequest("students.import", "data-export");
+  if (!access.ok) return access.response;
   try {
     const workbook = await buildStudentTemplate(
       await getStudentReferenceData(),
