@@ -12,22 +12,27 @@ import {
   PaymentMethodForm,
 } from "@/features/finance/components/category-forms";
 import { DeductionTypeForm } from "@/features/finance/components/deduction-type-form";
+import { SalaryConfigurationSettings } from "@/features/finance/components/salary-configuration-settings";
 import { getFinanceSettings } from "@/features/finance/server/queries";
-import { getDeductionTypes } from "@/features/finance/server/salary-queries";
+import {
+  getDeductionTypes,
+  getSalaryConfigurations,
+} from "@/features/finance/server/salary-queries";
 
 export default async function FinancialSettingsPage() {
   const context = await requirePermission("finance.settings.manage");
   if (!context) return <PermissionDenied />;
-  const [settings, deductionTypes] = await Promise.all([
+  const [settings, deductionTypes, salaries] = await Promise.all([
     getFinanceSettings(),
     getDeductionTypes(),
+    getSalaryConfigurations(),
   ]);
 
   return (
     <>
       <PageHeader
         title="Financial settings"
-        description={`Configure fee amounts, payment methods, income/expense categories, and salary deductions. The current fee period is ${settings.academicYearName} ${settings.academicTermName}; changes never rewrite posted history.`}
+        description={`Configure fee amounts, staff salaries, payment methods, income/expense categories, and salary deductions. The current fee period is ${settings.academicYearName} ${settings.academicTermName}; changes never rewrite posted history.`}
       />
       <div className="space-y-5">
         <BaseClassFeesForm
@@ -78,6 +83,11 @@ export default async function FinancialSettingsPage() {
             ))}
           </dl>
         </section>
+
+        <SalaryConfigurationSettings
+          rows={salaries.rows}
+          availableStaff={salaries.availableStaff}
+        />
 
         <section
           className="panel p-5"

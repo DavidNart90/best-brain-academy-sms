@@ -5,6 +5,8 @@ import { requireRateLimitedPermission } from "@/lib/security/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   deductionTypeInputSchema,
+  salaryConfigurationEndInputSchema,
+  salaryConfigurationInputSchema,
   salaryDeductionInputSchema,
   salaryRecordInputSchema,
   salaryReversalInputSchema,
@@ -32,8 +34,68 @@ function message(error: { code?: string; message?: string } | null) {
 
 function refreshSalary(id?: number, staffId?: number) {
   revalidatePath("/financials/salary-deductions");
+  revalidatePath("/settings/financials");
   if (id) revalidatePath(`/financials/salary-deductions/${id}`);
   if (staffId) revalidatePath(`/staff/${staffId}`);
+}
+
+export async function saveSalaryConfiguration(
+  input: unknown,
+): Promise<FinanceActionResult> {
+  const access = await requireRateLimitedPermission(
+    "finance.settings.manage",
+    "finance-settings",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
+  const parsed = salaryConfigurationInputSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false,
+      message:
+        parsed.error.issues[0]?.message ?? "Check the salary configuration.",
+    };
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase.rpc("set_staff_salary_configuration", {
+    request_key: parsed.data.requestKey,
+    target_staff_id: parsed.data.staffId,
+    target_gross_salary: Number(parsed.data.grossSalary),
+    target_effective_from: parsed.data.effectiveFrom,
+    target_notes: parsed.data.notes || undefined,
+  });
+  if (result.error) return { ok: false, message: message(result.error) };
+  refreshSalary(undefined, parsed.data.staffId);
+  return { ok: true, message: "Staff salary configuration saved." };
+}
+
+export async function endSalaryConfiguration(
+  input: unknown,
+): Promise<FinanceActionResult> {
+  const access = await requireRateLimitedPermission(
+    "finance.settings.manage",
+    "finance-settings",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
+  const parsed = salaryConfigurationEndInputSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false,
+      message:
+        parsed.error.issues[0]?.message ?? "Check the final salary month.",
+    };
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase.rpc("end_staff_salary_configuration", {
+    request_key: parsed.data.requestKey,
+    target_configuration_id: parsed.data.configurationId,
+    target_effective_to: parsed.data.effectiveTo,
+    target_reason: parsed.data.reason,
+  });
+  if (result.error) return { ok: false, message: message(result.error) };
+  const staffId = Number((result.data as { staffId?: number } | null)?.staffId);
+  refreshSalary(undefined, Number.isInteger(staffId) ? staffId : undefined);
+  return {
+    ok: true,
+    message: "Salary configuration ended; its history was preserved.",
+  };
 }
 
 export async function saveDeductionType(
@@ -105,7 +167,6 @@ export async function recordSalary(
     request_key: parsed.data.requestKey,
     target_staff_id: parsed.data.staffId,
     target_payroll_month: parsed.data.payrollMonth,
-    target_gross_salary: Number(parsed.data.grossSalary),
   });
   if (result.error) return { ok: false, message: message(result.error) };
   refreshSalary(undefined, parsed.data.staffId);

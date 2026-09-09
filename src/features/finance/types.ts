@@ -145,6 +145,28 @@ export type SalaryStaffOption = {
   staffNumber: string;
   name: string;
   position: string;
+  grossSalary: string;
+};
+
+export type SalaryConfiguration = {
+  id: number;
+  staffId: number;
+  staffNumber: string;
+  staffName: string;
+  position: string;
+  grossSalary: string;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  status: "active" | "ended";
+  notes: string | null;
+  endReason: string | null;
+};
+
+export type SalaryConfigurationStaffOption = {
+  id: number;
+  staffNumber: string;
+  name: string;
+  position: string;
 };
 
 export type SalaryListRow = {

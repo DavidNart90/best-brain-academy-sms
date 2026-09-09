@@ -4,6 +4,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { salaryListQuerySchema } from "../schemas";
 import type {
   DeductionType,
+  SalaryConfiguration,
+  SalaryConfigurationStaffOption,
   SalaryDetail,
   SalaryListRow,
   SalaryStaffOption,
@@ -40,24 +42,106 @@ export async function getDeductionTypes(): Promise<DeductionType[]> {
   }));
 }
 
-export async function getSalaryFormOptions(): Promise<{
-  staff: SalaryStaffOption[];
-  deductionTypes: DeductionType[];
-}> {
+export async function getSalaryFormOptions(
+  payrollMonth: string,
+): Promise<SalaryStaffOption[]> {
   const supabase = await createServerSupabaseClient();
-  const [staff, deductionTypes] = await Promise.all([
+  const [staff, configurations] = await Promise.all([
     supabase
       .from("staff_directory")
       .select("id,staff_number,full_name,position")
       .eq("status", "active")
       .order("full_name")
       .limit(250),
-    getDeductionTypes(),
+    supabase
+      .from("staff_salary_configurations")
+      .select("staff_id,gross_salary")
+      .lte("effective_from", payrollMonth)
+      .or(`effective_to.is.null,effective_to.gte.${payrollMonth}`)
+      .limit(250),
   ]);
-  if (staff.error) throw new Error(salaryLoadError);
+  if (staff.error || configurations.error) throw new Error(salaryLoadError);
+  const configuredSalary = new Map(
+    configurations.data.map((row) => [row.staff_id, row.gross_salary]),
+  );
+  return staff.data.flatMap((row) => {
+    const grossSalary = row.id ? configuredSalary.get(row.id) : undefined;
+    return row.id &&
+      row.staff_number &&
+      row.full_name &&
+      row.position &&
+      grossSalary !== undefined
+      ? [
+          {
+            id: row.id,
+            staffNumber: row.staff_number,
+            name: row.full_name,
+            position: row.position,
+            grossSalary: money(grossSalary),
+          },
+        ]
+      : [];
+  });
+}
+
+export async function getSalaryConfigurations(): Promise<{
+  rows: SalaryConfiguration[];
+  availableStaff: SalaryConfigurationStaffOption[];
+}> {
+  const supabase = await createServerSupabaseClient();
+  const [staff, configurations] = await Promise.all([
+    supabase
+      .from("staff_directory")
+      .select("id,staff_number,full_name,position,status")
+      .order("full_name")
+      .limit(250),
+    supabase
+      .from("staff_salary_configurations")
+      .select(
+        "id,staff_id,gross_salary,effective_from,effective_to,status,notes,end_reason",
+      )
+      .order("effective_from", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(250),
+  ]);
+  if (staff.error || configurations.error) throw new Error(salaryLoadError);
+  const staffById = new Map(staff.data.map((row) => [row.id, row]));
+  const rows = configurations.data.flatMap((row) => {
+    const member = staffById.get(row.staff_id);
+    return member?.id &&
+      member.staff_number &&
+      member.full_name &&
+      member.position
+      ? [
+          {
+            id: row.id,
+            staffId: member.id,
+            staffNumber: member.staff_number,
+            staffName: member.full_name,
+            position: member.position,
+            grossSalary: money(row.gross_salary),
+            effectiveFrom: row.effective_from,
+            effectiveTo: row.effective_to,
+            status: row.status as "active" | "ended",
+            notes: row.notes,
+            endReason: row.end_reason,
+          },
+        ]
+      : [];
+  });
+  const activeStaffIds = new Set<number>();
+  for (const row of rows) {
+    if (row.status === "active") activeStaffIds.add(row.staffId);
+  }
   return {
-    staff: staff.data.flatMap((row) =>
-      row.id && row.staff_number && row.full_name && row.position
+    rows,
+    availableStaff: staff.data.flatMap((row) =>
+      row.id &&
+      row.staff_number &&
+      row.full_name &&
+      row.position &&
+      row.status === "active" &&
+      !activeStaffIds.has(row.id)
         ? [
             {
               id: row.id,
@@ -68,7 +152,6 @@ export async function getSalaryFormOptions(): Promise<{
           ]
         : [],
     ),
-    deductionTypes,
   };
 }
 

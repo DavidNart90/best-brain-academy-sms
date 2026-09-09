@@ -9,6 +9,7 @@ import {
   Plus,
   RotateCcw,
 } from "lucide-react";
+import { Money } from "@/components/data-display/money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,12 @@ import {
 import type { DeductionType, SalaryStaffOption } from "../types";
 
 type Outcome = { ok: boolean; message: string } | null;
+
+const payrollMonthFormatter = new Intl.DateTimeFormat("en-GB", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
 
 function Notice({ outcome }: { outcome: Outcome }) {
   if (!outcome) return null;
@@ -50,6 +57,8 @@ export function SalaryEntryForm({
   const retry = useRef<{ payload: string; key: string } | null>(null);
   const [pending, setPending] = useState(false);
   const [outcome, setOutcome] = useState<Outcome>(null);
+  const [staffId, setStaffId] = useState("");
+  const selectedStaff = staff.find((item) => String(item.id) === staffId);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -59,7 +68,6 @@ export function SalaryEntryForm({
     const input = {
       staffId: String(form.get("staffId") ?? ""),
       payrollMonth: String(form.get("payrollMonth") ?? ""),
-      grossSalary: String(form.get("grossSalary") ?? ""),
     };
     const payload = JSON.stringify(input);
     if (retry.current?.payload !== payload)
@@ -76,6 +84,7 @@ export function SalaryEntryForm({
       if (result.ok) {
         retry.current = null;
         formElement.reset();
+        setStaffId("");
         router.refresh();
       }
     } catch {
@@ -97,8 +106,8 @@ export function SalaryEntryForm({
           Record monthly salary
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Gross salary is snapshotted once per staff member and month. Active
-          automatic deductions are applied immediately.
+          The configured gross salary is snapshotted once per staff member and
+          month. Active automatic deductions are applied immediately.
         </p>
       </div>
       <form
@@ -113,7 +122,8 @@ export function SalaryEntryForm({
             className="native-select"
             required
             disabled={pending}
-            defaultValue=""
+            value={staffId}
+            onChange={(event) => setStaffId(event.target.value)}
           >
             <option value="">Choose staff member</option>
             {staff.map((item) => (
@@ -127,27 +137,29 @@ export function SalaryEntryForm({
           <Label htmlFor="salary-month">Salary month</Label>
           <Input
             id="salary-month"
-            name="payrollMonth"
-            type="month"
-            required
-            disabled={pending}
-            defaultValue={payrollMonth.slice(0, 7)}
+            value={payrollMonthFormatter.format(
+              new Date(`${payrollMonth}T00:00:00Z`),
+            )}
+            readOnly
           />
+          <input type="hidden" name="payrollMonth" value={payrollMonth} />
         </div>
         <div className="field">
-          <Label htmlFor="salary-gross">Gross salary (GHS)</Label>
-          <Input
-            id="salary-gross"
-            name="grossSalary"
-            inputMode="decimal"
-            placeholder="0.00"
-            required
-            maxLength={15}
-            disabled={pending}
-          />
+          <p className="text-sm leading-none font-medium">
+            Configured gross salary
+          </p>
+          <div className="flex h-10 items-center rounded-md border border-input bg-muted/40 px-3 text-sm font-semibold tabular-nums">
+            {selectedStaff ? (
+              <Money value={selectedStaff.grossSalary} />
+            ) : (
+              <span className="font-normal text-muted-foreground">
+                Choose a staff member
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-end">
-          <Button type="submit" disabled={pending}>
+          <Button type="submit" disabled={pending || !selectedStaff}>
             {pending ? <LoaderCircle className="animate-spin" /> : <Plus />}
             {pending ? "Posting…" : "Post salary"}
           </Button>

@@ -21,12 +21,14 @@ import {
 import { requirePermission } from "@/lib/auth/access";
 import { hasPermission } from "@/lib/permissions/contracts";
 
+const monthFormatter = new Intl.DateTimeFormat("en-GB", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
 const monthName = (value: string) =>
-  new Intl.DateTimeFormat("en-GB", {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(`${value}T00:00:00Z`));
+  monthFormatter.format(new Date(`${value}T00:00:00Z`));
 
 export default async function SalaryDeductionsPage({
   searchParams,
@@ -36,8 +38,8 @@ export default async function SalaryDeductionsPage({
   const context = await requirePermission("financials.read");
   if (!context) return <PermissionDenied />;
   const result = await getSalaryPage(await searchParams);
-  const options = hasPermission(context, "finance.transactions.manage")
-    ? await getSalaryFormOptions()
+  const salaryStaff = hasPermission(context, "finance.transactions.manage")
+    ? await getSalaryFormOptions(result.month)
     : null;
   const search = new URLSearchParams({
     month: result.month,
@@ -52,15 +54,15 @@ export default async function SalaryDeductionsPage({
         description="Monthly gross salary, approved deductions and final net position. This register does not run PAYE, pensions or payslips."
       >
         <Button asChild variant="outline">
-          <Link href="/settings/financials">
+          <Link href="/settings/financials#staff-salaries">
             <Settings2 />
-            Deduction settings
+            Salary settings
           </Link>
         </Button>
       </PageHeader>
       <div className="space-y-5">
-        {options && (
-          <SalaryEntryForm staff={options.staff} payrollMonth={result.month} />
+        {salaryStaff && (
+          <SalaryEntryForm staff={salaryStaff} payrollMonth={result.month} />
         )}
         <section className="panel p-5" aria-labelledby="salary-period-title">
           <div className="flex flex-wrap items-end justify-between gap-4">

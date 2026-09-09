@@ -2093,6 +2093,80 @@ export type Database = {
           },
         ];
       };
+      staff_salary_configurations: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          effective_from: string;
+          effective_to: string | null;
+          end_reason: string | null;
+          gross_salary: number;
+          id: number;
+          notes: string | null;
+          staff_id: number;
+          status: string;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          effective_from: string;
+          effective_to?: string | null;
+          end_reason?: string | null;
+          gross_salary: number;
+          id?: never;
+          notes?: string | null;
+          staff_id: number;
+          status?: string;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          effective_from?: string;
+          effective_to?: string | null;
+          end_reason?: string | null;
+          gross_salary?: number;
+          id?: never;
+          notes?: string | null;
+          staff_id?: number;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_salary_configurations_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_salary_configurations_staff_id_fkey";
+            columns: ["staff_id"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_salary_configurations_staff_id_fkey";
+            columns: ["staff_id"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_salary_configurations_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       school_locations: {
         Row: {
           code: string;
@@ -2815,6 +2889,15 @@ export type Database = {
         Args: { target_assignment_id: number; target_ended_on: string };
         Returns: Json;
       };
+      end_staff_salary_configuration: {
+        Args: {
+          request_key: string;
+          target_configuration_id: number;
+          target_effective_to: string;
+          target_reason: string;
+        };
+        Returns: Json;
+      };
       finalize_administrator_invitation: {
         Args: {
           error_message?: string;
@@ -2980,7 +3063,6 @@ export type Database = {
       record_salary_record: {
         Args: {
           request_key: string;
-          target_gross_salary: number;
           target_payroll_month: string;
           target_staff_id: number;
         };
@@ -3058,6 +3140,16 @@ export type Database = {
       set_current_academic_context: {
         Args: { target_term_id: number; target_year_id: number };
         Returns: undefined;
+      };
+      set_staff_salary_configuration: {
+        Args: {
+          request_key: string;
+          target_effective_from: string;
+          target_gross_salary: number;
+          target_notes?: string;
+          target_staff_id: number;
+        };
+        Returns: Json;
       };
       set_student_photo: {
         Args: { target_photo_path: string; target_student_id: number };

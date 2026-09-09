@@ -239,7 +239,23 @@ export const salaryRecordInputSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}(-01)?$/, "Choose a salary month.")
     .transform((value) => (value.length === 7 ? `${value}-01` : value)),
+});
+const salaryMonthSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}(-01)?$/, "Choose a valid month.")
+  .transform((value) => (value.length === 7 ? `${value}-01` : value));
+export const salaryConfigurationInputSchema = z.object({
+  requestKey: z.uuid(),
+  staffId: idSchema,
   grossSalary: moneyAmountSchema,
+  effectiveFrom: salaryMonthSchema,
+  notes: z.string().trim().max(500).optional(),
+});
+export const salaryConfigurationEndInputSchema = z.object({
+  requestKey: z.uuid(),
+  configurationId: idSchema,
+  effectiveTo: salaryMonthSchema,
+  reason: z.string().trim().min(2, "A reason is required.").max(500),
 });
 export const salaryDeductionInputSchema = z.object({
   requestKey: z.uuid(),
@@ -266,5 +282,11 @@ export const salaryListQuerySchema = z.object({
 export type DeductionTypeInput = z.infer<typeof deductionTypeInputSchema>;
 export type DeductionTypeFormValues = z.input<typeof deductionTypeInputSchema>;
 export type SalaryRecordInput = z.infer<typeof salaryRecordInputSchema>;
+export type SalaryConfigurationInput = z.infer<
+  typeof salaryConfigurationInputSchema
+>;
+export type SalaryConfigurationEndInput = z.infer<
+  typeof salaryConfigurationEndInputSchema
+>;
 export type SalaryDeductionInput = z.infer<typeof salaryDeductionInputSchema>;
 export type SalaryReversalInput = z.infer<typeof salaryReversalInputSchema>;
