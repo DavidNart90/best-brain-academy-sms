@@ -15,7 +15,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
     <LazyMotion features={domAnimation} strict>
       <main className="flex min-h-dvh items-center justify-center bg-canvas sm:p-4 lg:p-7">
-        <div className="grid min-h-dvh w-full overflow-hidden bg-card sm:min-h-[calc(100dvh-2rem)] sm:max-w-[1240px] sm:rounded-2xl sm:border sm:border-border sm:shadow-[0_24px_80px_rgba(37,31,30,0.12)] lg:min-h-[min(760px,calc(100dvh-3.5rem))] lg:grid-cols-[1.12fr_0.88fr]">
+        <div className="grid min-h-dvh w-full overflow-hidden bg-card sm:min-h-[calc(100dvh-2rem)] sm:max-w-310 sm:rounded-2xl sm:border sm:border-border sm:shadow-[0_24px_80px_rgba(37,31,30,0.12)] lg:min-h-[min(760px,calc(100dvh-3.5rem))] lg:grid-cols-[1.12fr_0.88fr]">
           <section className="relative hidden min-h-0 overflow-hidden bg-auth-panel text-white lg:block">
             <m.div
               initial={reduceMotion ? false : { scale: 1.035 }}
@@ -41,7 +41,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
               aria-hidden="true"
             />
 
-            <div className="relative flex h-full min-h-[700px] flex-col justify-between p-12 xl:p-14">
+            <div className="relative flex h-full min-h-175 flex-col justify-between p-12 xl:p-14">
               <m.div
                 initial={reduceMotion ? false : { opacity: 0, y: -12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -52,13 +52,13 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
                   className="absolute inset-y-0 left-0 w-1 bg-primary"
                   aria-hidden="true"
                 />
-                <span className="flex size-[4.5rem] items-center justify-center">
+                <span className="flex size-18 items-center justify-center">
                   <Image
                     src="/api/branding/logo"
                     alt="Best Brain Academy crest"
                     width={1254}
                     height={1254}
-                    className="size-[4.5rem] object-contain drop-shadow-[0_6px_10px_rgba(65,31,27,0.14)]"
+                    className="size-18 object-contain drop-shadow-[0_6px_10px_rgba(65,31,27,0.14)]"
                     sizes="72px"
                     unoptimized
                     priority
@@ -78,12 +78,12 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
                 initial={reduceMotion ? false : { opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ ...transition, delay: reduceMotion ? 0 : 0.12 }}
-                className="max-w-[480px] pb-1"
+                className="max-w-120 pb-1"
               >
                 <p className="mb-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#f3b6b2]">
                   Service with diligence
                 </p>
-                <h2 className="max-w-[460px] text-[3.25rem] font-semibold leading-[1.02] tracking-[-0.045em] xl:text-[3.65rem]">
+                <h2 className="max-w-115 text-[3.25rem] font-semibold leading-[1.02] tracking-[-0.045em] xl:text-[3.65rem]">
                   Built for the rhythm of every school day.
                 </h2>
                 <p className="mt-6 max-w-md text-sm leading-6 text-white/76">
@@ -133,7 +133,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
               transition={{ ...transition, delay: reduceMotion ? 0 : 0.08 }}
               className="flex flex-1 items-center justify-center px-5 py-9 sm:px-10 lg:px-12 xl:px-16"
             >
-              <div className="w-full max-w-[400px]">{children}</div>
+              <div className="w-full max-w-100">{children}</div>
             </m.div>
           </section>
         </div>

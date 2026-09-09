@@ -44,7 +44,7 @@ export function AppShell({
       </a>
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-border bg-card px-4 lg:flex",
+          "app-sidebar fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-border bg-card px-4 lg:flex",
           compact ? "w-[72px] px-2" : "w-[232px]",
         )}
       >
@@ -71,8 +71,13 @@ export function AppShell({
           </Button>
         </div>
       </aside>
-      <div className={compact ? "lg:pl-[72px]" : "lg:pl-[232px]"}>
-        <header className="flex h-[72px] items-center justify-between gap-3 border-b border-border bg-card px-4 sm:px-7">
+      <div
+        className={cn(
+          "app-content",
+          compact ? "lg:pl-[72px]" : "lg:pl-[232px]",
+        )}
+      >
+        <header className="app-topbar flex h-[72px] items-center justify-between gap-3 border-b border-border bg-card px-4 sm:px-7">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>

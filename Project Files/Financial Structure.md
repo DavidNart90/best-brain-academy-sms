@@ -121,34 +121,33 @@ The daily receipt worksheet has four explicit income categories.
 
 This is the school-fee money actually received during the day, not the full value of invoices generated that day.
 
-For each entry, accounts staff select/search the student, see the applicable invoice and outstanding balance, enter the amount received, payment method, business date, and optional external reference/notes. The posted amount updates the student's balance atomically and produces a receipt.
+For each entry, accounts staff search live by invoice number or student name, select the applicable open invoice and see its outstanding balance, then enter the amount received, payment method, business date, and optional external reference/notes. The posted amount updates the student's balance atomically and produces a receipt. The entry label is **School Fees**.
 
 ### 6.2 Feeding-fee collections
 
 - Current standard amount: `GHS 10.00` per paying student per day.
 - The system must **not** automatically charge, generate, or assume this fee for every student or every school day.
-- An authorized accountant must manually record the feeding payment each day for each student who actually paid.
+- As directed by the Chief Engineer on 8 September 2026, the accountant records the aggregate amount actually received for the business day, without selecting students.
 - The amount must be configurable and effective-dated.
-- The accountant explicitly selects or enters the students who paid for the business date; no entry means no feeding-fee collection was recorded.
-- A student who did not pay contributes `GHS 0.00` to collected income; the system must not fabricate a payment.
-- Prevent an accidental duplicate feeding payment for the same student and business date unless an authorized correction/reversal explains it.
-- Preserve student, amount, date, collector, payment method, and reversal history for every posted line.
+- No entry means no collection was recorded; do not infer receipts from enrollment counts.
+- Prevent duplicate aggregate totals for the same business date and payment method. Reverse a posted total before recording its replacement.
+- Preserve amount, date, collector, payment method, and reversal history. Existing student-linked receipts remain readable with their original references.
 
-The system may provide a roster-style bulk entry screen, but each student line remains individually traceable. A batch is an input convenience, not the accounting source of truth.
+This aggregate-entry decision supersedes the earlier per-student feeding roster requirement.
 
 ### 6.3 Admission-fee collections
 
 - Current amount: `GHS 50.00` for a new student.
 - The amount must be configurable and effective-dated.
-- Link the receipt to the admitted student and admission record.
-- Prevent an accidental second admission-fee charge/collection for the same admission.
+- As directed on 8 September 2026, record the day's aggregate admission-fee amount without choosing a student.
+- Prevent duplicate active totals for the same business date and payment method; preserve historical student-linked receipts and audited reversals.
 - A waiver, refund, or repeat-admission rule requires later approval; it must not be invented during implementation.
 
 ### 6.4 Miscellaneous collections
 
 Use miscellaneous income only for approved receipts that are not school fees, feeding fees, or admission fees. Each entry requires:
 
-- a configurable miscellaneous-income category;
+- a staff-entered income name, as directed on 8 September 2026; no category selection is required;
 - business date;
 - amount;
 - clear description/purpose;
@@ -161,15 +160,15 @@ The system must not use a generic miscellaneous entry to bypass student balances
 
 ## 7. Daily cashflow entry experience
 
-The supplied notebook demonstrates the school's current habit of recording school-fee, feeding-fee, and admission-fee income by weekday and then calculating a daily and weekly total. The application should preserve that speed and familiarity, but daily and weekly figures must be calculated from individually posted transactions rather than entered as unsupported aggregate totals.
+The supplied notebook demonstrates the school's current habit of recording school-fee, feeding-fee, and admission-fee income by weekday and then calculating a daily and weekly total. The application calculates totals from posted records: school fees remain invoice-linked payments, while feeding/admission records are explicitly identified daily aggregates under the 8 September 2026 decision. Do not infer student-level payment status from those aggregates.
 
 The accounts workspace should make frequent income and expense entry fast without weakening control:
 
 1. Select the business date, defaulting visibly to today.
 2. Choose money received or money spent.
-3. For money received, choose School Fees, Feeding, Admission, or Miscellaneous.
+3. For money received, choose School Fees, Feeding fees, Admission fees, or Miscellaneous income.
 4. For money spent, choose a configurable expense category and enter a positive amount and clear description.
-5. Search/select the student where required; feeding payments are entered manually and are never pre-posted automatically.
+5. Search/select an invoice for School Fees. Feeding/admission entries use manually recorded daily totals, without student selection.
 6. Show the relevant class, location, invoice, outstanding balance, and default configured amount where applicable.
 7. Enter the amount, payment method, reference, and notes; the quick expense path always requires the amount and description.
 8. Preview entries plus receipt, expense, and net-cash totals for the selected business date.
@@ -181,6 +180,8 @@ For roster/batch entry, validation occurs before posting. If an atomic batch fai
 The daily summary must keep the following figures distinct: gross receipts, expenses, and net cashflow. The interface must never make an expense look like negative income or make an invoice look like cash received.
 
 ## 8. Expenses
+
+When the accountant selects **Other**, require an **Other expense name** field. Store the entered name as the posted description so it appears in expense history and vouchers.
 
 Expenses are outgoing amounts and are not negative income records. Every expense must have:
 
@@ -249,7 +250,7 @@ Monthly Final Position
   = Monthly Operating Net - Valid Monthly Salary Deductions
 ```
 
-This structure implements the supplied rule while keeping the calculation explainable. Weekly and monthly values are derived from authoritative dated transactions; users do not manually enter aggregate totals.
+This structure implements the supplied rule while keeping the calculation explainable. Weekly and monthly values are derived from authoritative dated transactions, including the explicitly posted daily feeding/admission aggregates; users do not enter separate weekly or monthly totals.
 
 Reports must display at least:
 

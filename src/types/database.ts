@@ -264,65 +264,71 @@ export type Database = {
       };
       admission_receipts: {
         Row: {
-          admission_number_snapshot: string;
+          admission_number_snapshot: string | null;
           amount: number;
           business_date: string;
-          class_name_snapshot: string;
+          class_name_snapshot: string | null;
+          collection_scope: string;
           created_at: string;
           created_by: string;
           external_reference: string | null;
           id: number;
           notes: string | null;
           payment_method_id: number;
+          payment_method_name_snapshot: string | null;
           receipt_number: string;
           reversal_reason: string | null;
           reversed_at: string | null;
           reversed_by: string | null;
           status: string;
-          student_id: number;
-          student_name_snapshot: string;
+          student_id: number | null;
+          student_name_snapshot: string | null;
           updated_at: string;
           updated_by: string;
         };
         Insert: {
-          admission_number_snapshot: string;
+          admission_number_snapshot?: string | null;
           amount: number;
           business_date: string;
-          class_name_snapshot: string;
+          class_name_snapshot?: string | null;
+          collection_scope?: string;
           created_at?: string;
           created_by: string;
           external_reference?: string | null;
           id?: never;
           notes?: string | null;
           payment_method_id: number;
+          payment_method_name_snapshot?: string | null;
           receipt_number: string;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
           status?: string;
-          student_id: number;
-          student_name_snapshot: string;
+          student_id?: number | null;
+          student_name_snapshot?: string | null;
           updated_at?: string;
           updated_by: string;
         };
         Update: {
-          admission_number_snapshot?: string;
+          admission_number_snapshot?: string | null;
           amount?: number;
           business_date?: string;
-          class_name_snapshot?: string;
+          class_name_snapshot?: string | null;
+          collection_scope?: string;
           created_at?: string;
           created_by?: string;
           external_reference?: string | null;
           id?: never;
           notes?: string | null;
           payment_method_id?: number;
+          payment_method_name_snapshot?: string | null;
           receipt_number?: string;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
           status?: string;
-          student_id?: number;
-          student_name_snapshot?: string;
+          student_id?: number | null;
+          student_name_snapshot?: string | null;
           updated_at?: string;
           updated_by?: string;
         };
@@ -767,65 +773,71 @@ export type Database = {
       };
       feeding_receipts: {
         Row: {
-          admission_number_snapshot: string;
+          admission_number_snapshot: string | null;
           amount: number;
           business_date: string;
-          class_name_snapshot: string;
+          class_name_snapshot: string | null;
+          collection_scope: string;
           created_at: string;
           created_by: string;
           external_reference: string | null;
           id: number;
           notes: string | null;
           payment_method_id: number;
+          payment_method_name_snapshot: string | null;
           receipt_number: string;
           reversal_reason: string | null;
           reversed_at: string | null;
           reversed_by: string | null;
           status: string;
-          student_id: number;
-          student_name_snapshot: string;
+          student_id: number | null;
+          student_name_snapshot: string | null;
           updated_at: string;
           updated_by: string;
         };
         Insert: {
-          admission_number_snapshot: string;
+          admission_number_snapshot?: string | null;
           amount: number;
           business_date: string;
-          class_name_snapshot: string;
+          class_name_snapshot?: string | null;
+          collection_scope?: string;
           created_at?: string;
           created_by: string;
           external_reference?: string | null;
           id?: never;
           notes?: string | null;
           payment_method_id: number;
+          payment_method_name_snapshot?: string | null;
           receipt_number: string;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
           status?: string;
-          student_id: number;
-          student_name_snapshot: string;
+          student_id?: number | null;
+          student_name_snapshot?: string | null;
           updated_at?: string;
           updated_by: string;
         };
         Update: {
-          admission_number_snapshot?: string;
+          admission_number_snapshot?: string | null;
           amount?: number;
           business_date?: string;
-          class_name_snapshot?: string;
+          class_name_snapshot?: string | null;
+          collection_scope?: string;
           created_at?: string;
           created_by?: string;
           external_reference?: string | null;
           id?: never;
           notes?: string | null;
           payment_method_id?: number;
+          payment_method_name_snapshot?: string | null;
           receipt_number?: string;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
           status?: string;
-          student_id?: number;
-          student_name_snapshot?: string;
+          student_id?: number | null;
+          student_name_snapshot?: string | null;
           updated_at?: string;
           updated_by?: string;
         };
@@ -1204,7 +1216,7 @@ export type Database = {
           description: string;
           external_reference: string | null;
           id: number;
-          misc_income_category_id: number;
+          misc_income_category_id: number | null;
           notes: string | null;
           payer_name: string | null;
           payment_method_id: number;
@@ -1225,7 +1237,7 @@ export type Database = {
           description: string;
           external_reference?: string | null;
           id?: never;
-          misc_income_category_id: number;
+          misc_income_category_id?: number | null;
           notes?: string | null;
           payer_name?: string | null;
           payment_method_id: number;
@@ -1246,7 +1258,7 @@ export type Database = {
           description?: string;
           external_reference?: string | null;
           id?: never;
-          misc_income_category_id?: number;
+          misc_income_category_id?: number | null;
           notes?: string | null;
           payer_name?: string | null;
           payment_method_id?: number;
@@ -2328,112 +2340,6 @@ export type Database = {
         Args: { target_invoice_id: number; target_reason: string };
         Returns: Json;
       };
-      reverse_admission_receipt: {
-        Args: {
-          request_fingerprint: string;
-          request_key: string;
-          target_reason: string;
-          target_receipt_id: number;
-        };
-        Returns: Json;
-      };
-      reverse_feeding_receipt: {
-        Args: {
-          request_fingerprint: string;
-          request_key: string;
-          target_reason: string;
-          target_receipt_id: number;
-        };
-        Returns: Json;
-      };
-      reverse_misc_receipt: {
-        Args: {
-          request_fingerprint: string;
-          request_key: string;
-          target_reason: string;
-          target_receipt_id: number;
-        };
-        Returns: Json;
-      };
-      reverse_school_fee_payment: {
-        Args: {
-          request_fingerprint: string;
-          request_key: string;
-          target_payment_id: number;
-          target_reason: string;
-        };
-        Returns: Json;
-      };
-      record_admission_receipt: {
-        Args: {
-          request_key: string;
-          request_fingerprint: string;
-          target_student_id: number;
-          receipt_amount: number;
-          target_business_date: string;
-          target_payment_method_id: number;
-          target_external_reference?: string;
-          target_notes?: string;
-        };
-        Returns: Json;
-      };
-      record_expense: {
-        Args: {
-          request_key: string;
-          request_fingerprint: string;
-          target_expense_category_id: number;
-          expense_amount: number;
-          target_business_date: string;
-          target_description: string;
-          target_payment_method_id: number;
-          target_external_reference?: string;
-          target_attachment_path?: string;
-          target_notes?: string;
-        };
-        Returns: Json;
-      };
-      record_feeding_receipt: {
-        Args: {
-          request_key: string;
-          request_fingerprint: string;
-          target_student_id: number;
-          receipt_amount: number;
-          target_business_date: string;
-          target_payment_method_id: number;
-          target_external_reference?: string;
-          target_notes?: string;
-        };
-        Returns: Json;
-      };
-      record_misc_receipt: {
-        Args: {
-          request_key: string;
-          request_fingerprint: string;
-          target_misc_income_category_id: number;
-          target_description: string;
-          receipt_amount: number;
-          target_business_date: string;
-          target_payment_method_id: number;
-          target_student_id?: number;
-          target_payer_name?: string;
-          target_external_reference?: string;
-          target_notes?: string;
-        };
-        Returns: Json;
-      };
-      record_school_fee_payment: {
-        Args: {
-          request_key: string;
-          request_fingerprint: string;
-          target_invoice_id: number;
-          payment_amount: number;
-          target_payment_method_id: number;
-          target_business_date: string;
-          target_external_reference?: string;
-          target_notes?: string;
-        };
-        Returns: Json;
-      };
       change_administrator_role: {
         Args: { target_role_code: string; target_user_id: string };
         Returns: Json;
@@ -2462,15 +2368,6 @@ export type Database = {
           target_academic_term_id: number;
           target_academic_year_id: number;
           target_student_id?: number;
-        };
-        Returns: Json;
-      };
-      void_expense: {
-        Args: {
-          request_fingerprint: string;
-          request_key: string;
-          target_expense_id: number;
-          target_reason: string;
         };
         Returns: Json;
       };
@@ -2507,6 +2404,137 @@ export type Database = {
         Args: { payload: Json };
         Returns: Json;
       };
+      record_admission_receipt: {
+        Args: {
+          receipt_amount: number;
+          request_fingerprint: string;
+          request_key: string;
+          target_business_date: string;
+          target_external_reference?: string;
+          target_notes?: string;
+          target_payment_method_id: number;
+          target_student_id: number;
+        };
+        Returns: Json;
+      };
+      record_daily_collection: {
+        Args: {
+          collection_type: string;
+          receipt_amount: number;
+          request_key: string;
+          target_business_date: string;
+          target_external_reference?: string;
+          target_notes?: string;
+          target_payment_method_id: number;
+        };
+        Returns: Json;
+      };
+      record_expense: {
+        Args: {
+          expense_amount: number;
+          request_fingerprint: string;
+          request_key: string;
+          target_attachment_path?: string;
+          target_business_date: string;
+          target_description: string;
+          target_expense_category_id: number;
+          target_external_reference?: string;
+          target_notes?: string;
+          target_payment_method_id: number;
+        };
+        Returns: Json;
+      };
+      record_feeding_receipt: {
+        Args: {
+          receipt_amount: number;
+          request_fingerprint: string;
+          request_key: string;
+          target_business_date: string;
+          target_external_reference?: string;
+          target_notes?: string;
+          target_payment_method_id: number;
+          target_student_id: number;
+        };
+        Returns: Json;
+      };
+      record_misc_receipt: {
+        Args: {
+          receipt_amount: number;
+          request_fingerprint: string;
+          request_key: string;
+          target_business_date: string;
+          target_description: string;
+          target_external_reference?: string;
+          target_misc_income_category_id: number;
+          target_notes?: string;
+          target_payer_name?: string;
+          target_payment_method_id: number;
+          target_student_id?: number;
+        };
+        Returns: Json;
+      };
+      record_named_misc_receipt: {
+        Args: {
+          income_name: string;
+          receipt_amount: number;
+          request_key: string;
+          target_business_date: string;
+          target_external_reference?: string;
+          target_notes?: string;
+          target_payer_name?: string;
+          target_payment_method_id: number;
+        };
+        Returns: Json;
+      };
+      record_school_fee_payment: {
+        Args: {
+          payment_amount: number;
+          request_fingerprint: string;
+          request_key: string;
+          target_business_date: string;
+          target_external_reference?: string;
+          target_invoice_id: number;
+          target_notes?: string;
+          target_payment_method_id: number;
+        };
+        Returns: Json;
+      };
+      reverse_admission_receipt: {
+        Args: {
+          request_fingerprint: string;
+          request_key: string;
+          target_reason: string;
+          target_receipt_id: number;
+        };
+        Returns: Json;
+      };
+      reverse_feeding_receipt: {
+        Args: {
+          request_fingerprint: string;
+          request_key: string;
+          target_reason: string;
+          target_receipt_id: number;
+        };
+        Returns: Json;
+      };
+      reverse_misc_receipt: {
+        Args: {
+          request_fingerprint: string;
+          request_key: string;
+          target_reason: string;
+          target_receipt_id: number;
+        };
+        Returns: Json;
+      };
+      reverse_school_fee_payment: {
+        Args: {
+          request_fingerprint: string;
+          request_key: string;
+          target_payment_id: number;
+          target_reason: string;
+        };
+        Returns: Json;
+      };
       set_administrator_status: {
         Args: { target_status: string; target_user_id: string };
         Returns: Json;
@@ -2521,6 +2549,15 @@ export type Database = {
       };
       update_staff: {
         Args: { payload: Json; target_staff_id: number };
+        Returns: Json;
+      };
+      void_expense: {
+        Args: {
+          request_fingerprint: string;
+          request_key: string;
+          target_expense_id: number;
+          target_reason: string;
+        };
         Returns: Json;
       };
     };

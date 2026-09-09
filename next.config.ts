@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   agentRules: false,
   allowedDevOrigins: ["127.0.0.1"],
   poweredByHeader: false,
+  // Never serialize financial forms (or other Server Function arguments) into logs.
+  logging: { serverFunctions: false },
   experimental: { serverActions: { bodySizeLimit: "16kb" } },
   async headers() {
     return [

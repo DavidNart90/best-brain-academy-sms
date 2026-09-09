@@ -1,27 +1,32 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, LoaderCircle, PlusCircle } from "lucide-react";
+import { cloneElement, useRef, useState, type ReactElement } from "react";
+import { useRouter } from "next/navigation";
+import {
+  AlertCircle,
+  CheckCircle2,
+  LoaderCircle,
+  PlusCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { recordFinanceAction } from "../server/actions";
+import { InvoiceSearch } from "./invoice-search";
+import type { OpenInvoiceOption } from "../types";
 
 export type CashflowFormOptions = {
-  students: Array<{ id: number; label: string; admissionNumber: string }>;
-  invoices: Array<{
-    id: number;
-    invoice_number: string;
-    student_name_snapshot: string;
-    outstanding: number;
-  }>;
   paymentMethods: Array<{
     id: number;
     name: string;
     requires_reference: boolean;
   }>;
-  expenseCategories: Array<{ id: number; name: string; status: string }>;
-  miscIncomeCategories: Array<{ id: number; name: string; status: string }>;
+  expenseCategories: Array<{
+    id: number;
+    code: string;
+    name: string;
+    status: string;
+  }>;
 };
 
 type Mode =
@@ -30,12 +35,11 @@ type Mode =
   | "admission_receipt"
   | "misc_receipt"
   | "expense";
-
 const modes: Array<{ value: Mode; label: string }> = [
-  { value: "school_fee_payment", label: "School fee" },
-  { value: "feeding_receipt", label: "Feeding" },
-  { value: "admission_receipt", label: "Admission" },
-  { value: "misc_receipt", label: "Miscellaneous" },
+  { value: "school_fee_payment", label: "School Fees" },
+  { value: "feeding_receipt", label: "Feeding fees" },
+  { value: "admission_receipt", label: "Admission fees" },
+  { value: "misc_receipt", label: "Miscellaneous income" },
   { value: "expense", label: "Expense" },
 ];
 
@@ -46,71 +50,105 @@ export function CashflowEntryForm({
   options: CashflowFormOptions;
   businessDate: string;
 }) {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>("school_fee_payment");
   const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState("");
+  const inFlight = useRef(false);
+  const retry = useRef<{ payload: string; key: string } | null>(null);
+  const [outcome, setOutcome] = useState<{
+    ok: boolean;
+    message: string;
+  } | null>(null);
   const [selectedMethod, setSelectedMethod] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [invoice, setInvoice] = useState<OpenInvoiceOption | null>(null);
+  const [formVersion, setFormVersion] = useState(0);
   const selectedPaymentMethod = options.paymentMethods.find(
     (item) => String(item.id) === selectedMethod,
   );
+  const category = options.expenseCategories.find(
+    (item) => String(item.id) === categoryId,
+  );
+  const isOtherExpense =
+    category?.code.toUpperCase() === "OTHER" ||
+    category?.name.trim().toLowerCase() === "other";
+  const dailyTotal = mode === "feeding_receipt" || mode === "admission_receipt";
+
+  function resetControls() {
+    setSelectedMethod("");
+    setCategoryId("");
+    setInvoice(null);
+    setFormVersion((version) => version + 1);
+  }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setPending(true);
-    setMessage("");
-    const form = new FormData(event.currentTarget);
-    const requestKey = crypto.randomUUID();
-    const requestFingerprint = JSON.stringify({
-      mode,
-      date: businessDate,
-      amount: form.get("amount"),
-      record: form.get("recordId"),
-    });
+    if (inFlight.current) return;
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    if (mode === "school_fee_payment" && !invoice) {
+      setOutcome({
+        ok: false,
+        message: "Select an invoice from the search results first.",
+      });
+      return;
+    }
     const base = {
-      requestKey,
-      requestFingerprint,
       amount: String(form.get("amount") ?? ""),
       businessDate,
-      paymentMethodId: form.get("paymentMethodId"),
+      paymentMethodId: selectedMethod,
       externalReference: String(form.get("externalReference") ?? ""),
       notes: String(form.get("notes") ?? ""),
     };
-    const recordId = form.get("recordId");
-    const result = await recordFinanceAction(
-      mode,
+    const input =
       mode === "school_fee_payment"
-        ? { ...base, invoiceId: recordId }
-        : mode === "feeding_receipt" || mode === "admission_receipt"
-          ? { ...base, studentId: recordId }
-          : mode === "misc_receipt"
+        ? { ...base, invoiceId: invoice?.id }
+        : mode === "misc_receipt"
+          ? {
+              ...base,
+              description: String(form.get("description") ?? ""),
+              payerName: String(form.get("payerName") ?? ""),
+              studentId: null,
+            }
+          : mode === "expense"
             ? {
                 ...base,
-                categoryId: form.get("categoryId"),
-                description: form.get("description"),
-                payerName: form.get("payerName"),
-                studentId: form.get("studentId"),
+                categoryId,
+                description: String(form.get("description") ?? ""),
+                attachmentPath: String(form.get("attachmentPath") ?? ""),
               }
-            : {
-                ...base,
-                categoryId: form.get("categoryId"),
-                description: form.get("description"),
-                attachmentPath: form.get("attachmentPath"),
-              },
-    );
-    setMessage(result.message);
-    if (result.ok) event.currentTarget.reset();
-    setPending(false);
+            : base;
+    const payload = JSON.stringify({ mode, input });
+    if (retry.current?.payload !== payload)
+      retry.current = { payload, key: crypto.randomUUID() };
+    inFlight.current = true;
+    setPending(true);
+    setOutcome(null);
+    try {
+      const result = await recordFinanceAction(mode, {
+        ...input,
+        requestKey: retry.current.key,
+        // SQL derives the authoritative fingerprint from the full validated arguments.
+        requestFingerprint: retry.current.key,
+      });
+      setOutcome(result);
+      if (result.ok) {
+        retry.current = null;
+        formElement.reset();
+        resetControls();
+        router.refresh();
+      }
+    } catch {
+      setOutcome({
+        ok: false,
+        message:
+          "We could not confirm the result. Retry without changing the fields to safely check this transaction.",
+      });
+    } finally {
+      inFlight.current = false;
+      setPending(false);
+    }
   }
-
-  function changeMode(nextMode: Mode) {
-    setMode(nextMode);
-    setMessage("");
-    setSelectedMethod("");
-  }
-
-  const needsStudent =
-    mode === "feeding_receipt" || mode === "admission_receipt";
-  const needsCategory = mode === "misc_receipt" || mode === "expense";
 
   return (
     <section className="panel p-5" aria-labelledby="cashflow-entry-title">
@@ -120,157 +158,168 @@ export function CashflowEntryForm({
             Record a transaction
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Post one receipt or expense for the selected business date.
+            Post money received or spent for the selected business date.
           </p>
         </div>
         <span className="rounded-md bg-brand-subtle px-3 py-2 text-xs font-medium text-primary">
           {businessDate}
         </span>
       </div>
-
       <div
-        className="mt-4 grid gap-2 sm:grid-cols-5"
+        className="mt-4 grid gap-2 sm:grid-cols-3 xl:grid-cols-5"
         aria-label="Transaction type"
       >
         {modes.map((item) => (
           <button
             key={item.value}
             type="button"
-            onClick={() => changeMode(item.value)}
-            className={`min-h-10 rounded-md border px-3 text-sm font-medium transition-colors ${mode === item.value ? "border-primary bg-brand-subtle text-primary" : "border-border bg-background hover:bg-muted"}`}
+            disabled={pending}
+            onClick={() => {
+              setMode(item.value);
+              setOutcome(null);
+              resetControls();
+            }}
+            className={`min-h-11 rounded-md border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${mode === item.value ? "border-primary bg-brand-subtle text-primary" : "border-border bg-background hover:bg-muted"}`}
             aria-pressed={mode === item.value}
           >
             {item.label}
           </button>
         ))}
       </div>
-
-      <form
-        className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-        onSubmit={submit}
-      >
-        {mode === "school_fee_payment" && (
-          <Field label="Open invoice" name="recordId" required>
-            <select name="recordId" className="native-select" required>
-              <option value="">Choose invoice</option>
-              {options.invoices.map((invoice) => (
-                <option key={invoice.id} value={invoice.id}>
-                  {invoice.invoice_number} · {invoice.student_name_snapshot} ·
-                  GHS {invoice.outstanding.toFixed(2)} due
-                </option>
-              ))}
-            </select>
-          </Field>
-        )}
-        {needsStudent && (
-          <Field label="Student" name="recordId" required>
-            <select name="recordId" className="native-select" required>
-              <option value="">Choose student</option>
-              {options.students.map((student) => (
-                <option key={student.id} value={student.id}>
-                  {student.label} · {student.admissionNumber}
-                </option>
-              ))}
-            </select>
-          </Field>
-        )}
-        {needsCategory && (
-          <Field
-            label={mode === "expense" ? "Expense category" : "Income category"}
-            name="categoryId"
-            required
-          >
-            <select name="categoryId" className="native-select" required>
-              <option value="">Choose category</option>
-              {(mode === "expense"
-                ? options.expenseCategories
-                : options.miscIncomeCategories
-              ).map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-        )}
-        {mode === "misc_receipt" && (
-          <Field label="Student (optional)" name="studentId">
-            <select name="studentId" className="native-select">
-              <option value="">Not linked to a student</option>
-              {options.students.map((student) => (
-                <option key={student.id} value={student.id}>
-                  {student.label}
-                </option>
-              ))}
-            </select>
-          </Field>
-        )}
-        {mode === "misc_receipt" && (
-          <Field label="Payer name (optional)" name="payerName">
-            <Input name="payerName" maxLength={160} />
-          </Field>
-        )}
-        {(mode === "misc_receipt" || mode === "expense") && (
-          <Field label="Description" name="description" required>
-            <Input name="description" required maxLength={500} />
-          </Field>
-        )}
-        <Field label="Amount (GHS)" name="amount" required>
-          <Input
-            name="amount"
-            inputMode="decimal"
-            placeholder="0.00"
-            required
-          />
-        </Field>
-        <Field label="Payment method" name="paymentMethodId" required>
-          <select
-            name="paymentMethodId"
-            className="native-select"
-            required
-            value={selectedMethod}
-            onChange={(event) => setSelectedMethod(event.target.value)}
-          >
-            <option value="">Choose method</option>
-            {options.paymentMethods.map((method) => (
-              <option key={method.id} value={method.id}>
-                {method.name}
-                {method.requires_reference ? " · reference required" : ""}
-              </option>
-            ))}
-          </select>
-        </Field>
-        {selectedPaymentMethod?.requires_reference && (
-          <Field label="External reference" name="externalReference" required>
-            <Input name="externalReference" required maxLength={120} />
-          </Field>
-        )}
-        {mode === "expense" && (
-          <Field label="Attachment path (optional)" name="attachmentPath">
-            <Input name="attachmentPath" maxLength={300} />
-          </Field>
-        )}
-        <Field label="Notes (optional)" name="notes">
-          <Input name="notes" maxLength={500} />
-        </Field>
-        <div className="flex items-end sm:col-span-2 lg:col-span-3">
-          <Button type="submit" disabled={pending}>
-            {pending ? (
-              <LoaderCircle className="animate-spin" />
-            ) : (
-              <PlusCircle />
-            )}
-            {pending ? "Posting..." : "Post transaction"}
-          </Button>
-        </div>
-      </form>
-      {message && (
-        <p
-          className="mt-4 flex items-center gap-2 text-sm font-medium"
-          role="status"
+      {dailyTotal && (
+        <p className="mt-4 rounded-md bg-muted p-3 text-sm">
+          Enter the day&apos;s total{" "}
+          {mode === "feeding_receipt" ? "feeding" : "admission"} collections for
+          the selected payment method. Each method can be posted once per day.
+          To correct a posted total, reverse it in Receipts before posting its
+          replacement.
+        </p>
+      )}
+      <form key={mode + "-" + formVersion} className="mt-5" onSubmit={submit}>
+        <fieldset
+          disabled={pending}
+          className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3"
         >
-          <CheckCircle2 className="size-4 text-success" />
-          {message}
+          <legend className="sr-only">Transaction details</legend>
+          {mode === "school_fee_payment" && (
+            <InvoiceSearch selected={invoice} onSelect={setInvoice} />
+          )}
+          {mode === "expense" && (
+            <Field label="Expense category" name="categoryId" required>
+              <select
+                name="categoryId"
+                className="native-select"
+                required
+                value={categoryId}
+                onChange={(event) => setCategoryId(event.target.value)}
+              >
+                <option value="">Choose category</option>
+                {options.expenseCategories.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {(mode === "misc_receipt" || mode === "expense") && (
+            <Field
+              label={
+                mode === "misc_receipt"
+                  ? "Income name"
+                  : isOtherExpense
+                    ? "Other expense name"
+                    : "Description"
+              }
+              name="description"
+              required
+            >
+              <Input
+                name="description"
+                required
+                minLength={2}
+                maxLength={500}
+                placeholder={
+                  mode === "misc_receipt"
+                    ? "e.g. Exercise book sales"
+                    : isOtherExpense
+                      ? "Name the expense"
+                      : "What was this expense for?"
+                }
+              />
+            </Field>
+          )}
+          {mode === "misc_receipt" && (
+            <Field label="Payer name (optional)" name="payerName">
+              <Input name="payerName" maxLength={160} />
+            </Field>
+          )}
+          <Field
+            label={dailyTotal ? "Daily total (GHS)" : "Amount (GHS)"}
+            name="amount"
+            required
+          >
+            <Input
+              name="amount"
+              inputMode="decimal"
+              placeholder="0.00"
+              required
+              maxLength={15}
+            />
+          </Field>
+          <Field label="Payment method" name="paymentMethodId" required>
+            <select
+              name="paymentMethodId"
+              className="native-select"
+              required
+              value={selectedMethod}
+              onChange={(event) => setSelectedMethod(event.target.value)}
+            >
+              <option value="">Choose method</option>
+              {options.paymentMethods.map((method) => (
+                <option key={method.id} value={method.id}>
+                  {method.name}
+                  {method.requires_reference ? " · reference required" : ""}
+                </option>
+              ))}
+            </select>
+          </Field>
+          {selectedPaymentMethod?.requires_reference && (
+            <Field label="External reference" name="externalReference" required>
+              <Input name="externalReference" required maxLength={120} />
+            </Field>
+          )}
+          {mode === "expense" && (
+            <Field label="Attachment path (optional)" name="attachmentPath">
+              <Input name="attachmentPath" maxLength={300} />
+            </Field>
+          )}
+          <Field label="Notes (optional)" name="notes">
+            <Input name="notes" maxLength={500} />
+          </Field>
+          <div className="flex items-end sm:col-span-2 lg:col-span-3">
+            <Button type="submit" disabled={pending}>
+              {pending ? (
+                <LoaderCircle className="animate-spin" />
+              ) : (
+                <PlusCircle />
+              )}
+              {pending ? "Posting..." : "Post transaction"}
+            </Button>
+          </div>
+        </fieldset>
+      </form>
+      {outcome && (
+        <p
+          className={`mt-4 flex items-start gap-2 text-sm font-medium ${outcome.ok ? "text-success" : "text-destructive"}`}
+          role={outcome.ok ? "status" : "alert"}
+        >
+          {outcome.ok ? (
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          ) : (
+            <AlertCircle className="mt-0.5 size-4 shrink-0" />
+          )}
+          {outcome.message}
         </p>
       )}
     </section>
@@ -286,16 +335,16 @@ function Field({
   label: string;
   name: string;
   required?: boolean;
-  children: React.ReactNode;
+  children: ReactElement<{ id?: string }>;
 }) {
-  const id = `cashflow-${name}`;
+  const id = "cashflow-" + name;
   return (
-    <div className="space-y-2">
+    <div className="min-w-0 space-y-2">
       <Label htmlFor={id}>
         {label}
         {required ? <span className="text-destructive"> *</span> : null}
       </Label>
-      {children ?? <Input id={id} name={name} />}
+      {cloneElement(children, { id })}
     </div>
   );
 }

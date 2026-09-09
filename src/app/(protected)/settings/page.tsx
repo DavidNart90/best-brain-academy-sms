@@ -195,10 +195,16 @@ export default async function SettingsPage() {
       </section>
 
       <aside className="mt-6 border-l-2 border-primary/55 bg-brand-subtle/55 px-4 py-3">
-        <p className="text-sm font-medium">Finance configuration comes next</p>
+        <p className="text-sm font-medium">Finance configuration</p>
         <p className="mt-1 text-xs leading-5 text-muted-foreground">
-          Fee categories, document numbering and payment settings remain locked
-          until the Phase 3 finance foundation is implemented and verified.
+          Manage fee amounts, payment methods and document settings in{" "}
+          <Link
+            href="/settings/financials"
+            className="font-medium text-primary underline"
+          >
+            Financial settings
+          </Link>
+          .
         </p>
       </aside>
     </>

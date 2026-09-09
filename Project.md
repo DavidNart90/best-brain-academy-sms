@@ -2,8 +2,8 @@
 
 **Owner:** Chief Engineer (the user)  
 **Research baseline:** 31 August 2026  
-**Status:** Phase 0 foundation and integrated gate verified on 1 September 2026; Phase 1 has not started.
-**Execution plan:** [Plan.md](Plan.md) contains current task statuses, verification evidence, and handover. Phase 1 has not started.
+**Status:** Phase 3 Finance Core is in progress. The Chief Engineer reconfirmed the active phase on 8 September 2026.
+**Execution plan:** [Plan.md](Plan.md) contains current task statuses, verification evidence, and handover. Earlier phase and baseline descriptions below are historical scope definitions, not the current implementation status.
 
 ## 1. Purpose and Engineering Ownership
 

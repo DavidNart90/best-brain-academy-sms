@@ -5,7 +5,12 @@ import { Button } from "@/components/ui/button";
 
 export function PrintInvoiceButton() {
   return (
-    <Button type="button" variant="outline" onClick={() => window.print()}>
+    <Button
+      className="print:hidden"
+      type="button"
+      variant="outline"
+      onClick={() => window.print()}
+    >
       <Printer /> Print
     </Button>
   );

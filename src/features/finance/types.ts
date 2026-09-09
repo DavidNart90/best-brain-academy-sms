@@ -112,3 +112,9 @@ export type GenerateInvoicesResult = {
   }>;
   skipped: Array<{ studentId: number; reason: string }>;
 };
+export type OpenInvoiceOption = {
+  id: number;
+  invoiceNumber: string;
+  studentName: string;
+  outstanding: string;
+};

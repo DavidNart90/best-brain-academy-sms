@@ -22,20 +22,46 @@ function formatRateAmount(value: number) {
   return value.toFixed(2);
 }
 
-export async function getFinanceSettings(): Promise<FinanceSettings> {
+export async function getFinancePeriods() {
   const supabase = await createServerSupabaseClient();
-  const [year, term] = await Promise.all([
+  const [terms, years] = await Promise.all([
+    supabase
+      .from("academic_terms")
+      .select("id,name,academic_year_id,is_current")
+      .order("id", { ascending: false })
+      .limit(150),
     supabase
       .from("academic_years")
       .select("id,name")
-      .eq("is_current", true)
-      .maybeSingle(),
-    supabase
-      .from("academic_terms")
-      .select("id,name,academic_year_id")
-      .eq("is_current", true)
-      .maybeSingle(),
+      .order("id", { ascending: false })
+      .limit(50),
   ]);
+  if (terms.error || years.error) throw new Error(loadError);
+  return terms.data.map((term) => ({
+    id: term.id,
+    label: `${years.data.find((year) => year.id === term.academic_year_id)?.name ?? "Academic year"} · ${term.name}`,
+    isCurrent: term.is_current,
+  }));
+}
+
+export async function getFinanceSettings(
+  academicTermId?: number,
+): Promise<FinanceSettings> {
+  const supabase = await createServerSupabaseClient();
+  const termQuery = supabase
+    .from("academic_terms")
+    .select("id,name,academic_year_id");
+  const term = await (
+    academicTermId
+      ? termQuery.eq("id", academicTermId)
+      : termQuery.eq("is_current", true)
+  ).maybeSingle();
+  if (term.error || !term.data) throw new Error(loadError);
+  const year = await supabase
+    .from("academic_years")
+    .select("id,name")
+    .eq("id", term.data.academic_year_id)
+    .single();
   if (year.error || term.error || !year.data || !term.data)
     throw new Error(loadError);
 
@@ -67,7 +93,8 @@ export async function getFinanceSettings(): Promise<FinanceSettings> {
       .eq("academic_year_id", year.data.id)
       .eq("academic_term_id", term.data.id)
       .eq("status", "active")
-      .limit(200),
+      .order("id")
+      .limit(250),
     supabase
       .from("payment_methods")
       .select("id,code,name,requires_reference,sort_order,status")
@@ -386,64 +413,27 @@ export async function getDailyCashflow(businessDate: string) {
 
 export async function getCashflowFormOptions() {
   const supabase = await createServerSupabaseClient();
-  const [students, invoices, methods, expenseCategories, miscCategories] =
-    await Promise.all([
-      supabase
-        .from("students")
-        .select("id,admission_number,first_name,middle_name,last_name")
-        .eq("status", "active")
-        .order("last_name")
-        .limit(200),
-      supabase
-        .from("invoices")
-        .select("id,invoice_number,student_name_snapshot,outstanding")
-        .in("status", ["unpaid", "partially_paid"])
-        .order("issued_on", { ascending: false })
-        .limit(200),
-      supabase
-        .from("payment_methods")
-        .select("id,name,requires_reference,status")
-        .eq("status", "active")
-        .order("sort_order")
-        .limit(50),
-      supabase
-        .from("expense_categories")
-        .select("id,name,status")
-        .eq("status", "active")
-        .order("sort_order")
-        .limit(100),
-      supabase
-        .from("misc_income_categories")
-        .select("id,name,status")
-        .eq("status", "active")
-        .order("sort_order")
-        .limit(100),
-    ]);
-  if (
-    students.error ||
-    invoices.error ||
-    methods.error ||
-    expenseCategories.error ||
-    miscCategories.error
-  )
+  const [methods, expenseCategories] = await Promise.all([
+    supabase
+      .from("payment_methods")
+      .select("id,name,requires_reference,status")
+      .eq("status", "active")
+      .order("sort_order")
+      .limit(50),
+    supabase
+      .from("expense_categories")
+      .select("id,code,name,status")
+      .eq("status", "active")
+      .order("sort_order")
+      .limit(100),
+  ]);
+  if (methods.error || expenseCategories.error)
     throw new Error(
       "Cashflow entry options could not be loaded. Try again or contact an administrator.",
     );
   return {
-    students: students.data.map((student) => ({
-      id: student.id,
-      label: [student.first_name, student.middle_name, student.last_name]
-        .filter(Boolean)
-        .join(" "),
-      admissionNumber: student.admission_number,
-    })),
-    invoices: invoices.data.map((invoice) => ({
-      ...invoice,
-      outstanding: invoice.outstanding ?? 0,
-    })),
     paymentMethods: methods.data,
     expenseCategories: expenseCategories.data,
-    miscIncomeCategories: miscCategories.data,
   };
 }
 
@@ -544,8 +534,10 @@ export async function getReceiptsPage(
       id: row.id,
       receiptNumber: row.receipt_number,
       source: "Feeding" as const,
-      person: row.student_name_snapshot,
-      description: "Feeding collection",
+      person: row.student_name_snapshot ?? "Daily aggregate",
+      description: row.student_name_snapshot
+        ? "Feeding collection"
+        : "Daily feeding total",
       amount: formatRateAmount(row.amount),
       businessDate: row.business_date,
       status: row.status,
@@ -556,8 +548,10 @@ export async function getReceiptsPage(
       id: row.id,
       receiptNumber: row.receipt_number,
       source: "Admission" as const,
-      person: row.student_name_snapshot,
-      description: "Admission collection",
+      person: row.student_name_snapshot ?? "Daily aggregate",
+      description: row.student_name_snapshot
+        ? "Admission collection"
+        : "Daily admission total",
       amount: formatRateAmount(row.amount),
       businessDate: row.business_date,
       status: row.status,
@@ -775,7 +769,15 @@ export async function getReceiptDocument(
       .eq("payment_id", sourceId)
       .maybeSingle();
     if (result.error) throw new Error("Receipt could not be loaded.");
-    return result.data ? { source, ...result.data } : null;
+    return result.data
+      ? {
+          source,
+          ...result.data,
+          amount: formatRateAmount(result.data.amount),
+          previous_balance: formatRateAmount(result.data.previous_balance),
+          remaining_balance: formatRateAmount(result.data.remaining_balance),
+        }
+      : null;
   }
   const table =
     source === "Feeding"
@@ -790,11 +792,22 @@ export async function getReceiptDocument(
     .maybeSingle();
   if (result.error) throw new Error("Receipt could not be loaded.");
   if (!result.data) return null;
-  if (source === "Miscellaneous") return { source, ...result.data };
+  const method = await supabase
+    .from("payment_methods")
+    .select("name")
+    .eq("id", result.data.payment_method_id)
+    .maybeSingle();
+  if (method.error) throw new Error("Payment method could not be loaded.");
   return {
     source,
     ...result.data,
-    payment_method_name_snapshot: "Recorded payment method",
+    amount: formatRateAmount(result.data.amount),
+    payment_method_name_snapshot:
+      ("payment_method_name_snapshot" in result.data
+        ? result.data.payment_method_name_snapshot
+        : null) ??
+      method.data?.name ??
+      "Not recorded",
   };
 }
 

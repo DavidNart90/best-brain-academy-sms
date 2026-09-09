@@ -148,3 +148,57 @@
     scroll-behavior: auto !important;
   }
 }
+
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  .app-sidebar,
+  .app-topbar,
+  .page-header,
+  [data-slot="sheet-overlay"],
+  [data-slot="sheet-content"],
+  nextjs-portal {
+    display: none !important;
+  }
+  body {
+    background: white;
+    color: #1f2328;
+  }
+  .app-content,
+  #main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .finance-document {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .finance-document dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .finance-document tr,
+  .finance-document dl > div {
+    break-inside: avoid;
+  }
+  thead {
+    display: table-header-group;
+  }
+  .finance-document .table-scroll {
+    overflow: visible;
+  }
+  .fee-schedule {
+    font-size: 10px;
+  }
+  .fee-schedule th,
+  .fee-schedule td {
+    padding: 6px 4px;
+  }
+}

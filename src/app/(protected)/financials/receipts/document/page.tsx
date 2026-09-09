@@ -8,6 +8,7 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { PrintInvoiceButton } from "@/features/finance/components/print-invoice-button";
+import { DocumentHeader } from "@/features/finance/components/document-header";
 import { getReceiptDocument } from "@/features/finance/server/queries";
 import { requirePermission } from "@/lib/auth/access";
 
@@ -65,30 +66,28 @@ export default async function ReceiptDocumentPage({
           <PrintInvoiceButton />
         </div>
       </PageHeader>
-      <section className="panel mx-auto max-w-[180mm] p-8 print:border-0 print:shadow-none">
-        <div className="flex items-start justify-between border-b pb-5">
-          <div>
-            <h2 className="text-lg font-semibold">Best Brain Academy</h2>
-            <p className="text-sm text-muted-foreground">
-              Official receipt · {source}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="font-mono text-sm font-semibold">
-              {field("receipt_number")}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {field("business_date")}
-            </p>
-          </div>
-        </div>
+      <section className="finance-document panel mx-auto max-w-[210mm] p-5 sm:p-8">
+        <DocumentHeader
+          title="Official receipt"
+          reference={field("receipt_number")}
+        >
+          <p className="mt-1 text-sm text-muted-foreground">
+            {field("business_date")}
+          </p>
+        </DocumentHeader>
         <dl className="mt-6 grid gap-4 sm:grid-cols-2">
           <Detail
-            label="Student / payer"
+            label={
+              record.collection_scope === "daily_total"
+                ? "Collection"
+                : "Student / payer"
+            }
             value={
-              field("student_name_snapshot") === "Not recorded"
-                ? field("payer_name")
-                : field("student_name_snapshot")
+              record.collection_scope === "daily_total"
+                ? "Daily aggregate"
+                : field("student_name_snapshot") === "Not recorded"
+                  ? field("payer_name")
+                  : field("student_name_snapshot")
             }
           />
           <Detail
@@ -108,24 +107,58 @@ export default async function ReceiptDocumentPage({
             value={field("payment_method_name_snapshot")}
           />
           <Detail label="Business date" value={field("business_date")} />
+          {source === "School fee" && (
+            <>
+              <Detail
+                label="Admission number"
+                value={field("admission_number_snapshot")}
+              />
+              <Detail label="Class" value={field("class_name_snapshot")} />
+              <Detail
+                label="Academic period"
+                value={`${field("academic_year_name_snapshot")} · ${field("academic_term_name_snapshot")}`}
+              />
+              <Detail
+                label="Invoice"
+                value={field("invoice_number_snapshot")}
+              />
+            </>
+          )}
         </dl>
-        <div className="mt-8 flex items-center justify-between border-t pt-5">
-          <span className="text-base font-semibold">Amount received</span>
-          <Money value={field("amount")} />
+        <div className="mt-6 overflow-hidden rounded-lg border">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/70">
+              <tr>
+                <th className="px-4 py-2 text-left font-medium">Description</th>
+                <th className="px-4 py-2 text-right font-medium">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {source === "School fee" && (
+                <tr className="border-t">
+                  <td className="px-4 py-2">Balance before payment</td>
+                  <td className="px-4 py-2 text-right">
+                    <Money value={field("previous_balance")} />
+                  </td>
+                </tr>
+              )}
+              <tr className="border-t bg-muted/40 font-semibold">
+                <td className="px-4 py-3">Amount received</td>
+                <td className="px-4 py-3 text-right">
+                  <Money value={field("amount")} />
+                </td>
+              </tr>
+              {source === "School fee" && (
+                <tr className="border-t">
+                  <td className="px-4 py-2">Remaining balance after payment</td>
+                  <td className="px-4 py-2 text-right">
+                    <Money value={field("remaining_balance")} />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-        {source === "School fee" && (
-          <div className="mt-5 grid gap-3 border-t pt-5 text-sm sm:grid-cols-2">
-            <Detail
-              label="Previous balance"
-              value={<Money value={field("previous_balance")} />}
-            />
-            <Detail
-              label="Remaining balance"
-              value={<Money value={field("remaining_balance")} />}
-            />
-            <Detail label="Invoice" value={field("invoice_number_snapshot")} />
-          </div>
-        )}
         {record.status === "reversed" && (
           <div className="mt-6 rounded-lg border border-destructive/30 bg-danger-soft p-4 text-sm text-destructive">
             <p className="font-semibold">REVERSED</p>
@@ -133,8 +166,10 @@ export default async function ReceiptDocumentPage({
           </div>
         )}
         <p className="mt-8 border-t pt-4 text-xs text-muted-foreground">
-          This receipt reflects the recorded transaction and remains available
-          for audit history.
+          Please keep this receipt as proof of payment and quote{" "}
+          {field("receipt_number")} when contacting the school. Any balance
+          shown is the balance immediately after this payment; later payments
+          appear on separate receipts.
         </p>
       </section>
     </>
