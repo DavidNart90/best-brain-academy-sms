@@ -27,7 +27,7 @@ const reportChoices: Array<{
   { value: "expenses", label: "Expenses", access: "financials" },
   {
     value: "salary-deductions",
-    label: "Salary deductions",
+    label: "Payroll deductions",
     access: "financials",
   },
   {

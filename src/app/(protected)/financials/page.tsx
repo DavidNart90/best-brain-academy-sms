@@ -4,7 +4,8 @@ import { PermissionDenied } from "@/components/data-display/page-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { FinancialSummaryReport } from "@/features/reports/components/financial-summary";
-import { RecentCollections } from "@/features/reports/components/recent-collections";
+import { LibraryFinancialSummary } from "@/features/library/components/library-financial-summary";
+import { getLibraryFinancialSummary } from "@/features/library/server/queries";
 import { buildFinancialPeriodSummary } from "@/features/reports/period-summary";
 import {
   getFinancialSnapshot,
@@ -20,10 +21,13 @@ export default async function FinancialOverviewPage() {
   if (!context) return <PermissionDenied />;
   const options = await getReportingOptions();
   const filters = resolveReportFilters({ view: "financial-summary" }, options);
-  const snapshot = await getFinancialSnapshot(filters);
   const selectedTerm = options.academicTerms.find(
     (term) => term.id === filters.academicTermId,
   );
+  const [snapshot, librarySummary] = await Promise.all([
+    getFinancialSnapshot(filters),
+    getLibraryFinancialSummary(filters.academicTermId ?? selectedTerm?.id ?? 0),
+  ]);
   const periodLabel = `${selectedTerm?.name ?? "Current period"} · ${filters.start} to ${filters.end}`;
   const periodSummary = buildFinancialPeriodSummary(
     snapshot.daily,
@@ -49,7 +53,10 @@ export default async function FinancialOverviewPage() {
           periodLabel={periodLabel}
           periodSummary={periodSummary}
         />
-        <RecentCollections rows={snapshot.recentCollections} />
+        <LibraryFinancialSummary
+          summary={librarySummary}
+          periodLabel={selectedTerm?.name ?? "Selected term"}
+        />
       </div>
     </>
   );

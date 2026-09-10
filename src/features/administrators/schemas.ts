@@ -5,6 +5,7 @@ export const administratorRoles = [
   "ADMINISTRATOR",
   "ACCOUNTANT",
   "MANAGEMENT",
+  "LIBRARIAN",
 ] as const;
 export const administratorStatuses = ["active", "disabled"] as const;
 

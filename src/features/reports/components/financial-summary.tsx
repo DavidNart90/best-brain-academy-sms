@@ -113,16 +113,21 @@ export function FinancialSummaryReport({
               strong
             />
             <LedgerRow
-              label="Less: salary deductions"
+              label={deductionSummaryLabel(snapshot.deductionBreakdown)}
               value={snapshot.summary.salaryDeductions}
             />
             <LedgerRow
-              label="Final position"
+              label="Recorded cash position"
               value={snapshot.summary.finalPosition}
               strong
               accent
             />
           </dl>
+          <p className="border-t px-5 py-3 text-xs leading-5 text-muted-foreground sm:px-6">
+            Posting a salary records the monthly calculation. SSNIT and any
+            other payroll deductions do not reduce the cash position until an
+            actual salary payment or remittance is recorded.
+          </p>
         </div>
         <div className="space-y-5">
           <Breakdown
@@ -145,7 +150,7 @@ export function FinancialSummaryReport({
           icon="expense"
         />
         <Breakdown
-          title="Deductions by type"
+          title="Payroll deductions by type"
           rows={snapshot.deductionBreakdown}
           icon="expense"
         />
@@ -165,7 +170,7 @@ function PeriodTable({ summary }: { summary: FinancialPeriodSummary }) {
       <div className="border-b px-5 py-4 sm:px-6">
         <h2 className="text-base font-semibold">{summary.title}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          {summary.description} Net is revenue less recorded expenses; salary
+          {summary.description} Net is revenue less recorded expenses; payroll
           deductions remain separate below.
         </p>
       </div>
@@ -235,6 +240,14 @@ function PeriodTable({ summary }: { summary: FinancialPeriodSummary }) {
       </div>
     </section>
   );
+}
+
+function deductionSummaryLabel(rows: FinancialBreakdown[]) {
+  const [onlyRow] = rows;
+  if (rows.length === 1 && onlyRow) {
+    return `${onlyRow.label} (informational)`;
+  }
+  return "Payroll deductions (informational)";
 }
 
 function LedgerRow({

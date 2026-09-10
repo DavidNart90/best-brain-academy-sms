@@ -43,7 +43,9 @@ The system must let authorized accounts staff record daily money quickly while p
 | Outstanding balance | Valid charges minus valid payments applied to those charges. |
 | Gross receipts | All valid money received during a selected period before subtracting expenses or deductions. |
 | Expense | A valid, posted outgoing amount assigned to an approved expense category. |
-| Salary deduction | A monthly amount recorded against a staff member and deduction type. It remains separately visible from ordinary expenses. |
+| Payroll deduction | A monthly SSNIT or other configured deduction recorded against a staff member. It remains separately visible from ordinary expenses. |
+| Salary payment | Money actually paid to an employee against the posted net salary. It may be recorded in partial amounts and is an outgoing expense. |
+| SSNIT remittance | Money actually sent to SSNIT against the posted employee contribution. It is tracked separately from the employee's net-salary payment and is an outgoing expense. |
 | Reversal / void | A traceable correction that neutralizes a posted record without deleting its history. |
 | Business date | The school date to which a transaction belongs; this is separate from the system creation timestamp. |
 
@@ -202,11 +204,15 @@ The Chief Engineer will confirm the official expense categories later. Phase 3 m
 
 Posted expenses cannot be edited or deleted. An authorized void/reversal records the reason, actor, and time and removes the amount from active totals while preserving the original entry.
 
-## 9. Salary deductions
+## 9. Salary calculation, employee payment, and SSNIT remittance
 
-Salary deductions are recorded monthly against a staff member and a configurable deduction type. Each record includes month/year, positive amount, reason, recorder, and correction history. Full payroll, salary generation, PAYE, SSNIT, pensions, and payslips are outside the current scope.
+Payroll deductions are recorded monthly against a staff member and a configurable deduction type. The current automatic GHS 27.50 example is specifically the 5.5% SSNIT employee contribution on a GHS 500.00 salary calculation; it is not a generic deduction label. Each record includes month/year, positive amount, reason, recorder, and correction history.
 
-The Chief Engineer stated that monthly total income is reduced by salary deductions. To keep this transparent, reports must show deductions as their own line rather than silently folding them into expenses.
+The Chief Engineer clarified on 10 September 2026 that posting a salary records the monthly salary calculation; it does not mean the employee has been paid. Posted SSNIT and other payroll deductions are informational until the related cash leaves the school. The salary register therefore calculates net pay as gross salary less payroll deductions without changing cash.
+
+An authorized employee payment is recorded separately against the posted net salary. Payments may be partial or complete; the register shows Unpaid, Partially Paid, or Paid from the active payment total. An authorized SSNIT remittance is recorded separately against the automatic employee contribution and shows Due, Partially Remitted, or Remitted. Each workflow rejects amounts above its exact outstanding balance, supports retry-safe submission, uses a configured payment method and business date, creates one linked expense, and requires reversal rather than deletion. An SSNIT deduction cannot be changed or reversed while an active remittance depends on it, and a salary calculation cannot be reversed while either kind of active cash entry depends on it.
+
+Only active employee payments and SSNIT remittances reduce cash and operating net. The employee payment uses the reserved Salaries expense category; the contribution payment uses the reserved SSNIT remittance category. These system categories are not available in the generic expense form, preventing an unlinked duplicate payroll entry. Employer SSNIT, PAYE, pension-liability accounting, payroll approvals, bank files, and payslips remain outside the current scope.
 
 ## 10. Calculation model
 
@@ -246,19 +252,28 @@ Monthly Gross Receipts
 Monthly Operating Net
   = Monthly Gross Receipts - Valid Monthly Expenses
 
-Monthly Final Position
-  = Monthly Operating Net - Valid Monthly Salary Deductions
+Monthly Salary Register Net Pay
+  = Posted Monthly Gross Salary - Posted Monthly Payroll Deductions
+
+Monthly Employee Salary Cash Expense
+  = Valid Active Employee Salary Payments
+
+Monthly SSNIT Remittance Cash Expense
+  = Valid Active SSNIT Employee-Contribution Remittances
+
+Monthly Recorded Cash Position
+  = Monthly Gross Receipts - Valid Monthly Expenses
 ```
 
-This structure implements the supplied rule while keeping the calculation explainable. Weekly and monthly values are derived from authoritative dated transactions, including the explicitly posted daily feeding/admission aggregates; users do not enter separate weekly or monthly totals.
+Weekly and monthly financial values are derived from authoritative dated cash transactions, including the explicitly posted daily feeding/admission aggregates and active linked salary payments/SSNIT remittances; users do not enter separate weekly or monthly totals. Posted salary calculations and deductions remain separately visible without being treated as cash movement before payment or remittance.
 
 Reports must display at least:
 
 - gross receipts by income category;
 - expenses by category;
-- operating net before salary deductions;
-- salary deductions;
-- final position after salary deductions;
+- operating net / recorded cash position from receipts less expenses;
+- posted SSNIT and other payroll deductions as informational figures;
+- employee salary payments and SSNIT remittances in expenses only when cash is recorded;
 - reversals/voids separately;
 - billed school fees, collected school fees, and outstanding school fees separately.
 
@@ -325,7 +340,7 @@ PDF/print generation occurs after the financial transaction commits and is safel
 | --- | --- |
 | Phase 2 | Give each student an enrollment, class, and transport location (distance from school). Admission remains possible without generating an invoice. |
 | Phase 3 | Implement fee configuration, invoices, school-fee payments, feeding/admission/miscellaneous receipts, simple daily expenses, receipt/expense reversals, official document templates, outstanding balances, and the combined daily cashflow workspace. |
-| Phase 4 | Implement monthly salary deductions and any later-approved advanced operational-finance controls; do not rebuild the Phase 3 daily expense ledger. |
+| Phase 4 | Implement monthly salary calculations and deductions; separately approved employee-payment and SSNIT-remittance controls reuse the Phase 3 expense ledger rather than rebuilding it. |
 | Phase 5 | Implement reconciled daily, weekly, monthly, term, class, location, income-category, expense, deduction, and outstanding reports. |
 | Phase 6 | Confirm production categories, numbering, payment methods, samples, opening-balance treatment, role ownership, and release acceptance. |
 
@@ -348,7 +363,8 @@ The following items remain deliberately configurable or unresolved:
 
 - official expense categories;
 - miscellaneous-income categories;
-- salary-deduction types and whether deductions represent retained cash, a liability, or another accounting treatment;
+- salary-deduction types; posting remains calculation-only, while employee payments and SSNIT employee-contribution remittances are separately recorded cash workflows;
+- any future retained-cash treatment, employer contribution, PAYE, payroll liability, approval, bank-file, or payslip workflow;
 - final approval or revision of the proposed payment methods and external-reference rules;
 - final approval or revision of the proposed number prefixes and permitted gaps;
 - official weekly boundary and any day-close/reopen workflow;

@@ -5,8 +5,12 @@ import { requireRateLimitedPermission } from "@/lib/security/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   deductionTypeInputSchema,
+  salaryBatchDispatchInputSchema,
+  salaryBatchPostInputSchema,
   salaryConfigurationEndInputSchema,
   salaryConfigurationInputSchema,
+  salaryCashInputSchema,
+  salaryCashReversalInputSchema,
   salaryDeductionInputSchema,
   salaryRecordInputSchema,
   salaryReversalInputSchema,
@@ -37,6 +41,15 @@ function refreshSalary(id?: number, staffId?: number) {
   revalidatePath("/settings/financials");
   if (id) revalidatePath(`/financials/salary-deductions/${id}`);
   if (staffId) revalidatePath(`/staff/${staffId}`);
+}
+
+function refreshSalaryCash(id?: number) {
+  refreshSalary(id);
+  revalidatePath("/dashboard");
+  revalidatePath("/financials");
+  revalidatePath("/financials/cashflow");
+  revalidatePath("/financials/expenses");
+  revalidatePath("/reports");
 }
 
 export async function saveSalaryConfiguration(
@@ -176,6 +189,99 @@ export async function recordSalary(
   };
 }
 
+const batchMonthFormatter = new Intl.DateTimeFormat("en-GB", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+const batchMoneyFormatter = new Intl.NumberFormat("en-GH", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function batchMonth(value: string) {
+  return batchMonthFormatter.format(new Date(`${value}T00:00:00Z`));
+}
+
+export async function postSalaryBatch(
+  input: unknown,
+): Promise<FinanceActionResult> {
+  const access = await requireRateLimitedPermission(
+    "finance.transactions.manage",
+    "finance-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
+  const parsed = salaryBatchPostInputSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Check the salary month.",
+    };
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase.rpc("post_salary_batch", {
+    request_key: parsed.data.requestKey,
+    target_payroll_month: parsed.data.payrollMonth,
+  });
+  if (result.error) return { ok: false, message: message(result.error) };
+  const batch = result.data as {
+    postedCount?: number;
+    skippedCount?: number;
+  } | null;
+  const postedCount = Number(batch?.postedCount ?? 0);
+  const skippedCount = Number(batch?.skippedCount ?? 0);
+  refreshSalary();
+  return {
+    ok: true,
+    message:
+      postedCount > 0
+        ? `Posted ${postedCount} ${postedCount === 1 ? "salary" : "salaries"} for ${batchMonth(parsed.data.payrollMonth)}. ${skippedCount} already-posted ${skippedCount === 1 ? "record was" : "records were"} skipped.`
+        : `No salaries needed posting for ${batchMonth(parsed.data.payrollMonth)}. Existing records were left unchanged.`,
+  };
+}
+
+export async function dispatchSalaryBatch(
+  input: unknown,
+): Promise<FinanceActionResult> {
+  const access = await requireRateLimitedPermission(
+    "finance.transactions.manage",
+    "finance-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
+  const parsed = salaryBatchDispatchInputSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Check the dispatch details.",
+    };
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase.rpc("dispatch_salary_batch", {
+    request_key: parsed.data.requestKey,
+    target_payroll_month: parsed.data.payrollMonth,
+    target_business_date: parsed.data.businessDate,
+    target_payment_method_id: parsed.data.paymentMethodId,
+    target_external_reference: parsed.data.externalReference || undefined,
+    target_notes: parsed.data.notes || undefined,
+  });
+  if (result.error) return { ok: false, message: message(result.error) };
+  const batch = result.data as {
+    dispatchedCount?: number;
+    dispatchedTotal?: number;
+    skippedCount?: number;
+  } | null;
+  const dispatchedCount = Number(batch?.dispatchedCount ?? 0);
+  const dispatchedTotal = Number(batch?.dispatchedTotal ?? 0);
+  const skippedCount = Number(batch?.skippedCount ?? 0);
+  refreshSalaryCash();
+  return {
+    ok: true,
+    message:
+      dispatchedCount > 0
+        ? `Dispatched ${dispatchedCount} ${dispatchedCount === 1 ? "salary" : "salaries"} totalling GHS ${batchMoneyFormatter.format(dispatchedTotal)}. ${skippedCount} fully paid ${skippedCount === 1 ? "record was" : "records were"} skipped; SSNIT was not included.`
+        : `No employee salaries were outstanding for ${batchMonth(parsed.data.payrollMonth)}. No cash expense was created.`,
+  };
+}
+
 export async function recordSalaryDeduction(
   input: unknown,
 ): Promise<FinanceActionResult> {
@@ -201,6 +307,89 @@ export async function recordSalaryDeduction(
   if (result.error) return { ok: false, message: message(result.error) };
   refreshSalary(parsed.data.salaryRecordId);
   return { ok: true, message: "Deduction posted and net salary recalculated." };
+}
+
+export async function recordSalaryCash(
+  input: unknown,
+): Promise<FinanceActionResult> {
+  const access = await requireRateLimitedPermission(
+    "finance.transactions.manage",
+    "finance-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
+  const parsed = salaryCashInputSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Check the payment details.",
+    };
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase.rpc("record_salary_cash_transaction", {
+    request_key: parsed.data.requestKey,
+    target_salary_record_id: parsed.data.salaryRecordId,
+    transaction_kind: parsed.data.kind,
+    transaction_amount: Number(parsed.data.amount),
+    target_business_date: parsed.data.businessDate,
+    target_payment_method_id: parsed.data.paymentMethodId,
+    target_external_reference: parsed.data.externalReference || undefined,
+    target_notes: parsed.data.notes || undefined,
+  });
+  if (result.error) return { ok: false, message: message(result.error) };
+  refreshSalaryCash(parsed.data.salaryRecordId);
+  return {
+    ok: true,
+    message:
+      parsed.data.kind === "salary_payment"
+        ? "Salary payment recorded and included in cash expenses."
+        : "SSNIT remittance recorded and included in cash expenses.",
+  };
+}
+
+export async function reverseSalaryCash(
+  input: unknown,
+): Promise<FinanceActionResult> {
+  const access = await requireRateLimitedPermission(
+    "finance.transactions.manage",
+    "finance-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
+  const parsed = salaryCashReversalInputSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Enter a reversal reason.",
+    };
+  const supabase = await createServerSupabaseClient();
+  const linkedExpense = await supabase
+    .from("expenses")
+    .select("salary_record_id,payroll_cash_kind")
+    .eq("id", parsed.data.expenseId)
+    .maybeSingle();
+  if (
+    linkedExpense.error ||
+    linkedExpense.data?.salary_record_id !== parsed.data.salaryRecordId ||
+    !linkedExpense.data?.payroll_cash_kind
+  ) {
+    return {
+      ok: false,
+      message: "Choose a salary payment or SSNIT remittance from this record.",
+    };
+  }
+  const result = await supabase.rpc("void_expense", {
+    request_key: parsed.data.requestKey,
+    request_fingerprint: JSON.stringify([
+      parsed.data.expenseId,
+      parsed.data.reason,
+    ]),
+    target_expense_id: parsed.data.expenseId,
+    target_reason: parsed.data.reason,
+  });
+  if (result.error) return { ok: false, message: message(result.error) };
+  refreshSalaryCash(parsed.data.salaryRecordId);
+  return {
+    ok: true,
+    message: "Cash transaction reversed; the outstanding balance was restored.",
+  };
 }
 
 export async function reverseSalary(

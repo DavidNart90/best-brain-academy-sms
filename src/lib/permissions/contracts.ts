@@ -18,6 +18,9 @@ export const permissionSchema = z.enum([
   "settings.manage",
   "finance.settings.manage",
   "finance.transactions.manage",
+  "library.read",
+  "library.collections.manage",
+  "library.settings.manage",
   "audit.read",
 ]);
 export type Permission = z.infer<typeof permissionSchema>;
@@ -26,6 +29,7 @@ export const roleSchema = z.enum([
   "ADMINISTRATOR",
   "ACCOUNTANT",
   "MANAGEMENT",
+  "LIBRARIAN",
 ]);
 export type Role = z.infer<typeof roleSchema>;
 export const accessContextSchema = z.object({
@@ -33,7 +37,7 @@ export const accessContextSchema = z.object({
   displayName: z.string().max(120),
   status: z.enum(["pending", "active", "disabled"]),
   mustChangePassword: z.boolean(),
-  roles: z.array(roleSchema).max(4),
+  roles: z.array(roleSchema).max(5),
   permissions: z.array(permissionSchema).max(50),
 });
 export type AccessContext = z.infer<typeof accessContextSchema>;

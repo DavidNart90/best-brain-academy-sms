@@ -55,6 +55,13 @@ export const appRoutes: AppRoute[] = [
     description: "Teaching and non-teaching staff records.",
   },
   {
+    href: "/library",
+    title: "Library Collections",
+    permission: "library.read",
+    phase: 6,
+    description: "Books & Prospectus rates, student bills and collections.",
+  },
+  {
     href: "/financials",
     title: "Financial Overview",
     permission: "financials.read",

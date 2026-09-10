@@ -20,12 +20,11 @@ const statusLabels = {
   paid: "Paid",
   cancelled: "Cancelled",
 } as const;
+const dateFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+});
 const date = (value: string | null) =>
-  value
-    ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(
-        new Date(`${value}T00:00:00Z`),
-      )
-    : "Not recorded";
+  value ? dateFormatter.format(new Date(`${value}T00:00:00Z`)) : "Not recorded";
 
 export default async function InvoiceDetailPage({
   params,
@@ -166,6 +165,53 @@ export default async function InvoiceDetailPage({
             </tfoot>
           </table>
         </div>
+
+        {invoice.libraryBalance && (
+          <div className="mt-6 overflow-hidden rounded-lg border border-primary/25">
+            <div className="flex flex-wrap items-start justify-between gap-3 bg-brand-subtle px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold">Separate Library bill</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Collected by the Librarian / Book Keeper; excluded from the
+                  school-fee total above.
+                </p>
+              </div>
+              <StatusBadge
+                status={statusLabels[invoice.libraryBalance.status]}
+              />
+            </div>
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium">
+                    Description
+                  </th>
+                  <th className="px-4 py-2 text-right font-medium">Billed</th>
+                  <th className="px-4 py-2 text-right font-medium">Paid</th>
+                  <th className="px-4 py-2 text-right font-medium">
+                    Library balance
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-t">
+                  <td className="px-4 py-3">
+                    {invoice.libraryBalance.description}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Money value={invoice.libraryBalance.expected} />
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Money value={invoice.libraryBalance.paid} />
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold">
+                    <Money value={invoice.libraryBalance.outstanding} />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {invoice.status === "cancelled" && (
           <div className="mt-5 rounded-lg border border-destructive/30 bg-danger-soft p-4 text-sm text-destructive">

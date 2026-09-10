@@ -6,14 +6,20 @@ import type {
   DeductionType,
   SalaryConfiguration,
   SalaryConfigurationStaffOption,
+  SalaryCashPosition,
   SalaryDetail,
   SalaryListRow,
+  SalaryPaymentMethod,
   SalaryStaffOption,
 } from "../types";
 
 const pageSize = 25;
 const salaryLoadError = "Salary records could not be loaded.";
 const money = (value: number) => value.toFixed(2);
+const sumMoney = (values: number[]) =>
+  (
+    values.reduce((total, amount) => total + Math.round(amount * 100), 0) / 100
+  ).toFixed(2);
 const value = (amount: number | null) =>
   amount === null ? null : amount.toFixed(4).replace(/\.?0+$/, "");
 
@@ -185,6 +191,30 @@ function mapSalary(row: {
   };
 }
 
+function mapCashPosition(row: {
+  net_salary: number | null;
+  salary_paid: number | null;
+  salary_outstanding: number | null;
+  salary_payment_status: string | null;
+  ssnit_due: number | null;
+  ssnit_remitted: number | null;
+  ssnit_outstanding: number | null;
+  ssnit_status: string | null;
+}): SalaryCashPosition {
+  return {
+    netSalary: money(row.net_salary ?? 0),
+    salaryPaid: money(row.salary_paid ?? 0),
+    salaryOutstanding: money(row.salary_outstanding ?? 0),
+    salaryPaymentStatus: (row.salary_payment_status ??
+      "unpaid") as SalaryCashPosition["salaryPaymentStatus"],
+    ssnitDue: money(row.ssnit_due ?? 0),
+    ssnitRemitted: money(row.ssnit_remitted ?? 0),
+    ssnitOutstanding: money(row.ssnit_outstanding ?? 0),
+    ssnitStatus: (row.ssnit_status ??
+      "not_due") as SalaryCashPosition["ssnitStatus"],
+  };
+}
+
 export async function getSalaryPage(
   raw: Record<string, string | string[] | undefined>,
 ) {
@@ -215,13 +245,40 @@ export async function getSalaryPage(
     query,
     supabase
       .from("salary_records")
-      .select("gross_salary,total_deductions,net_salary")
+      .select("id,staff_id,gross_salary,total_deductions,net_salary")
       .eq("payroll_month", month)
       .eq("status", "active")
       .limit(500),
   ]);
   if (result.error || totals.error) throw new Error(salaryLoadError);
-  const rows = result.data.map(mapSalary);
+  const salaryIds = Array.from(
+    new Set([...result.data, ...totals.data].map((row) => row.id)),
+  );
+  const positions = salaryIds.length
+    ? await supabase
+        .from("salary_cash_positions")
+        .select(
+          "salary_record_id,net_salary,salary_paid,salary_outstanding,salary_payment_status,ssnit_due,ssnit_remitted,ssnit_outstanding,ssnit_status",
+        )
+        .in("salary_record_id", salaryIds)
+        .limit(500)
+    : { data: [], error: null };
+  if (positions.error) throw new Error(salaryLoadError);
+  const positionById = new Map(
+    positions.data.flatMap((row) =>
+      row.salary_record_id
+        ? [[row.salary_record_id, mapCashPosition(row)]]
+        : [],
+    ),
+  );
+  const rows = result.data.map((row) => ({
+    ...mapSalary(row),
+    cashPosition: positionById.get(row.id),
+  }));
+  const totalPositions = totals.data.flatMap((row) => {
+    const position = positionById.get(row.id);
+    return position ? [position] : [];
+  });
   return {
     rows,
     month,
@@ -229,14 +286,25 @@ export async function getSalaryPage(
     status: params.status,
     page: params.page,
     pageCount: Math.max(1, Math.ceil((result.count ?? 0) / pageSize)),
-    grossSalary: money(
-      totals.data.reduce((sum, row) => sum + row.gross_salary, 0),
+    grossSalary: sumMoney(totals.data.map((row) => row.gross_salary)),
+    totalDeductions: sumMoney(totals.data.map((row) => row.total_deductions)),
+    netSalary: sumMoney(totals.data.map((row) => row.net_salary)),
+    salaryPaid: sumMoney(totalPositions.map((row) => Number(row.salaryPaid))),
+    salaryOutstanding: sumMoney(
+      totalPositions.map((row) => Number(row.salaryOutstanding)),
     ),
-    totalDeductions: money(
-      totals.data.reduce((sum, row) => sum + row.total_deductions, 0),
+    ssnitDue: sumMoney(totalPositions.map((row) => Number(row.ssnitDue))),
+    ssnitRemitted: sumMoney(
+      totalPositions.map((row) => Number(row.ssnitRemitted)),
     ),
-    netSalary: money(totals.data.reduce((sum, row) => sum + row.net_salary, 0)),
+    ssnitOutstanding: sumMoney(
+      totalPositions.map((row) => Number(row.ssnitOutstanding)),
+    ),
     activeCount: totals.data.length,
+    activeStaffIds: totals.data.map((row) => row.staff_id),
+    salaryOutstandingCount: totalPositions.filter(
+      (row) => Number(row.salaryOutstanding) > 0,
+    ).length,
   };
 }
 
@@ -244,7 +312,7 @@ export async function getSalaryDetail(
   id: number,
 ): Promise<SalaryDetail | null> {
   const supabase = await createServerSupabaseClient();
-  const [salary, deductions] = await Promise.all([
+  const [salary, deductions, cashPosition, cashEntries] = await Promise.all([
     supabase
       .from("salary_records")
       .select(
@@ -260,9 +328,33 @@ export async function getSalaryDetail(
       .eq("salary_record_id", id)
       .order("id")
       .limit(100),
+    supabase
+      .from("salary_cash_positions")
+      .select(
+        "salary_record_id,net_salary,salary_paid,salary_outstanding,salary_payment_status,ssnit_due,ssnit_remitted,ssnit_outstanding,ssnit_status",
+      )
+      .eq("salary_record_id", id)
+      .maybeSingle(),
+    supabase
+      .from("expenses")
+      .select(
+        "id,expense_number,payroll_cash_kind,amount,business_date,payment_method_name_snapshot,external_reference,notes,status,reversal_number,reversal_reason,salary_deduction_id",
+      )
+      .eq("salary_record_id", id)
+      .not("payroll_cash_kind", "is", null)
+      .order("business_date", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(100),
   ]);
-  if (salary.error || deductions.error) throw new Error(salaryLoadError);
+  if (
+    salary.error ||
+    deductions.error ||
+    cashPosition.error ||
+    cashEntries.error
+  )
+    throw new Error(salaryLoadError);
   if (!salary.data) return null;
+  if (!cashPosition.data) throw new Error(salaryLoadError);
   return {
     ...mapSalary(salary.data),
     recordedBy: salary.data.recorded_by_snapshot,
@@ -284,7 +376,47 @@ export async function getSalaryDetail(
       reversalNumber: row.reversal_number,
       reversalReason: row.reversal_reason,
     })),
+    cashPosition: mapCashPosition(cashPosition.data),
+    cashEntries: cashEntries.data.flatMap((row) =>
+      row.payroll_cash_kind === "salary_payment" ||
+      row.payroll_cash_kind === "ssnit_remittance"
+        ? [
+            {
+              id: row.id,
+              expenseNumber: row.expense_number,
+              kind: row.payroll_cash_kind,
+              amount: money(row.amount),
+              businessDate: row.business_date,
+              paymentMethod: row.payment_method_name_snapshot,
+              externalReference: row.external_reference,
+              notes: row.notes,
+              status: row.status as "active" | "reversed",
+              reversalNumber: row.reversal_number,
+              reversalReason: row.reversal_reason,
+              salaryDeductionId: row.salary_deduction_id,
+            },
+          ]
+        : [],
+    ),
   };
+}
+
+export async function getSalaryPaymentMethods(): Promise<
+  SalaryPaymentMethod[]
+> {
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase
+    .from("payment_methods")
+    .select("id,name,requires_reference")
+    .eq("status", "active")
+    .order("sort_order")
+    .limit(50);
+  if (result.error) throw new Error(salaryLoadError);
+  return result.data.map((row) => ({
+    id: row.id,
+    name: row.name,
+    requiresReference: row.requires_reference,
+  }));
 }
 
 export async function getStaffSalaryHistory(staffId: number) {

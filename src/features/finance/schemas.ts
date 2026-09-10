@@ -257,6 +257,18 @@ export const salaryConfigurationEndInputSchema = z.object({
   effectiveTo: salaryMonthSchema,
   reason: z.string().trim().min(2, "A reason is required.").max(500),
 });
+export const salaryBatchPostInputSchema = z.object({
+  requestKey: z.uuid(),
+  payrollMonth: salaryMonthSchema,
+});
+export const salaryBatchDispatchInputSchema = z.object({
+  requestKey: z.uuid(),
+  payrollMonth: salaryMonthSchema,
+  businessDate: z.string().date(),
+  paymentMethodId: idSchema,
+  externalReference: z.string().trim().max(120).optional(),
+  notes: z.string().trim().max(500).optional(),
+});
 export const salaryDeductionInputSchema = z.object({
   requestKey: z.uuid(),
   salaryRecordId: idSchema,
@@ -267,6 +279,16 @@ export const salaryDeductionInputSchema = z.object({
 export const salaryReversalInputSchema = z.object({
   requestKey: z.uuid(),
   recordId: idSchema,
+  reason: z.string().trim().min(2, "A reversal reason is required.").max(500),
+});
+export const salaryCashInputSchema = transactionBaseSchema.extend({
+  salaryRecordId: idSchema,
+  kind: z.enum(["salary_payment", "ssnit_remittance"]),
+});
+export const salaryCashReversalInputSchema = z.object({
+  requestKey: z.uuid(),
+  salaryRecordId: idSchema,
+  expenseId: idSchema,
   reason: z.string().trim().min(2, "A reversal reason is required.").max(500),
 });
 export const salaryListQuerySchema = z.object({
@@ -288,5 +310,13 @@ export type SalaryConfigurationInput = z.infer<
 export type SalaryConfigurationEndInput = z.infer<
   typeof salaryConfigurationEndInputSchema
 >;
+export type SalaryBatchPostInput = z.infer<typeof salaryBatchPostInputSchema>;
+export type SalaryBatchDispatchInput = z.infer<
+  typeof salaryBatchDispatchInputSchema
+>;
 export type SalaryDeductionInput = z.infer<typeof salaryDeductionInputSchema>;
 export type SalaryReversalInput = z.infer<typeof salaryReversalInputSchema>;
+export type SalaryCashInput = z.infer<typeof salaryCashInputSchema>;
+export type SalaryCashReversalInput = z.infer<
+  typeof salaryCashReversalInputSchema
+>;

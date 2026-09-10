@@ -22,6 +22,7 @@ const roleLabels: Record<Role, string> = {
   ADMINISTRATOR: "Administrator",
   ACCOUNTANT: "Accountant",
   MANAGEMENT: "Management · Read only",
+  LIBRARIAN: "Librarian / Book Keeper",
 };
 
 export function AppShell({

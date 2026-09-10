@@ -505,6 +505,7 @@ export type Database = {
           created_at: string;
           created_by: string | null;
           id: number;
+          is_system: boolean;
           name: string;
           sort_order: number;
           status: string;
@@ -516,6 +517,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           id?: never;
+          is_system?: boolean;
           name: string;
           sort_order: number;
           status?: string;
@@ -527,6 +529,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           id?: never;
+          is_system?: boolean;
           name?: string;
           sort_order?: number;
           status?: string;
@@ -563,14 +566,18 @@ export type Database = {
           expense_number: string;
           external_reference: string | null;
           id: number;
+          notes: string | null;
           payment_method_id: number;
           payment_method_name_snapshot: string;
+          payroll_cash_kind: string | null;
           recorded_by_snapshot: string;
           reversal_number: string | null;
           reversal_reason: string | null;
           reversed_at: string | null;
           reversed_by: string | null;
           reversed_by_name_snapshot: string | null;
+          salary_deduction_id: number | null;
+          salary_record_id: number | null;
           school_address_snapshot: string | null;
           school_email_snapshot: string | null;
           school_logo_path_snapshot: string | null;
@@ -593,14 +600,18 @@ export type Database = {
           expense_number: string;
           external_reference?: string | null;
           id?: never;
+          notes?: string | null;
           payment_method_id: number;
           payment_method_name_snapshot: string;
+          payroll_cash_kind?: string | null;
           recorded_by_snapshot: string;
           reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
           reversed_by_name_snapshot?: string | null;
+          salary_deduction_id?: number | null;
+          salary_record_id?: number | null;
           school_address_snapshot?: string | null;
           school_email_snapshot?: string | null;
           school_logo_path_snapshot?: string | null;
@@ -623,14 +634,18 @@ export type Database = {
           expense_number?: string;
           external_reference?: string | null;
           id?: never;
+          notes?: string | null;
           payment_method_id?: number;
           payment_method_name_snapshot?: string;
+          payroll_cash_kind?: string | null;
           recorded_by_snapshot?: string;
           reversal_number?: string | null;
           reversal_reason?: string | null;
           reversed_at?: string | null;
           reversed_by?: string | null;
           reversed_by_name_snapshot?: string | null;
+          salary_deduction_id?: number | null;
+          salary_record_id?: number | null;
           school_address_snapshot?: string | null;
           school_email_snapshot?: string | null;
           school_logo_path_snapshot?: string | null;
@@ -668,6 +683,27 @@ export type Database = {
             columns: ["reversed_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expenses_salary_deduction_id_fkey";
+            columns: ["salary_deduction_id"];
+            isOneToOne: false;
+            referencedRelation: "salary_deductions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expenses_salary_record_id_fkey";
+            columns: ["salary_record_id"];
+            isOneToOne: false;
+            referencedRelation: "salary_cash_positions";
+            referencedColumns: ["salary_record_id"];
+          },
+          {
+            foreignKeyName: "expenses_salary_record_id_fkey";
+            columns: ["salary_record_id"];
+            isOneToOne: false;
+            referencedRelation: "salary_records";
             referencedColumns: ["id"];
           },
           {
@@ -1272,6 +1308,281 @@ export type Database = {
             columns: ["updated_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      library_charges: {
+        Row: {
+          academic_term_id: number;
+          academic_term_name_snapshot: string;
+          academic_year_id: number;
+          academic_year_name_snapshot: string;
+          admission_number_snapshot: string;
+          amount_paid: number;
+          class_id: number;
+          class_name_snapshot: string;
+          created_at: string;
+          created_by: string;
+          description: string;
+          enrollment_id: number;
+          expected_amount: number;
+          id: number;
+          outstanding: number | null;
+          status: string;
+          student_id: number;
+          student_name_snapshot: string;
+          term_rate_id: number;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          academic_term_id: number;
+          academic_term_name_snapshot: string;
+          academic_year_id: number;
+          academic_year_name_snapshot: string;
+          admission_number_snapshot: string;
+          amount_paid?: number;
+          class_id: number;
+          class_name_snapshot: string;
+          created_at?: string;
+          created_by: string;
+          description?: string;
+          enrollment_id: number;
+          expected_amount: number;
+          id?: never;
+          outstanding?: number | null;
+          status?: string;
+          student_id: number;
+          student_name_snapshot: string;
+          term_rate_id: number;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          academic_term_id?: number;
+          academic_term_name_snapshot?: string;
+          academic_year_id?: number;
+          academic_year_name_snapshot?: string;
+          admission_number_snapshot?: string;
+          amount_paid?: number;
+          class_id?: number;
+          class_name_snapshot?: string;
+          created_at?: string;
+          created_by?: string;
+          description?: string;
+          enrollment_id?: number;
+          expected_amount?: number;
+          id?: never;
+          outstanding?: number | null;
+          status?: string;
+          student_id?: number;
+          student_name_snapshot?: string;
+          term_rate_id?: number;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "library_charges_academic_term_id_fkey";
+            columns: ["academic_term_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_terms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_charges_academic_year_id_fkey";
+            columns: ["academic_year_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_years";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_charges_class_id_fkey";
+            columns: ["class_id"];
+            isOneToOne: false;
+            referencedRelation: "classes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_charges_enrollment_id_fkey";
+            columns: ["enrollment_id"];
+            isOneToOne: false;
+            referencedRelation: "student_enrollments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_charges_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_charges_term_rate_id_fkey";
+            columns: ["term_rate_id"];
+            isOneToOne: false;
+            referencedRelation: "library_term_rates";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      library_collections: {
+        Row: {
+          admission_number_snapshot: string;
+          amount: number;
+          business_date: string;
+          charge_id: number;
+          class_name_snapshot: string;
+          collection_number: string;
+          created_at: string;
+          created_by: string;
+          external_reference: string | null;
+          id: number;
+          notes: string | null;
+          payment_method_id: number;
+          payment_method_name_snapshot: string;
+          recorded_by_snapshot: string;
+          request_key: string;
+          reversal_number: string | null;
+          reversal_reason: string | null;
+          reversal_request_key: string | null;
+          reversed_at: string | null;
+          reversed_by: string | null;
+          reversed_by_name_snapshot: string | null;
+          status: string;
+          student_id: number;
+          student_name_snapshot: string;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          admission_number_snapshot: string;
+          amount: number;
+          business_date: string;
+          charge_id: number;
+          class_name_snapshot: string;
+          collection_number: string;
+          created_at?: string;
+          created_by: string;
+          external_reference?: string | null;
+          id?: never;
+          notes?: string | null;
+          payment_method_id: number;
+          payment_method_name_snapshot: string;
+          recorded_by_snapshot: string;
+          request_key: string;
+          reversal_number?: string | null;
+          reversal_reason?: string | null;
+          reversal_request_key?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          status?: string;
+          student_id: number;
+          student_name_snapshot: string;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          admission_number_snapshot?: string;
+          amount?: number;
+          business_date?: string;
+          charge_id?: number;
+          class_name_snapshot?: string;
+          collection_number?: string;
+          created_at?: string;
+          created_by?: string;
+          external_reference?: string | null;
+          id?: never;
+          notes?: string | null;
+          payment_method_id?: number;
+          payment_method_name_snapshot?: string;
+          recorded_by_snapshot?: string;
+          request_key?: string;
+          reversal_number?: string | null;
+          reversal_reason?: string | null;
+          reversal_request_key?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          status?: string;
+          student_id?: number;
+          student_name_snapshot?: string;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "library_collections_charge_id_fkey";
+            columns: ["charge_id"];
+            isOneToOne: false;
+            referencedRelation: "library_charges";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_collections_payment_method_id_fkey";
+            columns: ["payment_method_id"];
+            isOneToOne: false;
+            referencedRelation: "payment_methods";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_collections_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      library_term_rates: {
+        Row: {
+          academic_term_id: number;
+          amount: number | null;
+          charge_status: string;
+          class_id: number;
+          created_at: string;
+          created_by: string | null;
+          id: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          academic_term_id: number;
+          amount?: number | null;
+          charge_status: string;
+          class_id: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: never;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          academic_term_id?: number;
+          amount?: number | null;
+          charge_status?: string;
+          class_id?: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: never;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "library_term_rates_academic_term_id_fkey";
+            columns: ["academic_term_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_terms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_term_rates_class_id_fkey";
+            columns: ["class_id"];
+            isOneToOne: false;
+            referencedRelation: "classes";
             referencedColumns: ["id"];
           },
         ];
@@ -2781,6 +3092,20 @@ export type Database = {
         };
         Relationships: [];
       };
+      salary_cash_positions: {
+        Row: {
+          net_salary: number | null;
+          salary_outstanding: number | null;
+          salary_paid: number | null;
+          salary_payment_status: string | null;
+          salary_record_id: number | null;
+          ssnit_due: number | null;
+          ssnit_outstanding: number | null;
+          ssnit_remitted: number | null;
+          ssnit_status: string | null;
+        };
+        Relationships: [];
+      };
       staff_directory: {
         Row: {
           assigned_classes: string | null;
@@ -2885,6 +3210,17 @@ export type Database = {
       };
       create_staff: { Args: { payload: Json }; Returns: Json };
       create_student: { Args: { payload: Json }; Returns: Json };
+      dispatch_salary_batch: {
+        Args: {
+          request_key: string;
+          target_business_date: string;
+          target_external_reference?: string;
+          target_notes?: string;
+          target_payment_method_id: number;
+          target_payroll_month: string;
+        };
+        Returns: Json;
+      };
       end_staff_assignment: {
         Args: { target_assignment_id: number; target_ended_on: string };
         Returns: Json;
@@ -2905,6 +3241,10 @@ export type Database = {
           succeeded: boolean;
           target_user_id: string;
         };
+        Returns: Json;
+      };
+      generate_library_term_charges: {
+        Args: { target_academic_term_id: number; target_student_id?: number };
         Returns: Json;
       };
       generate_term_invoices: {
@@ -2964,6 +3304,10 @@ export type Database = {
         Args: { payload: Json; target_student_id: number };
         Returns: Json;
       };
+      post_salary_batch: {
+        Args: { request_key: string; target_payroll_month: string };
+        Returns: Json;
+      };
       prepare_administrator_invitations: {
         Args: { payload: Json };
         Returns: Json;
@@ -3021,6 +3365,18 @@ export type Database = {
         };
         Returns: Json;
       };
+      record_library_collection: {
+        Args: {
+          payment_amount: number;
+          target_business_date: string;
+          target_charge_id: number;
+          target_external_reference?: string;
+          target_notes?: string;
+          target_payment_method_id: number;
+          target_request_key: string;
+        };
+        Returns: Json;
+      };
       record_misc_receipt: {
         Args: {
           receipt_amount: number;
@@ -3047,6 +3403,19 @@ export type Database = {
           target_notes?: string;
           target_payer_name?: string;
           target_payment_method_id: number;
+        };
+        Returns: Json;
+      };
+      record_salary_cash_transaction: {
+        Args: {
+          request_key: string;
+          target_business_date: string;
+          target_external_reference?: string;
+          target_notes?: string;
+          target_payment_method_id: number;
+          target_salary_record_id: number;
+          transaction_amount: number;
+          transaction_kind: string;
         };
         Returns: Json;
       };
@@ -3099,6 +3468,14 @@ export type Database = {
         };
         Returns: Json;
       };
+      reverse_library_collection: {
+        Args: {
+          target_collection_id: number;
+          target_reason: string;
+          target_request_key: string;
+        };
+        Returns: Json;
+      };
       reverse_misc_receipt: {
         Args: {
           request_fingerprint: string;
@@ -3140,6 +3517,15 @@ export type Database = {
       set_current_academic_context: {
         Args: { target_term_id: number; target_year_id: number };
         Returns: undefined;
+      };
+      set_library_term_rate: {
+        Args: {
+          target_academic_term_id: number;
+          target_amount?: number;
+          target_charge_status: string;
+          target_class_id: number;
+        };
+        Returns: Json;
       };
       set_staff_salary_configuration: {
         Args: {
