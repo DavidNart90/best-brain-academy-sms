@@ -1,5 +1,7 @@
 import "server-only";
 
+import { getInvoiceLibraryBalance } from "@/features/library/server/queries";
+
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { invoiceListQuerySchema } from "../schemas";
 import type {
@@ -103,6 +105,7 @@ export async function getFinanceSettings(
     supabase
       .from("expense_categories")
       .select("id,code,name,sort_order,status")
+      .eq("is_system", false)
       .order("sort_order")
       .limit(50),
     supabase
@@ -396,6 +399,7 @@ export async function getCashflowFormOptions() {
     supabase
       .from("expense_categories")
       .select("id,code,name,status")
+      .eq("is_system", false)
       .eq("status", "active")
       .order("sort_order")
       .limit(100),
@@ -806,9 +810,14 @@ export async function getInvoiceDetail(
     .eq("invoice_id", invoiceId)
     .order("sort_order");
   if (lines.error) throw new Error(invoiceError);
+  const libraryBalance = await getInvoiceLibraryBalance(
+    row.student_id,
+    row.academic_term_id,
+  );
   return {
     ...mapInvoiceRow(row),
     studentId: row.student_id,
+    academicTermId: row.academic_term_id,
     subtotal: formatRateAmount(row.subtotal),
     schoolName: row.school_name_snapshot,
     schoolAddress: row.school_address_snapshot,
@@ -828,5 +837,6 @@ export async function getInvoiceDetail(
       amount: formatRateAmount(line.amount),
       sortOrder: line.sort_order,
     })),
+    libraryBalance,
   };
 }

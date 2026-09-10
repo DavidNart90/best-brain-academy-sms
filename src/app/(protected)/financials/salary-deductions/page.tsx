@@ -13,20 +13,24 @@ import {
 import { StatusBadge } from "@/components/data-display/status-badge";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { SalaryBulkActions } from "@/features/finance/components/salary-bulk-actions";
 import { SalaryEntryForm } from "@/features/finance/components/salary-forms";
 import {
   getSalaryFormOptions,
   getSalaryPage,
+  getSalaryPaymentMethods,
 } from "@/features/finance/server/salary-queries";
 import { requirePermission } from "@/lib/auth/access";
 import { hasPermission } from "@/lib/permissions/contracts";
 
+const monthFormatter = new Intl.DateTimeFormat("en-GB", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
 const monthName = (value: string) =>
-  new Intl.DateTimeFormat("en-GB", {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(`${value}T00:00:00Z`));
+  monthFormatter.format(new Date(`${value}T00:00:00Z`));
 
 export default async function SalaryDeductionsPage({
   searchParams,
@@ -36,9 +40,22 @@ export default async function SalaryDeductionsPage({
   const context = await requirePermission("financials.read");
   if (!context) return <PermissionDenied />;
   const result = await getSalaryPage(await searchParams);
-  const options = hasPermission(context, "finance.transactions.manage")
-    ? await getSalaryFormOptions()
-    : null;
+  const canManageSalary = hasPermission(context, "finance.transactions.manage");
+  const [salaryStaff, paymentMethods] = canManageSalary
+    ? await Promise.all([
+        getSalaryFormOptions(result.month),
+        getSalaryPaymentMethods(),
+      ])
+    : [null, null];
+  const postedStaffIds = new Set(result.activeStaffIds);
+  const postEligibleStaff =
+    salaryStaff?.filter((staff) => !postedStaffIds.has(staff.id)) ?? [];
+  const postGrossTotal = (
+    postEligibleStaff.reduce(
+      (total, staff) => total + Math.round(Number(staff.grossSalary) * 100),
+      0,
+    ) / 100
+  ).toFixed(2);
   const search = new URLSearchParams({
     month: result.month,
     q: result.q,
@@ -49,18 +66,30 @@ export default async function SalaryDeductionsPage({
     <>
       <PageHeader
         title="Salaries & deductions"
-        description="Monthly gross salary, approved deductions and final net position. This register does not run PAYE, pensions or payslips."
+        description="Monthly salary calculations, employee payment status and SSNIT remittance status. Posting a salary does not mark it paid."
       >
         <Button asChild variant="outline">
-          <Link href="/settings/financials">
+          <Link href="/settings/financials#staff-salaries">
             <Settings2 />
-            Deduction settings
+            Salary settings
           </Link>
         </Button>
       </PageHeader>
       <div className="space-y-5">
-        {options && (
-          <SalaryEntryForm staff={options.staff} payrollMonth={result.month} />
+        {salaryStaff && paymentMethods && (
+          <SalaryBulkActions
+            payrollMonth={result.month}
+            configuredCount={salaryStaff.length}
+            postEligibleCount={postEligibleStaff.length}
+            postGrossTotal={postGrossTotal}
+            activeSalaryCount={result.activeCount}
+            dispatchEligibleCount={result.salaryOutstandingCount}
+            dispatchOutstandingTotal={result.salaryOutstanding}
+            paymentMethods={paymentMethods}
+          />
+        )}
+        {salaryStaff && (
+          <SalaryEntryForm staff={salaryStaff} payrollMonth={result.month} />
         )}
         <section className="panel p-5" aria-labelledby="salary-period-title">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -111,7 +140,7 @@ export default async function SalaryDeductionsPage({
                   htmlFor="salary-filter-status"
                   className="text-sm font-medium"
                 >
-                  Status
+                  Record status
                 </label>
                 <select
                   id="salary-filter-status"
@@ -130,22 +159,37 @@ export default async function SalaryDeductionsPage({
               </Button>
             </form>
           </div>
+          <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t pt-4 text-sm">
+            <InlineAmount
+              label="Payroll deductions"
+              value={result.totalDeductions}
+            />
+            <InlineAmount label="SSNIT due" value={result.ssnitDue} />
+            <InlineAmount label="SSNIT remitted" value={result.ssnitRemitted} />
+            <InlineAmount
+              label="SSNIT outstanding"
+              value={result.ssnitOutstanding}
+            />
+            <span className="text-muted-foreground">
+              Active records{" "}
+              <strong className="font-semibold text-foreground">
+                {result.activeCount}
+              </strong>
+            </span>
+          </div>
         </section>
         <section
           className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
           aria-label="Monthly salary totals"
         >
           <Summary label="Gross salary" value={result.grossSalary} />
-          <Summary label="Deductions" value={result.totalDeductions} />
-          <Summary label="Net salary" value={result.netSalary} primary />
-          <div className="rounded-xl border bg-card p-5">
-            <p className="text-sm text-muted-foreground">
-              Active staff records
-            </p>
-            <p className="mt-3 text-2xl font-semibold tabular-nums">
-              {result.activeCount}
-            </p>
-          </div>
+          <Summary label="Net salary due" value={result.netSalary} />
+          <Summary label="Salary paid" value={result.salaryPaid} />
+          <Summary
+            label="Salary outstanding"
+            value={result.salaryOutstanding}
+            primary
+          />
         </section>
         {result.rows.length === 0 ? (
           <PageState
@@ -161,18 +205,19 @@ export default async function SalaryDeductionsPage({
               role="region"
               aria-label="Salary records"
             >
-              <table className="w-full min-w-220 text-sm">
+              <table className="w-full min-w-250 text-sm">
                 <thead className="bg-muted/70">
                   <tr>
                     <th className="px-5 py-3 text-left font-medium">
                       Salary record
                     </th>
                     <th className="py-3 text-left font-medium">Staff</th>
-                    <th className="py-3 text-left font-medium">Position</th>
                     <th className="py-3 text-right font-medium">Gross</th>
-                    <th className="py-3 text-right font-medium">Deductions</th>
-                    <th className="py-3 text-right font-medium">Net</th>
-                    <th className="px-5 py-3 text-left font-medium">Status</th>
+                    <th className="py-3 text-right font-medium">Net due</th>
+                    <th className="py-3 text-right font-medium">Paid</th>
+                    <th className="py-3 text-right font-medium">Outstanding</th>
+                    <th className="py-3 text-left font-medium">Payment</th>
+                    <th className="px-5 py-3 text-left font-medium">SSNIT</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -189,23 +234,51 @@ export default async function SalaryDeductionsPage({
                       <td className="py-4">
                         <p className="font-semibold">{row.staffName}</p>
                         <p className="text-xs text-muted-foreground">
-                          {row.staffNumber}
+                          {row.staffNumber} · {row.position}
                         </p>
                       </td>
-                      <td className="py-4">{row.position}</td>
                       <td className="py-4 text-right">
                         <Money value={row.grossSalary} />
                       </td>
                       <td className="py-4 text-right">
-                        <Money value={row.totalDeductions} />
+                        <Money value={row.netSalary} />
+                      </td>
+                      <td className="py-4 text-right">
+                        <Money value={row.cashPosition?.salaryPaid ?? "0.00"} />
                       </td>
                       <td className="py-4 text-right font-semibold">
-                        <Money value={row.netSalary} />
+                        <Money
+                          value={
+                            row.cashPosition?.salaryOutstanding ?? row.netSalary
+                          }
+                        />
+                      </td>
+                      <td className="py-4">
+                        <StatusBadge
+                          status={
+                            row.status === "reversed"
+                              ? "Reversed"
+                              : row.cashPosition?.salaryPaymentStatus === "paid"
+                                ? "Paid"
+                                : row.cashPosition?.salaryPaymentStatus ===
+                                    "partial"
+                                  ? "Partially Paid"
+                                  : "Unpaid"
+                          }
+                        />
                       </td>
                       <td className="px-5 py-4">
                         <StatusBadge
                           status={
-                            row.status === "active" ? "Active" : "Reversed"
+                            row.status === "reversed"
+                              ? "Reversed"
+                              : row.cashPosition?.ssnitStatus === "remitted"
+                                ? "Remitted"
+                                : row.cashPosition?.ssnitStatus === "partial"
+                                  ? "Partially Remitted"
+                                  : row.cashPosition?.ssnitStatus === "due"
+                                    ? "Due"
+                                    : "Not Due"
                           }
                         />
                         {row.reversalNumber && (
@@ -273,5 +346,16 @@ function Summary({
         <Money value={value} />
       </p>
     </div>
+  );
+}
+
+function InlineAmount({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="text-muted-foreground">
+      {label}{" "}
+      <strong className="font-semibold text-foreground">
+        <Money value={value} />
+      </strong>
+    </span>
   );
 }

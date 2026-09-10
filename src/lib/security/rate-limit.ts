@@ -14,6 +14,7 @@ export const rateLimitBucketSchema = z.enum([
   "finance-settings",
   "finance-write",
   "invoice-search",
+  "library-write",
   "password-change",
   "people-write",
   "report-export",

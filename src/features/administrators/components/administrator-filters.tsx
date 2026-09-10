@@ -46,6 +46,7 @@ export function AdministratorFilters({
         <option value="ADMINISTRATOR">Administrator</option>
         <option value="ACCOUNTANT">Accountant</option>
         <option value="MANAGEMENT">Management</option>
+        <option value="LIBRARIAN">Librarian / Book Keeper</option>
       </select>
       <Button type="submit" variant="outline">
         Search

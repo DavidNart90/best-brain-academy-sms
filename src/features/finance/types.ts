@@ -94,6 +94,7 @@ export type InvoiceLineRow = {
 
 export type InvoiceDetail = InvoiceListRow & {
   studentId: number;
+  academicTermId: number;
   subtotal: string;
   schoolName: string;
   schoolAddress: string | null;
@@ -108,6 +109,8 @@ export type InvoiceDetail = InvoiceListRow & {
   createdByName: string;
   createdAt: string;
   lines: InvoiceLineRow[];
+  libraryBalance:
+    import("@/features/library/types").InvoiceLibraryBalance | null;
 };
 
 export type GenerateInvoicesResult = {
@@ -145,6 +148,28 @@ export type SalaryStaffOption = {
   staffNumber: string;
   name: string;
   position: string;
+  grossSalary: string;
+};
+
+export type SalaryConfiguration = {
+  id: number;
+  staffId: number;
+  staffNumber: string;
+  staffName: string;
+  position: string;
+  grossSalary: string;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  status: "active" | "ended";
+  notes: string | null;
+  endReason: string | null;
+};
+
+export type SalaryConfigurationStaffOption = {
+  id: number;
+  staffNumber: string;
+  name: string;
+  position: string;
 };
 
 export type SalaryListRow = {
@@ -177,6 +202,43 @@ export type SalaryDeductionRow = {
   reversalReason: string | null;
 };
 
+export type SalaryPaymentStatus = "unpaid" | "partial" | "paid" | "reversed";
+
+export type SsnitRemittanceStatus =
+  "not_due" | "due" | "partial" | "remitted" | "reversed";
+
+export type SalaryCashPosition = {
+  netSalary: string;
+  salaryPaid: string;
+  salaryOutstanding: string;
+  salaryPaymentStatus: SalaryPaymentStatus;
+  ssnitDue: string;
+  ssnitRemitted: string;
+  ssnitOutstanding: string;
+  ssnitStatus: SsnitRemittanceStatus;
+};
+
+export type SalaryCashEntry = {
+  id: number;
+  expenseNumber: string;
+  kind: "salary_payment" | "ssnit_remittance";
+  amount: string;
+  businessDate: string;
+  paymentMethod: string;
+  externalReference: string | null;
+  notes: string | null;
+  status: "active" | "reversed";
+  reversalNumber: string | null;
+  reversalReason: string | null;
+  salaryDeductionId: number | null;
+};
+
+export type SalaryPaymentMethod = {
+  id: number;
+  name: string;
+  requiresReference: boolean;
+};
+
 export type SalaryDetail = SalaryListRow & {
   recordedBy: string;
   createdAt: string;
@@ -184,4 +246,6 @@ export type SalaryDetail = SalaryListRow & {
   reversedAt: string | null;
   reversedBy: string | null;
   deductions: SalaryDeductionRow[];
+  cashPosition: SalaryCashPosition;
+  cashEntries: SalaryCashEntry[];
 };

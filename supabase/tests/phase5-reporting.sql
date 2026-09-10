@@ -57,6 +57,13 @@ begin
     '{}', actor, actor
   ) returning id into staff_id;
 
+  insert into public.staff_salary_configurations (
+    staff_id, gross_salary, effective_from, notes, created_by, updated_by
+  ) values (
+    staff_id, 1000.00, '2099-10-01',
+    'Synthetic reporting salary configuration', actor, actor
+  );
+
   insert into public.invoices (
     invoice_number, student_id, academic_year_id, academic_term_id,
     class_id, school_location_id, student_name_snapshot,
@@ -124,7 +131,7 @@ begin
     gen_random_uuid(), 'phase5-expense', expense_category_id, 80.00,
     '2099-10-01', 'Synthetic reporting expense', method_id
   );
-  perform public.record_salary_record(gen_random_uuid(), staff_id, '2099-10-01', 1000.00);
+  perform public.record_salary_record(gen_random_uuid(), staff_id, '2099-10-01');
 
   snapshot := public.get_financial_reporting_snapshot(
     '2099-10-01', '2099-10-31', null, null
@@ -141,7 +148,7 @@ begin
     or (summary->>'totalExpenses')::numeric <> 80.00
     or (summary->>'operatingNet')::numeric <> 670.00
     or (summary->>'salaryDeductions')::numeric <> 55.00
-    or (summary->>'finalPosition')::numeric <> 615.00 then
+    or (summary->>'finalPosition')::numeric <> 670.00 then
     raise exception 'Financial summary reconciliation failed: %', summary;
   end if;
   if (summary->>'receiptCount')::integer <> 4
@@ -159,6 +166,16 @@ begin
     where business_date between '2099-10-01' and '2099-10-31'
   ) <> 7 then
     raise exception 'Normalized financial activity report failed';
+  end if;
+  if not exists (
+    select 1
+    from public.financial_activity_report
+    where business_date between '2099-10-01' and '2099-10-31'
+      and record_kind = 'deduction'
+      and status = 'active'
+      and amount = 55.00
+  ) then
+    raise exception 'Posted salary deduction is missing from the detailed report';
   end if;
 
   term_snapshot := public.get_financial_reporting_snapshot(
@@ -178,7 +195,8 @@ begin
   if week_row.gross_receipts <> 750.00
     or week_row.expenses <> 80.00
     or week_row.salary_deductions <> 55.00
-    or week_row.final_position <> 615.00 then
+    or week_row.operating_net <> 670.00
+    or week_row.final_position <> 670.00 then
     raise exception 'Weekly reporting reconciliation failed';
   end if;
 end;
@@ -209,5 +227,5 @@ end;
 $$;
 
 reset role;
-select 'PASS: Phase 5 totals, daily/monthly/weekly/term scope, normalized activity, reversals and access' as result;
+select 'PASS: Phase 5 totals, informational salary deductions, cash position, daily/monthly/weekly/term scope, normalized activity, reversals and access' as result;
 rollback;

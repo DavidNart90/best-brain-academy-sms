@@ -495,8 +495,8 @@ async function getFinancialActivityTable(
       "Posted expenses grouped through their recorded category snapshots.",
     ],
     "salary-deductions": [
-      "Salary deduction report",
-      "Monthly staff deductions. The unresolved August source batch remains unposted.",
+      "Payroll deduction report",
+      "Monthly SSNIT and other configured staff deductions. The unresolved August source batch remains unposted.",
     ],
   } as const;
   const [title, description] =

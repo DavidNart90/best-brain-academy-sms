@@ -36,6 +36,7 @@ const roleLabels: Record<string, string> = {
   ADMINISTRATOR: "Administrator",
   ACCOUNTANT: "Accountant",
   MANAGEMENT: "Management",
+  LIBRARIAN: "Librarian / Book Keeper",
 };
 function hrefFor(
   query: Awaited<ReturnType<typeof getAdministratorPage>>["query"],
