@@ -186,7 +186,7 @@ export function CashflowEntryForm({
           </button>
         ))}
       </div>
-      {dailyTotal && (
+      {dailyTotal ? (
         <p className="mt-4 rounded-md bg-muted p-3 text-sm">
           Enter the day&apos;s total{" "}
           {mode === "feeding_receipt" ? "feeding" : "admission"} collections for
@@ -194,7 +194,7 @@ export function CashflowEntryForm({
           To correct a posted total, reverse it in Receipts before posting its
           replacement.
         </p>
-      )}
+      ) : null}
       <form key={mode + "-" + formVersion} className="mt-5" onSubmit={submit}>
         <fieldset
           disabled={pending}

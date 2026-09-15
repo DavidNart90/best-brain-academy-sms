@@ -30,14 +30,7 @@ import { AdministratorImportDialog } from "@/features/administrators/components/
 import { AdministratorInviteDialog } from "@/features/administrators/components/administrator-invite-dialog";
 import { getAdministratorPage } from "@/features/administrators/server/queries";
 import { requirePermission } from "@/lib/auth/access";
-
-const roleLabels: Record<string, string> = {
-  SUPER_ADMIN: "Super Administrator",
-  ADMINISTRATOR: "Administrator",
-  ACCOUNTANT: "Accountant",
-  MANAGEMENT: "Management",
-  LIBRARIAN: "Librarian / Book Keeper",
-};
+import { getRoleLabel } from "@/lib/permissions/contracts";
 function hrefFor(
   query: Awaited<ReturnType<typeof getAdministratorPage>>["query"],
   page?: number,
@@ -176,9 +169,7 @@ export default async function AdministratorsPage({
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary">
-                            {account.role
-                              ? (roleLabels[account.role] ?? account.role)
-                              : "Unassigned"}
+                            {getRoleLabel(account.role)}
                           </Badge>
                         </TableCell>
                         <TableCell>

@@ -15,9 +15,14 @@ import {
   reverseFinanceInputSchema,
   schoolFeePaymentInputSchema,
   dailyCollectionInputSchema,
+  endTermInvoiceConfigurationSchema,
+  generateEndTermInvoicesSchema,
   transportChargesInputSchema,
 } from "../schemas";
-import type { GenerateInvoicesResult } from "../types";
+import type {
+  EndTermInvoiceGenerationResult,
+  GenerateInvoicesResult,
+} from "../types";
 import { postingError } from "./posting-error";
 
 export type FinanceActionResult = {
@@ -49,6 +54,13 @@ function refreshFinanceSettings() {
 function refreshInvoices(invoiceId?: number) {
   revalidatePath("/financials/invoices");
   if (invoiceId) revalidatePath(`/financials/invoices/${invoiceId}`);
+}
+
+function refreshEndTermInvoices(invoiceId?: number) {
+  revalidatePath("/financials/end-of-term-invoices");
+  revalidatePath("/financials/invoices");
+  if (invoiceId)
+    revalidatePath(`/financials/end-of-term-invoices/${invoiceId}`);
 }
 
 async function canManageFinance() {
@@ -338,6 +350,69 @@ export async function generateTermInvoices(
   return {
     ok: true,
     message: `${result.createdCount} invoice${result.createdCount === 1 ? "" : "s"} created${skippedCount ? `, ${skippedCount} skipped` : ""}.`,
+    result,
+  };
+}
+
+export async function saveEndTermInvoiceConfiguration(
+  input: unknown,
+): Promise<FinanceActionResult> {
+  const access = await requireRateLimitedPermission(
+    "finance.end_term_invoices.manage",
+    "finance-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
+  const parsed = endTermInvoiceConfigurationSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Review the parent note.",
+    };
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase.rpc("save_end_term_invoice_configuration", {
+    target_source_academic_term_id: parsed.data.sourceTermId,
+    target_parent_notes: parsed.data.parentNotes,
+  });
+  if (result.error)
+    return { ok: false, message: databaseMessage(result.error) };
+  refreshEndTermInvoices();
+  return {
+    ok: true,
+    message:
+      "End-of-term invoice note saved. It will lock after the first invoice is issued.",
+  };
+}
+
+export type GenerateEndTermInvoicesActionResult = FinanceActionResult & {
+  result?: EndTermInvoiceGenerationResult;
+};
+
+export async function generateEndTermInvoices(
+  input: unknown,
+): Promise<GenerateEndTermInvoicesActionResult> {
+  const access = await requireRateLimitedPermission(
+    "finance.end_term_invoices.manage",
+    "finance-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
+  const parsed = generateEndTermInvoicesSchema.safeParse(input);
+  if (!parsed.success)
+    return { ok: false, message: "Review the generation scope." };
+  const supabase = await createServerSupabaseClient();
+  const rpcResult = await supabase.rpc("generate_end_term_invoices", {
+    target_source_academic_term_id: parsed.data.sourceTermId,
+    target_class_id: parsed.data.classId ?? undefined,
+    after_student_id: parsed.data.afterStudentId ?? undefined,
+    target_batch_size: 50,
+  });
+  if (rpcResult.error)
+    return { ok: false, message: databaseMessage(rpcResult.error) };
+  const result = rpcResult.data as unknown as EndTermInvoiceGenerationResult;
+  refreshEndTermInvoices(result.created[0]?.invoiceId);
+  const skippedCount = result.skipped?.length ?? 0;
+  return {
+    ok: true,
+    message: `${result.createdCount} invoice${result.createdCount === 1 ? "" : "s"} created in this batch${skippedCount ? `, ${skippedCount} skipped` : ""}.`,
     result,
   };
 }

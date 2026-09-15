@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { LiveFilterForm } from "@/components/layout/live-filter-form";
 import {
   PageState,
   PermissionDenied,
@@ -41,8 +42,8 @@ export default async function PaymentsPage({
           </Button>
         )}
       </PageHeader>
-      <form
-        method="get"
+      <LiveFilterForm
+        ariaLabel="Filter payments"
         className="panel mb-5 flex flex-wrap items-end gap-3 p-5"
       >
         <div className="field">
@@ -98,13 +99,10 @@ export default async function PaymentsPage({
             <option value="reversed">Reversed</option>
           </select>
         </div>
-        <Button type="submit" variant="outline">
-          Apply filters
-        </Button>
         <Button asChild variant="ghost">
           <Link href="/financials/payments">Clear filters</Link>
         </Button>
-      </form>
+      </LiveFilterForm>
       {result.rows.length === 0 ? (
         <PageState
           kind="empty"

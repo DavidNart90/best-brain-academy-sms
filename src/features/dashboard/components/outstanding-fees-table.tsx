@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Money } from "@/components/data-display/money";
 import { StatusBadge } from "@/components/data-display/status-badge";
+import { LiveFilterForm } from "@/components/layout/live-filter-form";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -40,9 +41,8 @@ export function OutstandingFeesTable({
             Highest active student balances in the current academic term
           </p>
         </div>
-        <form
-          method="get"
-          action="/dashboard"
+        <LiveFilterForm
+          ariaLabel="Filter dashboard outstanding fees"
           className="flex flex-wrap items-end gap-2"
         >
           <div className="field min-w-52">
@@ -63,15 +63,12 @@ export function OutstandingFeesTable({
               ))}
             </select>
           </div>
-          <Button type="submit" size="sm">
-            Apply
-          </Button>
           {classId ? (
             <Button variant="ghost" size="sm" asChild>
               <Link href="/dashboard">Reset</Link>
             </Button>
           ) : null}
-        </form>
+        </LiveFilterForm>
       </div>
       <div
         className="table-scroll"

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { DataTablePagination } from "@/components/data-display/data-table-pagination";
 import { Money } from "@/components/data-display/money";
 import {
@@ -7,6 +8,9 @@ import {
 } from "@/components/data-display/page-state";
 import { StatusBadge } from "@/components/data-display/status-badge";
 import { PageHeader } from "@/components/layout/page-header";
+import { LiveFilterForm } from "@/components/layout/live-filter-form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -59,6 +63,49 @@ export default async function InvoicesPage({
       />
       <div className="space-y-5">
         {canGenerate && <GenerateInvoicesPanel />}
+        <LiveFilterForm
+          ariaLabel="Filter invoices"
+          className="panel grid gap-3 p-5 sm:grid-cols-[minmax(15rem,1fr)_12rem_auto]"
+        >
+          <div className="field">
+            <label htmlFor="invoice-list-search" className="field-label">
+              Student, admission number or invoice
+            </label>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="invoice-list-search"
+                name="q"
+                defaultValue={result.query.q}
+                maxLength={80}
+                placeholder="Search invoices"
+                className="pl-9"
+              />
+            </div>
+          </div>
+          <div className="field">
+            <label htmlFor="invoice-list-status" className="field-label">
+              Status
+            </label>
+            <select
+              id="invoice-list-status"
+              name="status"
+              defaultValue={result.query.status}
+              className="native-select"
+            >
+              <option value="all">All statuses</option>
+              <option value="unpaid">Unpaid</option>
+              <option value="partially_paid">Partially paid</option>
+              <option value="paid">Paid</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div className="flex items-end">
+            <Button asChild variant="ghost">
+              <Link href="/financials/invoices">Clear</Link>
+            </Button>
+          </div>
+        </LiveFilterForm>
         {result.total === 0 ? (
           <PageState
             kind="empty"

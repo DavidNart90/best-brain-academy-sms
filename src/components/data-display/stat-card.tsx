@@ -8,12 +8,14 @@ export function StatCard({
   note,
   icon: Icon,
   accent = false,
+  format = "money",
 }: {
   label: string;
   amount: string;
   note: string;
   icon: LucideIcon;
   accent?: boolean;
+  format?: "money" | "number";
 }) {
   return (
     <section
@@ -30,10 +32,16 @@ export function StatCard({
         />
       </div>
       <div>
-        <Money
-          value={amount}
-          className="text-[19px] font-semibold tracking-tight"
-        />
+        {format === "money" ? (
+          <Money
+            value={amount}
+            className="text-[19px] font-semibold tracking-tight"
+          />
+        ) : (
+          <span className="text-[19px] font-semibold tabular-nums tracking-tight">
+            {amount}
+          </span>
+        )}
         <p className="mt-2 text-xs text-muted-foreground">{note}</p>
       </div>
     </section>

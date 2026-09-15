@@ -90,6 +90,14 @@ export const appRoutes: AppRoute[] = [
     description: "Issued invoices and their original fee snapshots.",
   },
   {
+    href: "/financials/end-of-term-invoices",
+    title: "End-of-Term Invoices",
+    permission: "finance.end_term_invoices.read",
+    phase: 6,
+    description:
+      "Prepare, generate and print next-term invoices with carried balances.",
+  },
+  {
     href: "/financials/payments",
     title: "Payments",
     permission: "financials.read",
@@ -107,7 +115,7 @@ export const appRoutes: AppRoute[] = [
   {
     href: "/financials/outstanding",
     title: "Outstanding Fees",
-    permission: "financials.read",
+    permission: "finance.outstanding.read",
     phase: 3,
     description: "Outstanding balances by student and class.",
   },
@@ -142,9 +150,9 @@ export const appRoutes: AppRoute[] = [
   {
     href: "/settings",
     title: "Settings",
-    permission: "settings.manage",
+    permission: "dashboard.read",
     phase: 1,
-    description: "School, academic and system configuration.",
+    description: "Role-specific workspace settings and responsibilities.",
   },
   {
     href: "/settings/school",
@@ -163,7 +171,7 @@ export const appRoutes: AppRoute[] = [
   {
     href: "/settings/financials",
     title: "Financial Settings",
-    permission: "settings.manage",
+    permission: "finance.settings.manage",
     phase: 3,
     description: "Financial categories and document numbering.",
   },
@@ -184,7 +192,7 @@ export function resolveRoute(path: string): AppRoute | undefined {
   const exact = appRoutes.find((route) => route.href === path);
   if (exact) return exact;
   const details =
-    /^\/(admissions|students|classes|staff|financials\/invoices|financials\/receipts)\/[a-zA-Z0-9-]{1,64}$/.exec(
+    /^\/(admissions|students|classes|staff|financials\/invoices|financials\/end-of-term-invoices|financials\/receipts)\/[a-zA-Z0-9-]{1,64}$/.exec(
       path,
     );
   if (!details) return undefined;

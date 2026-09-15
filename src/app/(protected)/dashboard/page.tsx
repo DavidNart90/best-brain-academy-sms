@@ -1,13 +1,23 @@
-import { requirePermission } from "@/lib/auth/access";
-import { hasPermission } from "@/lib/permissions/contracts";
-import { Dashboard } from "@/features/dashboard/components/dashboard";
-import { PermissionDenied } from "@/components/data-display/page-state";
 import {
-  getFinancialSnapshot,
-  getReportTable,
-  getReportingOptions,
-  resolveReportFilters,
-} from "@/features/reports/server/queries";
+  PageState,
+  PermissionDenied,
+} from "@/components/data-display/page-state";
+import { PageHeader } from "@/components/layout/page-header";
+import { AdministratorDashboard } from "@/features/dashboard/components/administrator-dashboard";
+import { BoardMemberDashboard } from "@/features/dashboard/components/board-member-dashboard";
+import { FinancialDashboard } from "@/features/dashboard/components/dashboard";
+import { FinanceOversightDashboard } from "@/features/dashboard/components/finance-oversight-dashboard";
+import { LibrarianDashboard } from "@/features/dashboard/components/librarian-dashboard";
+import { resolveDashboardVariant } from "@/features/dashboard/role";
+import {
+  getAdministratorDashboardData,
+  getBoardDashboardData,
+  getFinancialDashboardData,
+  getSuperAdminOperationsData,
+} from "@/features/dashboard/server/queries";
+import { getLibraryPage } from "@/features/library/server/queries";
+import { getLibraryFinancialSummary } from "@/features/library/server/queries";
+import { requirePermission } from "@/lib/auth/access";
 
 export default async function DashboardPage({
   searchParams,
@@ -16,38 +26,65 @@ export default async function DashboardPage({
 }) {
   const context = await requirePermission("dashboard.read");
   if (!context) return <PermissionDenied />;
-  const showFinancials = hasPermission(context, "financials.read");
-  if (!showFinancials)
+
+  const raw = await searchParams;
+  const variant = resolveDashboardVariant(context.roles);
+
+  if (variant === "administrator") {
+    const data = await getAdministratorDashboardData();
+    return <AdministratorDashboard data={data} />;
+  }
+
+  if (variant === "librarian") {
+    const data = await getLibraryPage({});
+    return <LibrarianDashboard data={data} />;
+  }
+
+  if (variant === "board-member") {
+    const data = await getBoardDashboardData(raw);
+    return <BoardMemberDashboard data={data} />;
+  }
+
+  if (variant === "accountant") {
+    const data = await getBoardDashboardData(raw);
+    const librarySummary = await getLibraryFinancialSummary(
+      data.filters.academicTermId ?? 0,
+    );
     return (
-      <Dashboard
-        showFinancials={false}
-        snapshot={null}
-        periodLabel="Current reporting period"
-        outstanding={null}
-        classes={[]}
+      <FinanceOversightDashboard
+        data={data}
+        librarySummary={librarySummary}
+        title="Accountant dashboard"
+        description="Daily financial control across revenue, expenses, collections and outstanding balances."
+        resetHref="/dashboard"
       />
     );
-  const options = await getReportingOptions();
-  const raw = await searchParams;
-  const filters = resolveReportFilters(
-    { view: "outstanding", classId: raw.classId },
-    options,
-  );
-  const [snapshot, outstanding] = await Promise.all([
-    getFinancialSnapshot(filters),
-    getReportTable(filters, 10),
-  ]);
-  const selectedTerm = options.academicTerms.find(
-    (term) => term.id === filters.academicTermId,
-  );
+  }
+
+  if (variant === "super-admin") {
+    const [data, operations] = await Promise.all([
+      getFinancialDashboardData(raw, true),
+      getSuperAdminOperationsData(),
+    ]);
+    return (
+      <FinancialDashboard
+        mode="super-admin"
+        data={data}
+        operations={operations}
+      />
+    );
+  }
+
   return (
-    <Dashboard
-      showFinancials
-      snapshot={snapshot}
-      outstanding={outstanding}
-      classes={options.classes}
-      classId={filters.classId}
-      periodLabel={`${selectedTerm?.name ?? "Current period"} · ${filters.start} to ${filters.end}`}
-    />
+    <>
+      <PageHeader
+        title="Dashboard"
+        description="Your available school workspaces and daily responsibilities."
+      />
+      <PageState
+        title="Your workspace is ready"
+        description="Use the sidebar to open the pages available to your account."
+      />
+    </>
   );
 }

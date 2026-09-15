@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   BookOpenText,
   CircleAlert,
@@ -11,6 +12,7 @@ import { PermissionDenied } from "@/components/data-display/page-state";
 import { StatCard } from "@/components/data-display/stat-card";
 import { StatusBadge } from "@/components/data-display/status-badge";
 import { PageHeader } from "@/components/layout/page-header";
+import { LiveFilterForm } from "@/components/layout/live-filter-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,10 +42,9 @@ const statusLabels = {
   paid: "Paid",
 } as const;
 
+const mediumDate = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
 const date = (value: string) =>
-  new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(
-    new Date(`${value}T00:00:00Z`),
-  );
+  mediumDate.format(new Date(`${value}T00:00:00Z`));
 
 export default async function LibraryPage({
   searchParams,
@@ -94,9 +95,8 @@ export default async function LibraryPage({
               collection.
             </p>
           </div>
-          <form
-            method="get"
-            role="search"
+          <LiveFilterForm
+            ariaLabel="Filter Library balances"
             className="grid gap-3 md:grid-cols-[minmax(14rem,1fr)_minmax(11rem,0.7fr)_minmax(13rem,1fr)_auto]"
           >
             <select
@@ -135,10 +135,10 @@ export default async function LibraryPage({
                 className="pl-9"
               />
             </div>
-            <Button type="submit" variant="outline">
-              Apply filters
+            <Button asChild type="button" variant="ghost">
+              <Link href="/library">Clear</Link>
             </Button>
-          </form>
+          </LiveFilterForm>
         </section>
 
         <section

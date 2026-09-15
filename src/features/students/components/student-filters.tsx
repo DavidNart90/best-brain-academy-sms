@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,6 @@ export function StudentFilters({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [query, setQuery] = useState(initial.q);
   const [status, setStatus] = useState(initial.status);
   const [gender, setGender] = useState(initial.gender);
@@ -30,7 +29,7 @@ export function StudentFilters({
   const [sort, setSort] = useState(initial.sort);
 
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
     const next = query.trim();
     if (next) params.set("q", next);
     else params.delete("q");
@@ -47,23 +46,11 @@ export function StudentFilters({
     params.delete("page");
     params.delete("notice");
     const nextHref = params.size ? `${pathname}?${params}` : pathname;
-    const currentHref = searchParams.size
-      ? `${pathname}?${searchParams}`
-      : pathname;
+    const currentHref = `${window.location.pathname}${window.location.search}`;
     if (nextHref === currentHref) return;
     const timeout = window.setTimeout(() => router.replace(nextHref), 350);
     return () => window.clearTimeout(timeout);
-  }, [
-    classId,
-    gender,
-    pathname,
-    query,
-    router,
-    searchParams,
-    sort,
-    status,
-    yearId,
-  ]);
+  }, [classId, gender, pathname, query, router, sort, status, yearId]);
 
   const hasFilters =
     query ||

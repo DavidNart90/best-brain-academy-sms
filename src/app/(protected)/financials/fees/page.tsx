@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
+import { LiveFilterForm } from "@/components/layout/live-filter-form";
 import { Money } from "@/components/data-display/money";
 import {
   PageState,
   PermissionDenied,
 } from "@/components/data-display/page-state";
-import { Button } from "@/components/ui/button";
 import { DocumentHeader } from "@/features/finance/components/document-header";
 import { PrintInvoiceButton } from "@/features/finance/components/print-invoice-button";
 import {
@@ -60,7 +60,10 @@ export default async function FeeStructurePage({
       >
         <PrintInvoiceButton />
       </PageHeader>
-      <form className="mb-5 flex flex-wrap items-end gap-3 print:hidden">
+      <LiveFilterForm
+        ariaLabel="Select fee structure period"
+        className="mb-5 flex flex-wrap items-end gap-3 print:hidden"
+      >
         <div className="field">
           <label className="field-label" htmlFor="fee-term">
             Academic year / term
@@ -79,10 +82,7 @@ export default async function FeeStructurePage({
             ))}
           </select>
         </div>
-        <Button type="submit" variant="outline">
-          View fees
-        </Button>
-      </form>
+      </LiveFilterForm>
       <section className="finance-document panel p-5 sm:p-6">
         <DocumentHeader title="Fee structure" reference={selected.label} />
         <h3 className="mt-6 text-base font-semibold">Term school fees</h3>

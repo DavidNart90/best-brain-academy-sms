@@ -2,6 +2,7 @@ import "server-only";
 
 import ExcelJS from "exceljs";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getRoleLabel } from "@/lib/permissions/contracts";
 import {
   administratorInvitationSchema,
   type AdministratorInvitation,
@@ -48,7 +49,10 @@ export async function buildAdministratorTemplate() {
       "Required",
       "Full Name, Email, Role, Status and Temporary Password. Phone is optional.",
     ],
-    ["Roles", "Super Administrator, Administrator, Accountant or Management."],
+    [
+      "Roles",
+      "Super Administrator, Administrator, Accountant, Board Member or Librarian / Book Keeper.",
+    ],
     [
       "Security",
       "No invitation or OTP is sent. Share each temporary password securely; the user must change it at first sign-in. Delete the completed workbook after import.",
@@ -87,13 +91,14 @@ export async function buildAdministratorTemplate() {
     ["Super Administrator", "Active"],
     ["Administrator", "Disabled"],
     ["Accountant", ""],
-    ["Management", ""],
+    ["Board Member", ""],
+    ["Librarian / Book Keeper", ""],
   ]);
   for (let row = 2; row <= MAX_ROWS + 1; row += 1) {
     sheet.getCell(`D${row}`).dataValidation = {
       type: "list",
       allowBlank: false,
-      formulae: ["'Reference Data'!$A$2:$A$5"],
+      formulae: ["'Reference Data'!$A$2:$A$6"],
     };
     sheet.getCell(`E${row}`).dataValidation = {
       type: "list",
@@ -108,7 +113,10 @@ const roleMap = new Map([
   ["super administrator", "SUPER_ADMIN"],
   ["administrator", "ADMINISTRATOR"],
   ["accountant", "ACCOUNTANT"],
+  ["board member", "MANAGEMENT"],
   ["management", "MANAGEMENT"],
+  ["librarian", "LIBRARIAN"],
+  ["librarian / book keeper", "LIBRARIAN"],
 ]);
 export async function parseAdministratorWorkbook(file: File): Promise<{
   preview: AdministratorImportPreview;
@@ -247,7 +255,7 @@ export async function buildAdministratorExport(
       name: safeText(row.displayName),
       email: safeText(row.email),
       phone: safeText(row.phone ?? ""),
-      role: row.role ?? "Unassigned",
+      role: getRoleLabel(row.role),
       status: row.status,
       lastSignIn: row.lastSignInAt ?? "Never",
     });

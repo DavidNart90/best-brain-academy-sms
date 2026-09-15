@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ChevronDown,
+  CircleAlert,
   LayoutDashboard,
   UserPlus,
   GraduationCap,
@@ -17,7 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { permittedRoutes } from "@/lib/permissions/routes";
-import type { AccessContext } from "@/lib/permissions/contracts";
+import { hasPermission, type AccessContext } from "@/lib/permissions/contracts";
 import { cn } from "@/lib/utils";
 
 const items: {
@@ -31,6 +32,11 @@ const items: {
   { title: "Students", href: "/students", icon: GraduationCap },
   { title: "Classes", href: "/classes", icon: School },
   { title: "Staff", href: "/staff", icon: BriefcaseBusiness },
+  {
+    title: "Outstanding Fees",
+    href: "/financials/outstanding",
+    icon: CircleAlert,
+  },
   { title: "Library", href: "/library", icon: LibraryBig },
   { title: "Financials", href: "/financials", icon: WalletCards, group: true },
   { title: "Reports", href: "/reports", icon: ChartNoAxesCombined },
@@ -52,7 +58,20 @@ export function Navigation({
   return (
     <nav aria-label="Main navigation" className="space-y-1">
       {items
-        .filter((item) => allowed.some((route) => route.href === item.href))
+        .filter((item) => {
+          const permitted = allowed.some(
+            (route) =>
+              route.href === item.href ||
+              (item.group && route.href.startsWith(`${item.href}/`)),
+          );
+          if (!permitted) return false;
+          if (
+            item.href === "/financials/outstanding" &&
+            hasPermission(context, "financials.read")
+          )
+            return false;
+          return true;
+        })
         .map((item) => {
           const active =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -86,7 +105,15 @@ export function Navigation({
                     .filter(
                       (route) =>
                         route.href === item.href ||
-                        route.href.startsWith(`${item.href}/`),
+                        (route.href.startsWith(`${item.href}/`) &&
+                          !(
+                            item.href === "/financials" &&
+                            route.href === "/financials/outstanding" &&
+                            !hasPermission(context, "financials.read")
+                          )) ||
+                        (item.href === "/financials" &&
+                          route.href === "/settings/financials" &&
+                          !hasPermission(context, "settings.manage")),
                     )
                     .map((route) => (
                       <Link

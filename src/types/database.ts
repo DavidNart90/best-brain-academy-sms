@@ -1066,6 +1066,68 @@ export type Database = {
           },
         ];
       };
+      end_term_invoice_configurations: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          id: number;
+          parent_notes: string;
+          source_academic_term_id: number;
+          target_academic_term_id: number;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          id?: never;
+          parent_notes?: string;
+          source_academic_term_id: number;
+          target_academic_term_id: number;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          id?: never;
+          parent_notes?: string;
+          source_academic_term_id?: number;
+          target_academic_term_id?: number;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "end_term_invoice_configurations_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "end_term_invoice_configurations_source_academic_term_id_fkey";
+            columns: ["source_academic_term_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_terms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "end_term_invoice_configurations_target_academic_term_id_fkey";
+            columns: ["target_academic_term_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_terms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "end_term_invoice_configurations_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       invoice_lines: {
         Row: {
           amount: number;
@@ -1151,11 +1213,16 @@ export type Database = {
           class_name_snapshot: string;
           created_at: string;
           created_by: string;
+          end_term_configuration_id: number | null;
           id: number;
+          invoice_kind: string;
           invoice_number: string;
           issued_on: string;
           location_name_snapshot: string;
           outstanding: number | null;
+          parent_notes_snapshot: string | null;
+          previous_balance_snapshot: number;
+          prospectus_amount_snapshot: number;
           recorded_by_snapshot: string;
           school_address_snapshot: string | null;
           school_email_snapshot: string | null;
@@ -1167,6 +1234,7 @@ export type Database = {
           status: string;
           student_id: number;
           student_name_snapshot: string;
+          source_academic_term_id: number | null;
           subtotal: number;
           total: number;
           updated_at: string;
@@ -1188,11 +1256,16 @@ export type Database = {
           class_name_snapshot: string;
           created_at?: string;
           created_by: string;
+          end_term_configuration_id?: number | null;
           id?: never;
+          invoice_kind?: string;
           invoice_number: string;
           issued_on?: string;
           location_name_snapshot: string;
           outstanding?: number | null;
+          parent_notes_snapshot?: string | null;
+          previous_balance_snapshot?: number;
+          prospectus_amount_snapshot?: number;
           recorded_by_snapshot: string;
           school_address_snapshot?: string | null;
           school_email_snapshot?: string | null;
@@ -1204,6 +1277,7 @@ export type Database = {
           status?: string;
           student_id: number;
           student_name_snapshot: string;
+          source_academic_term_id?: number | null;
           subtotal: number;
           total: number;
           updated_at?: string;
@@ -1225,11 +1299,16 @@ export type Database = {
           class_name_snapshot?: string;
           created_at?: string;
           created_by?: string;
+          end_term_configuration_id?: number | null;
           id?: never;
+          invoice_kind?: string;
           invoice_number?: string;
           issued_on?: string;
           location_name_snapshot?: string;
           outstanding?: number | null;
+          parent_notes_snapshot?: string | null;
+          previous_balance_snapshot?: number;
+          prospectus_amount_snapshot?: number;
           recorded_by_snapshot?: string;
           school_address_snapshot?: string | null;
           school_email_snapshot?: string | null;
@@ -1241,6 +1320,7 @@ export type Database = {
           status?: string;
           student_id?: number;
           student_name_snapshot?: string;
+          source_academic_term_id?: number | null;
           subtotal?: number;
           total?: number;
           updated_at?: string;
@@ -1287,6 +1367,20 @@ export type Database = {
             columns: ["school_location_id"];
             isOneToOne: false;
             referencedRelation: "school_locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoices_end_term_configuration_id_fkey";
+            columns: ["end_term_configuration_id"];
+            isOneToOne: false;
+            referencedRelation: "end_term_invoice_configurations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoices_source_academic_term_id_fkey";
+            columns: ["source_academic_term_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_terms";
             referencedColumns: ["id"];
           },
           {
@@ -3243,6 +3337,15 @@ export type Database = {
         };
         Returns: Json;
       };
+      generate_end_term_invoices: {
+        Args: {
+          after_student_id?: number;
+          target_batch_size?: number;
+          target_class_id?: number;
+          target_source_academic_term_id: number;
+        };
+        Returns: Json;
+      };
       generate_library_term_charges: {
         Args: { target_academic_term_id: number; target_student_id?: number };
         Returns: Json;
@@ -3256,6 +3359,10 @@ export type Database = {
         Returns: Json;
       };
       get_access_context: { Args: never; Returns: Json };
+      get_end_term_invoice_setup: {
+        Args: { target_source_academic_term_id?: number };
+        Returns: Json;
+      };
       get_financial_reporting_snapshot: {
         Args: {
           report_end: string;
@@ -3507,6 +3614,13 @@ export type Database = {
           request_key: string;
           target_payment_id: number;
           target_reason: string;
+        };
+        Returns: Json;
+      };
+      save_end_term_invoice_configuration: {
+        Args: {
+          target_parent_notes: string;
+          target_source_academic_term_id: number;
         };
         Returns: Json;
       };
