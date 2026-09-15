@@ -159,6 +159,11 @@
   margin: 10mm;
 }
 
+@page outstanding-fees-report {
+  size: A4 landscape;
+  margin: 10mm;
+}
+
 @media print {
   .app-sidebar,
   .app-topbar,
@@ -204,12 +209,29 @@
   .finance-document .table-scroll {
     overflow: visible;
   }
+  .end-term-print-sheet {
+    break-after: page;
+  }
+  .end-term-print-sheet:last-child {
+    break-after: auto;
+  }
   .report-document {
     border: 0;
     border-radius: 0;
   }
   .report-document .table-scroll {
     overflow: visible;
+  }
+  .outstanding-report {
+    page: outstanding-fees-report;
+  }
+  .outstanding-report table {
+    min-width: 0;
+    font-size: 10px;
+  }
+  .outstanding-report th,
+  .outstanding-report td {
+    padding: 6px 4px;
   }
   .fee-schedule {
     font-size: 10px;

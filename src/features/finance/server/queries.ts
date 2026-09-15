@@ -3,14 +3,22 @@ import "server-only";
 import { getInvoiceLibraryBalance } from "@/features/library/server/queries";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { invoiceListQuerySchema } from "../schemas";
+import {
+  normalizeOutstandingQuery,
+  type OutstandingSearchParams,
+} from "../outstanding-query";
+import { endTermInvoiceQuerySchema, invoiceListQuerySchema } from "../schemas";
 import type {
   BaseClassFeeRow,
+  EndTermInvoiceDocument,
+  EndTermInvoicePage,
+  EndTermInvoiceSetup,
   FinanceCategory,
   FinanceSettings,
   FlatFeeRow,
   InvoiceDetail,
   InvoiceListRow,
+  OutstandingInvoiceRow,
   PaymentMethod,
   TransportChargeRow,
 } from "../types";
@@ -22,6 +30,14 @@ const loadError =
 // 2-decimal string for display, matching the app's decimal-string money convention.
 function formatRateAmount(value: number) {
   return value.toFixed(2);
+}
+
+function safeDirectorySearch(value: string) {
+  return value
+    .replace(/[^\p{L}\p{N}\s@.+/-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80);
 }
 
 export async function getFinancePeriods() {
@@ -439,6 +455,7 @@ export async function getReceiptsPage(
     Array.isArray(value) ? value[0] : value;
   const requestedDate = firstValue(raw.date);
   const status = firstValue(raw.status);
+  const q = safeDirectorySearch(firstValue(raw.q) ?? "");
   const date =
     requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)
       ? requestedDate
@@ -446,50 +463,62 @@ export async function getReceiptsPage(
   const statusFilter =
     status === "reversed" ? "reversed" : status === "active" ? "active" : "all";
   const supabase = await createServerSupabaseClient();
-  const filter = <T extends { eq: (column: string, value: string) => T }>(
-    query: T,
-  ) => {
-    const withStatus =
-      statusFilter === "all" ? query : query.eq("status", statusFilter);
-    return date ? withStatus.eq("business_date", date) : withStatus;
-  };
+  let paymentRequest = supabase
+    .from("receipts")
+    .select(
+      "id,receipt_number,student_name_snapshot,amount,business_date,status,reversal_number,payment_id",
+    )
+    .order("business_date", { ascending: false });
+  let feedingRequest = supabase
+    .from("feeding_receipts")
+    .select(
+      "id,receipt_number,student_name_snapshot,amount,business_date,status,reversal_number",
+    )
+    .order("business_date", { ascending: false });
+  let admissionRequest = supabase
+    .from("admission_receipts")
+    .select(
+      "id,receipt_number,student_name_snapshot,amount,business_date,status,reversal_number",
+    )
+    .order("business_date", { ascending: false });
+  let miscellaneousRequest = supabase
+    .from("misc_receipts")
+    .select(
+      "id,receipt_number,payer_name,description,amount,business_date,status,reversal_number",
+    )
+    .order("business_date", { ascending: false });
+  if (statusFilter !== "all") {
+    paymentRequest = paymentRequest.eq("status", statusFilter);
+    feedingRequest = feedingRequest.eq("status", statusFilter);
+    admissionRequest = admissionRequest.eq("status", statusFilter);
+    miscellaneousRequest = miscellaneousRequest.eq("status", statusFilter);
+  }
+  if (date) {
+    paymentRequest = paymentRequest.eq("business_date", date);
+    feedingRequest = feedingRequest.eq("business_date", date);
+    admissionRequest = admissionRequest.eq("business_date", date);
+    miscellaneousRequest = miscellaneousRequest.eq("business_date", date);
+  }
+  if (q) {
+    const pattern = `%${q}%`;
+    paymentRequest = paymentRequest.or(
+      `receipt_number.ilike.${pattern},student_name_snapshot.ilike.${pattern}`,
+    );
+    feedingRequest = feedingRequest.or(
+      `receipt_number.ilike.${pattern},student_name_snapshot.ilike.${pattern}`,
+    );
+    admissionRequest = admissionRequest.or(
+      `receipt_number.ilike.${pattern},student_name_snapshot.ilike.${pattern}`,
+    );
+    miscellaneousRequest = miscellaneousRequest.or(
+      `receipt_number.ilike.${pattern},payer_name.ilike.${pattern},description.ilike.${pattern}`,
+    );
+  }
   const [payments, feeding, admission, miscellaneous] = await Promise.all([
-    filter(
-      supabase
-        .from("receipts")
-        .select(
-          "id,receipt_number,student_name_snapshot,amount,business_date,status,reversal_number,payment_id",
-        )
-        .order("business_date", { ascending: false })
-        .limit(25),
-    ),
-    filter(
-      supabase
-        .from("feeding_receipts")
-        .select(
-          "id,receipt_number,student_name_snapshot,amount,business_date,status,reversal_number",
-        )
-        .order("business_date", { ascending: false })
-        .limit(25),
-    ),
-    filter(
-      supabase
-        .from("admission_receipts")
-        .select(
-          "id,receipt_number,student_name_snapshot,amount,business_date,status,reversal_number",
-        )
-        .order("business_date", { ascending: false })
-        .limit(25),
-    ),
-    filter(
-      supabase
-        .from("misc_receipts")
-        .select(
-          "id,receipt_number,payer_name,description,amount,business_date,status,reversal_number",
-        )
-        .order("business_date", { ascending: false })
-        .limit(25),
-    ),
+    paymentRequest.limit(25),
+    feedingRequest.limit(25),
+    admissionRequest.limit(25),
+    miscellaneousRequest.limit(25),
   ]);
   if (payments.error || feeding.error || admission.error || miscellaneous.error)
     throw new Error(
@@ -557,7 +586,7 @@ export async function getReceiptsPage(
       `${left.businessDate}-${left.id}`,
     ),
   );
-  return { rows: rows.slice(0, 50), date, status: statusFilter };
+  return { rows: rows.slice(0, 50), date, status: statusFilter, q };
 }
 
 export async function getExpensesPage(
@@ -567,6 +596,7 @@ export async function getExpensesPage(
     Array.isArray(value) ? value[0] : value;
   const requestedDate = firstValue(raw.date);
   const status = firstValue(raw.status);
+  const q = safeDirectorySearch(firstValue(raw.q) ?? "");
   const date =
     requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)
       ? requestedDate
@@ -584,6 +614,12 @@ export async function getExpensesPage(
     .limit(50);
   if (statusFilter !== "all") request = request.eq("status", statusFilter);
   if (date) request = request.eq("business_date", date);
+  if (q) {
+    const pattern = `%${q}%`;
+    request = request.or(
+      `expense_number.ilike.${pattern},description.ilike.${pattern},expense_category_name_snapshot.ilike.${pattern},payment_method_name_snapshot.ilike.${pattern}`,
+    );
+  }
   const result = await request;
   if (result.error)
     throw new Error(
@@ -603,52 +639,117 @@ export async function getExpensesPage(
     })),
     date,
     status: statusFilter,
+    q,
   };
 }
 
 export async function getOutstandingInvoices(
-  raw: Record<string, string | string[] | undefined>,
+  raw: OutstandingSearchParams,
+  options: { mode?: "page" | "print" } = {},
 ) {
-  const firstValue = (value: string | string[] | undefined) =>
-    Array.isArray(value) ? value[0] : value;
-  const search = firstValue(raw.q)?.trim() ?? "";
+  const query = normalizeOutstandingQuery(raw);
+  const isPrint = options.mode === "print";
+  const pageSize = isPrint ? 1000 : 25;
+  const page = isPrint ? 1 : query.page;
+  const offset = (page - 1) * pageSize;
   const supabase = await createServerSupabaseClient();
   let request = supabase
     .from("invoices")
     .select(
-      "id,invoice_number,student_name_snapshot,admission_number_snapshot,class_name_snapshot,location_name_snapshot,total,amount_paid,outstanding,issued_on",
+      "id,student_id,invoice_number,student_name_snapshot,admission_number_snapshot,class_id,class_name_snapshot,location_name_snapshot,academic_year_name_snapshot,academic_term_id,academic_term_name_snapshot,total,amount_paid,outstanding,status,issued_on",
+      { count: "exact" },
     )
     .in("status", ["unpaid", "partially_paid"])
-    .gt("outstanding", 0)
-    .order("outstanding", { ascending: false })
-    .order("id", { ascending: false })
-    .limit(100);
-  if (search) {
-    const safeSearch = search.replace(/[^\p{L}\p{N}\s/-]/gu, " ").trim();
-    if (safeSearch)
-      request = request.or(
-        `student_name_snapshot.ilike.%${safeSearch}%,admission_number_snapshot.ilike.%${safeSearch}%,invoice_number.ilike.%${safeSearch}%`,
-      );
-  }
-  const result = await request;
-  if (result.error)
+    .gt("outstanding", 0);
+  if (query.q)
+    request = request.or(
+      `student_name_snapshot.ilike.%${query.q}%,admission_number_snapshot.ilike.%${query.q}%,invoice_number.ilike.%${query.q}%`,
+    );
+  if (query.classId) request = request.eq("class_id", query.classId);
+  if (query.academicTermId)
+    request = request.eq("academic_term_id", query.academicTermId);
+
+  const [result, classes, terms, years] = await Promise.all([
+    request
+      .order("outstanding", { ascending: false })
+      .order("id", { ascending: false })
+      .range(offset, offset + pageSize - 1),
+    supabase
+      .from("classes")
+      .select("id,name,status")
+      .order("sort_order")
+      .order("id")
+      .limit(100),
+    supabase
+      .from("academic_terms")
+      .select("id,name,academic_year_id,is_current,status,sequence")
+      .order("academic_year_id", { ascending: false })
+      .order("sequence")
+      .limit(150),
+    supabase
+      .from("academic_years")
+      .select("id,name")
+      .order("starts_on", { ascending: false })
+      .limit(50),
+  ]);
+  if (result.error || classes.error || terms.error || years.error)
     throw new Error(
       "Outstanding balances could not be loaded. Try again or contact an administrator.",
     );
+
+  const rows: OutstandingInvoiceRow[] = result.data.map((row) => ({
+    id: row.id,
+    studentId: row.student_id,
+    invoiceNumber: row.invoice_number,
+    studentName: row.student_name_snapshot,
+    admissionNumber: row.admission_number_snapshot,
+    className: row.class_name_snapshot,
+    locationName: row.location_name_snapshot,
+    academicYearName: row.academic_year_name_snapshot,
+    academicTermName: row.academic_term_name_snapshot,
+    total: formatRateAmount(row.total),
+    amountPaid: formatRateAmount(row.amount_paid),
+    outstanding: formatRateAmount(row.outstanding ?? 0),
+    status: row.status as OutstandingInvoiceRow["status"],
+    issuedOn: row.issued_on,
+  }));
+
   return {
-    search,
-    rows: result.data.map((row) => ({
-      id: row.id,
-      invoiceNumber: row.invoice_number,
-      studentName: row.student_name_snapshot,
-      admissionNumber: row.admission_number_snapshot,
-      className: row.class_name_snapshot,
-      locationName: row.location_name_snapshot,
-      total: formatRateAmount(row.total),
-      amountPaid: formatRateAmount(row.amount_paid),
-      outstanding: formatRateAmount(row.outstanding ?? 0),
-      issuedOn: row.issued_on,
+    rows,
+    total: result.count ?? 0,
+    page,
+    pageSize,
+    query,
+    classes: classes.data.map((item) => ({
+      id: item.id,
+      label: `${item.name}${item.status === "active" ? "" : " (archived)"}`,
     })),
+    terms: terms.data.map((term) => ({
+      id: term.id,
+      label: `${years.data.find((year) => year.id === term.academic_year_id)?.name ?? "Academic year"} · ${term.name}${term.is_current ? " · Current" : ""}`,
+    })),
+    truncated: isPrint && (result.count ?? 0) > pageSize,
+  };
+}
+
+export async function getOutstandingReportIdentity() {
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase
+    .from("school_settings")
+    .select("school_name,address,phone,email,motto,logo_path")
+    .eq("id", 1)
+    .single();
+  if (result.error)
+    throw new Error(
+      "School identity could not be loaded for this report. Try again or contact an administrator.",
+    );
+  return {
+    schoolName: result.data.school_name,
+    schoolAddress: result.data.address,
+    schoolPhone: result.data.phone,
+    schoolEmail: result.data.email,
+    schoolMotto: result.data.motto,
+    schoolLogoPath: result.data.logo_path,
   };
 }
 
@@ -839,4 +940,223 @@ export async function getInvoiceDetail(
     })),
     libraryBalance,
   };
+}
+
+const endTermInvoiceColumns = `${invoiceListColumns},student_id,subtotal,cancelled_at,cancellation_number,cancellation_reason,cancelled_by_name_snapshot,created_at,school_name_snapshot,school_address_snapshot,school_phone_snapshot,school_email_snapshot,school_motto_snapshot,school_logo_path_snapshot,recorded_by_snapshot,source_academic_term_id,previous_balance_snapshot,prospectus_amount_snapshot,parent_notes_snapshot,invoice_lines(id,description,amount,sort_order)`;
+
+type EndTermInvoiceDatabaseRow = InvoiceRow & {
+  student_id: number;
+  subtotal: number;
+  cancelled_at: string | null;
+  cancellation_number: string | null;
+  cancellation_reason: string | null;
+  cancelled_by_name_snapshot: string | null;
+  created_at: string;
+  school_name_snapshot: string;
+  school_address_snapshot: string | null;
+  school_phone_snapshot: string | null;
+  school_email_snapshot: string | null;
+  school_motto_snapshot: string | null;
+  school_logo_path_snapshot: string | null;
+  recorded_by_snapshot: string;
+  source_academic_term_id: number;
+  previous_balance_snapshot: number;
+  prospectus_amount_snapshot: number;
+  parent_notes_snapshot: string | null;
+  invoice_lines: Array<{
+    id: number;
+    description: string;
+    amount: number;
+    sort_order: number;
+  }>;
+};
+
+function normalizeEndTermSetup(value: unknown): EndTermInvoiceSetup {
+  const item = value && typeof value === "object" ? value : {};
+  const read = (key: string) => (item as Record<string, unknown>)[key];
+  const number = (key: string) => Number(read(key) ?? 0);
+  const nullableNumber = (key: string) => {
+    const valueAtKey = read(key);
+    return valueAtKey === null || valueAtKey === undefined
+      ? null
+      : Number(valueAtKey);
+  };
+  const nullableString = (key: string) => {
+    const valueAtKey = read(key);
+    return typeof valueAtKey === "string" ? valueAtKey : null;
+  };
+  return {
+    ready: read("ready") === true,
+    reason: nullableString("reason"),
+    sourceTermId: number("sourceTermId"),
+    sourceTermName: nullableString("sourceTermName") ?? "Current term",
+    sourceAcademicYearId: number("sourceAcademicYearId"),
+    sourceAcademicYearName:
+      nullableString("sourceAcademicYearName") ?? "Current academic year",
+    targetTermId: nullableNumber("targetTermId"),
+    targetTermName: nullableString("targetTermName"),
+    targetAcademicYearId: nullableNumber("targetAcademicYearId"),
+    targetAcademicYearName: nullableString("targetAcademicYearName"),
+    configurationId: nullableNumber("configurationId"),
+    parentNotes: nullableString("parentNotes") ?? "",
+    studentCount: number("studentCount"),
+    generatedCount: number("generatedCount"),
+    remainingCount: number("remainingCount"),
+    missingSchoolFeeCount: number("missingSchoolFeeCount"),
+    missingProspectusCount: number("missingProspectusCount"),
+  };
+}
+
+function mapEndTermInvoice(
+  row: EndTermInvoiceDatabaseRow,
+  sourceTermName: string,
+  sourceAcademicYearName: string,
+): EndTermInvoiceDocument {
+  const previousBalance = formatRateAmount(row.previous_balance_snapshot);
+  const prospectusAmount = formatRateAmount(row.prospectus_amount_snapshot);
+  return {
+    ...mapInvoiceRow(row),
+    studentId: row.student_id,
+    academicTermId: row.academic_term_id,
+    subtotal: formatRateAmount(row.subtotal),
+    schoolName: row.school_name_snapshot,
+    schoolAddress: row.school_address_snapshot,
+    schoolPhone: row.school_phone_snapshot,
+    schoolEmail: row.school_email_snapshot,
+    schoolMotto: row.school_motto_snapshot,
+    schoolLogoPath: row.school_logo_path_snapshot,
+    cancelledAt: row.cancelled_at,
+    cancelledByName: row.cancelled_by_name_snapshot,
+    cancellationNumber: row.cancellation_number,
+    cancellationReason: row.cancellation_reason,
+    createdByName: row.recorded_by_snapshot,
+    createdAt: row.created_at,
+    lines: row.invoice_lines
+      .sort((left, right) => left.sort_order - right.sort_order)
+      .map((line) => ({
+        id: line.id,
+        description: line.description,
+        amount: formatRateAmount(line.amount),
+        sortOrder: line.sort_order,
+      })),
+    libraryBalance: null,
+    previousBalance,
+    prospectusAmount,
+    parentNotes: row.parent_notes_snapshot,
+    totalToPlanFor: (
+      row.total +
+      row.previous_balance_snapshot +
+      row.prospectus_amount_snapshot
+    ).toFixed(2),
+    sourceTermName,
+    sourceAcademicYearName,
+  };
+}
+
+export async function getEndTermInvoiceSetup() {
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase.rpc("get_end_term_invoice_setup", {});
+  if (result.error)
+    throw new Error("End-of-term invoice setup could not be loaded.");
+  return normalizeEndTermSetup(result.data);
+}
+
+export async function getEndTermInvoicesPage(
+  raw: Record<string, string | string[] | undefined>,
+  options: { pageSize?: number } = {},
+): Promise<EndTermInvoicePage> {
+  const firstValue = (value: string | string[] | undefined) =>
+    Array.isArray(value) ? value[0] : value;
+  const query = endTermInvoiceQuerySchema.parse({
+    q: firstValue(raw.q),
+    classId: firstValue(raw.classId),
+    page: firstValue(raw.page),
+  });
+  const pageSize = Math.min(Math.max(options.pageSize ?? 25, 1), 50);
+  const offset = (query.page - 1) * pageSize;
+  const supabase = await createServerSupabaseClient();
+  const [setup, classesResult] = await Promise.all([
+    getEndTermInvoiceSetup(),
+    supabase
+      .from("classes")
+      .select("id,name")
+      .eq("status", "active")
+      .order("sort_order")
+      .order("id"),
+  ]);
+  if (classesResult.error)
+    throw new Error("End-of-term invoice classes could not be loaded.");
+  if (!setup.configurationId) {
+    return {
+      rows: [],
+      total: 0,
+      page: query.page,
+      pageSize,
+      query,
+      classes: classesResult.data,
+      setup,
+    };
+  }
+
+  let request = supabase
+    .from("invoices")
+    .select(endTermInvoiceColumns, { count: "exact" })
+    .eq("invoice_kind", "end_of_term")
+    .eq("end_term_configuration_id", setup.configurationId);
+  if (query.classId) request = request.eq("class_id", query.classId);
+  if (query.q) {
+    const safePattern = safeDirectorySearch(query.q);
+    if (safePattern)
+      request = request.or(
+        `invoice_number.ilike.%${safePattern}%,student_name_snapshot.ilike.%${safePattern}%,admission_number_snapshot.ilike.%${safePattern}%`,
+      );
+  }
+  const result = await request
+    .order("class_name_snapshot")
+    .order("student_name_snapshot")
+    .order("id")
+    .range(offset, offset + pageSize - 1);
+  if (result.error)
+    throw new Error("End-of-term invoices could not be loaded.");
+  const rows = result.data as unknown as EndTermInvoiceDatabaseRow[];
+  return {
+    rows: rows.map((row) =>
+      mapEndTermInvoice(
+        row,
+        setup.sourceTermName,
+        setup.sourceAcademicYearName,
+      ),
+    ),
+    total: result.count ?? 0,
+    page: query.page,
+    pageSize,
+    query,
+    classes: classesResult.data,
+    setup,
+  };
+}
+
+export async function getEndTermInvoiceDetail(invoiceId: number) {
+  const supabase = await createServerSupabaseClient();
+  const invoice = await supabase
+    .from("invoices")
+    .select(endTermInvoiceColumns)
+    .eq("id", invoiceId)
+    .eq("invoice_kind", "end_of_term")
+    .maybeSingle();
+  if (invoice.error || !invoice.data) return null;
+  const row = invoice.data as unknown as EndTermInvoiceDatabaseRow;
+  const sourceTerm = await supabase
+    .from("academic_terms")
+    .select("name,academic_year_id")
+    .eq("id", row.source_academic_term_id)
+    .maybeSingle();
+  if (sourceTerm.error || !sourceTerm.data) return null;
+  const sourceYear = await supabase
+    .from("academic_years")
+    .select("name")
+    .eq("id", sourceTerm.data.academic_year_id)
+    .maybeSingle();
+  if (sourceYear.error || !sourceYear.data) return null;
+  return mapEndTermInvoice(row, sourceTerm.data.name, sourceYear.data.name);
 }

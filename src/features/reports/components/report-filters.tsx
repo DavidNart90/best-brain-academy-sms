@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SlidersHorizontal } from "lucide-react";
+import { LiveFilterForm } from "@/components/layout/live-filter-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -112,7 +113,10 @@ export function ReportFiltersForm({
   ].includes(filters.view);
 
   return (
-    <form method="get" className="panel mb-5 p-5 print:hidden">
+    <LiveFilterForm
+      ariaLabel="Report filters"
+      className="panel mb-5 p-5 print:hidden"
+    >
       <div className="mb-4 flex items-center gap-2">
         <SlidersHorizontal
           className="size-4 text-muted-foreground"
@@ -340,9 +344,8 @@ export function ReportFiltersForm({
         <Button variant="ghost" asChild>
           <Link href="/reports">Reset</Link>
         </Button>
-        <Button type="submit">Apply filters</Button>
       </div>
-    </form>
+    </LiveFilterForm>
   );
 }
 

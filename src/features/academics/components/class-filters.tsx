@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 function filterHref(query: string, status: string) {
@@ -76,9 +75,6 @@ export function ClassFilters({
           <option value="all">All statuses</option>
         </select>
       </div>
-      <Button type="submit" variant="outline">
-        Apply filters
-      </Button>
     </form>
   );
 }

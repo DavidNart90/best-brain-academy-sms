@@ -106,10 +106,17 @@ function DeductionTypes({ rows }: { rows: DeductionType[] }) {
   );
 }
 
-function SalarySettingsModule({ settings }: { settings: SalarySettings }) {
+function SalarySettingsModule({
+  defaultMonth,
+  settings,
+}: {
+  defaultMonth: string;
+  settings: SalarySettings;
+}) {
   return (
     <>
       <SalaryConfigurationSettings
+        defaultMonth={defaultMonth}
         rows={settings.rows}
         availableStaff={settings.availableStaff}
       />
@@ -297,10 +304,12 @@ function CategoriesSettings({ settings }: { settings: FinanceSettings }) {
 }
 
 export function FinancialSettingsPanel({
+  defaultMonth,
   salarySettings,
   selectedSection,
   settings,
 }: {
+  defaultMonth: string;
   salarySettings: SalarySettings | null;
   selectedSection: FinancialModuleId;
   settings: FinanceSettings;
@@ -339,7 +348,10 @@ export function FinancialSettingsPanel({
       <div className="space-y-5">
         {selectedSection === "fees" && <FeesSettings settings={settings} />}
         {selectedSection === "salaries" && salarySettings && (
-          <SalarySettingsModule settings={salarySettings} />
+          <SalarySettingsModule
+            defaultMonth={defaultMonth}
+            settings={salarySettings}
+          />
         )}
         {selectedSection === "payments" && (
           <PaymentSettings settings={settings} />

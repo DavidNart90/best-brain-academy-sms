@@ -1,10 +1,5 @@
 import Link from "next/link";
-import {
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Settings2,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
 import { Money } from "@/components/data-display/money";
 import {
   PageState,
@@ -12,6 +7,7 @@ import {
 } from "@/components/data-display/page-state";
 import { StatusBadge } from "@/components/data-display/status-badge";
 import { PageHeader } from "@/components/layout/page-header";
+import { LiveFilterForm } from "@/components/layout/live-filter-form";
 import { Button } from "@/components/ui/button";
 import { SalaryBulkActions } from "@/features/finance/components/salary-bulk-actions";
 import { SalaryEntryForm } from "@/features/finance/components/salary-forms";
@@ -104,7 +100,10 @@ export default async function SalaryDeductionsPage({
                 {monthName(result.month)}
               </h2>
             </div>
-            <form method="get" className="flex flex-wrap items-end gap-2">
+            <LiveFilterForm
+              ariaLabel="Filter salary records"
+              className="flex flex-wrap items-end gap-2"
+            >
               <div className="field">
                 <label
                   htmlFor="salary-filter-month"
@@ -153,11 +152,7 @@ export default async function SalaryDeductionsPage({
                   <option value="reversed">Reversed</option>
                 </select>
               </div>
-              <Button type="submit" variant="outline">
-                <CalendarDays />
-                Apply
-              </Button>
-            </form>
+            </LiveFilterForm>
           </div>
           <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t pt-4 text-sm">
             <InlineAmount

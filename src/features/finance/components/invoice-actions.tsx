@@ -91,8 +91,8 @@ export function GenerateInvoicesPanel() {
       )}
       {skipped.length > 0 && (
         <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
-          {skipped.slice(0, 10).map((item, index) => (
-            <li key={`${item.studentId}-${index}`}>
+          {skipped.slice(0, 10).map((item) => (
+            <li key={`${item.studentId}-${item.reason}`}>
               Student #{item.studentId}: {item.reason}
             </li>
           ))}

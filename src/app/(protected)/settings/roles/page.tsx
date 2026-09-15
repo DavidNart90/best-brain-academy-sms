@@ -34,6 +34,11 @@ const permissionLabels: Record<Permission, string> = {
   "finance.settings.manage": "Configure fee rates and finance categories",
   "finance.transactions.manage":
     "Generate invoices and process financial transactions",
+  "finance.end_term_invoices.read": "View and print end-of-term invoices",
+  "finance.end_term_invoices.manage":
+    "Configure and generate end-of-term invoices",
+  "finance.outstanding.read": "View outstanding student fee balances",
+  "finance.outstanding.print": "Print filtered outstanding fee balances",
   "library.read": "View Books & Prospectus balances",
   "library.collections.manage": "Record and reverse Library collections",
   "library.settings.manage": "Configure term Books & Prospectus rates",

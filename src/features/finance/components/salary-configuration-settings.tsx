@@ -10,9 +10,11 @@ import type {
 } from "../types";
 
 export function SalaryConfigurationSettings({
+  defaultMonth,
   rows,
   availableStaff,
 }: {
+  defaultMonth: string;
   rows: SalaryConfiguration[];
   availableStaff: SalaryConfigurationStaffOption[];
 }) {
@@ -73,8 +75,15 @@ export function SalaryConfigurationSettings({
                 month to correct an unposted setup, or a later month to preserve
                 the current rate as history.
               </p>
-              <SalaryConfigurationForm staff={[]} record={salary} />
-              <EndSalaryConfigurationForm record={salary} />
+              <SalaryConfigurationForm
+                defaultMonth={defaultMonth}
+                staff={[]}
+                record={salary}
+              />
+              <EndSalaryConfigurationForm
+                defaultMonth={defaultMonth}
+                record={salary}
+              />
             </div>
           </details>
         ))}
@@ -87,7 +96,10 @@ export function SalaryConfigurationSettings({
               </span>
             </summary>
             <div className="border-t border-border p-4">
-              <SalaryConfigurationForm staff={availableStaff} />
+              <SalaryConfigurationForm
+                defaultMonth={defaultMonth}
+                staff={availableStaff}
+              />
             </div>
           </details>
         )}
