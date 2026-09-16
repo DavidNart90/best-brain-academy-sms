@@ -36,8 +36,9 @@ function summarize(
   };
 }
 
-async function getOptions() {
-  const supabase = await createServerSupabaseClient();
+async function getOptions(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+) {
   const [years, terms, classes] = await Promise.all([
     supabase
       .from("academic_years")
@@ -78,7 +79,7 @@ export async function getLibraryPage(
   raw: Record<string, string | string[] | undefined>,
 ): Promise<LibraryPageResult> {
   const supabase = await createServerSupabaseClient();
-  const { termOptions, classOptions } = await getOptions();
+  const { termOptions, classOptions } = await getOptions(supabase);
   const requestedTermId = Number(first(raw.termId));
   const selectedTermId = termOptions.some((term) => term.id === requestedTermId)
     ? requestedTermId

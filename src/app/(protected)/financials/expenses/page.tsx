@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, CalendarDays } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { Money } from "@/components/data-display/money";
 import {
   PageState,
@@ -7,7 +7,9 @@ import {
 } from "@/components/data-display/page-state";
 import { StatusBadge } from "@/components/data-display/status-badge";
 import { PageHeader } from "@/components/layout/page-header";
+import { LiveFilterForm } from "@/components/layout/live-filter-form";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ReverseRecordForm } from "@/features/finance/components/reverse-record-form";
 import { getExpensesPage } from "@/features/finance/server/queries";
 import { requirePermission } from "@/lib/auth/access";
@@ -31,7 +33,26 @@ export default async function ExpensesPage({
       />
       <div className="space-y-5">
         <section className="panel flex flex-wrap items-end justify-between gap-4 p-5">
-          <form method="get" className="flex flex-wrap items-end gap-3">
+          <LiveFilterForm
+            ariaLabel="Filter expenses"
+            className="flex flex-1 flex-wrap items-end gap-3"
+          >
+            <div className="field min-w-56 flex-1">
+              <label htmlFor="expense-search" className="field-label">
+                Expense, category or description
+              </label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="expense-search"
+                  name="q"
+                  defaultValue={result.q}
+                  maxLength={80}
+                  placeholder="Search expenses"
+                  className="pl-9"
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <label htmlFor="expense-date" className="text-sm font-medium">
                 Business date
@@ -59,10 +80,10 @@ export default async function ExpensesPage({
                 <option value="reversed">Reversed</option>
               </select>
             </div>
-            <Button type="submit" variant="outline">
-              <CalendarDays /> Apply filters
+            <Button asChild type="button" variant="ghost">
+              <Link href="/financials/expenses">Clear</Link>
             </Button>
-          </form>
+          </LiveFilterForm>
           <Button asChild variant="outline">
             <Link href="/financials/cashflow">
               <ArrowLeft /> Daily cashflow
@@ -73,7 +94,7 @@ export default async function ExpensesPage({
           <PageState
             kind="empty"
             title="No expenses found"
-            description="Try another business date or status filter. Posted expenses will appear here after a successful cashflow entry."
+            description="Try another expense, category, business date or status. Posted expenses will appear here after a successful cashflow entry."
           />
         ) : (
           <section className="panel overflow-hidden">

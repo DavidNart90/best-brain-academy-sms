@@ -1,4 +1,6 @@
-import { Search } from "lucide-react";
+import Link from "next/link";
+import { Search, X } from "lucide-react";
+import { LiveFilterForm } from "@/components/layout/live-filter-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AdministratorListQuery } from "../schemas";
@@ -9,10 +11,9 @@ export function AdministratorFilters({
   initial: AdministratorListQuery;
 }) {
   return (
-    <form
-      method="get"
+    <LiveFilterForm
+      ariaLabel="Filter administrators"
       className="grid gap-3 sm:grid-cols-[minmax(15rem,1fr)_11rem_13rem_auto]"
-      role="search"
     >
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -45,12 +46,14 @@ export function AdministratorFilters({
         <option value="SUPER_ADMIN">Super Administrator</option>
         <option value="ADMINISTRATOR">Administrator</option>
         <option value="ACCOUNTANT">Accountant</option>
-        <option value="MANAGEMENT">Management</option>
+        <option value="MANAGEMENT">Board Member</option>
         <option value="LIBRARIAN">Librarian / Book Keeper</option>
       </select>
-      <Button type="submit" variant="outline">
-        Search
+      <Button asChild type="button" variant="outline" size="icon">
+        <Link href="/administrators" aria-label="Clear administrator filters">
+          <X />
+        </Link>
       </Button>
-    </form>
+    </LiveFilterForm>
   );
 }

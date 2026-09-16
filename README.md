@@ -24,6 +24,19 @@ No real credentials are bundled. If Supabase is not configured, the login page
 explains the setup requirement and protected pages remain inaccessible. Node
 preflight checks prevent running development/production commands on the wrong patch.
 
+## Installable app and updates
+
+The authenticated workspace is installable as an online-only PWA in supported
+Chrome/Edge browsers. Its service worker handles version activation only: it does
+not intercept requests or cache protected pages, API responses, student records, or
+financial data for offline access. When a deployed build is ready, signed-in users
+receive an in-app **Application update ready** notice and choose when to reload it.
+
+Deployments should expose a unique `APP_BUILD_ID` when the platform does not provide
+`NEXT_DEPLOYMENT_ID`, `VERCEL_GIT_COMMIT_SHA`, `GITHUB_SHA`, or `SOURCE_VERSION`.
+Git-backed builds fall back to the current commit SHA. A changed build ID changes the
+worker script and is what allows an open app to discover the new version.
+
 ## Commands
 
 | Command              | Purpose                                                                |

@@ -112,6 +112,20 @@ export const invoiceIdSchema = z.coerce.number().int().positive();
 export const generateInvoicesInputSchema = z.object({
   studentId: optionalIdSchema,
 });
+export const endTermInvoiceQuerySchema = z.object({
+  q: z.string().trim().max(80).catch(""),
+  classId: optionalIdSchema,
+  page: z.coerce.number().int().min(1).catch(1),
+});
+export const endTermInvoiceConfigurationSchema = z.object({
+  sourceTermId: idSchema,
+  parentNotes: z.string().trim().max(2000),
+});
+export const generateEndTermInvoicesSchema = z.object({
+  sourceTermId: idSchema,
+  classId: optionalIdSchema,
+  afterStudentId: optionalIdSchema,
+});
 export const cancelInvoiceInputSchema = z.object({
   invoiceId: idSchema,
   reason: z
@@ -128,6 +142,7 @@ export const reverseFinanceInputSchema = z.object({
 });
 export type InvoiceListQuery = z.infer<typeof invoiceListQuerySchema>;
 export type GenerateInvoicesInput = z.infer<typeof generateInvoicesInputSchema>;
+export type EndTermInvoiceQuery = z.infer<typeof endTermInvoiceQuerySchema>;
 export type CancelInvoiceInput = z.infer<typeof cancelInvoiceInputSchema>;
 export type ReverseFinanceInput = z.infer<typeof reverseFinanceInputSchema>;
 

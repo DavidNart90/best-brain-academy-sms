@@ -129,7 +129,7 @@ export function AdministratorInviteDialog() {
               >
                 <option value="ADMINISTRATOR">Administrator</option>
                 <option value="ACCOUNTANT">Accountant</option>
-                <option value="MANAGEMENT">Management</option>
+                <option value="MANAGEMENT">Board Member</option>
                 <option value="LIBRARIAN">Librarian / Book Keeper</option>
                 <option value="SUPER_ADMIN">Super Administrator</option>
               </select>

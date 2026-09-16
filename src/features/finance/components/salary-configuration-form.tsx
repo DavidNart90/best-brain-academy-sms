@@ -41,9 +41,11 @@ function Notice({ outcome }: { outcome: Outcome }) {
 }
 
 export function SalaryConfigurationForm({
+  defaultMonth,
   staff,
   record,
 }: {
+  defaultMonth: string;
   staff: SalaryConfigurationStaffOption[];
   record?: SalaryConfiguration;
 }) {
@@ -147,10 +149,7 @@ export function SalaryConfigurationForm({
           id={`${id}-effective`}
           name="effectiveFrom"
           type="month"
-          defaultValue={
-            record?.effectiveFrom.slice(0, 7) ??
-            new Date().toISOString().slice(0, 7)
-          }
+          defaultValue={record?.effectiveFrom.slice(0, 7) ?? defaultMonth}
           required
           disabled={pending}
         />
@@ -179,8 +178,10 @@ export function SalaryConfigurationForm({
 }
 
 export function EndSalaryConfigurationForm({
+  defaultMonth,
   record,
 }: {
+  defaultMonth: string;
   record: SalaryConfiguration;
 }) {
   const router = useRouter();
@@ -257,7 +258,11 @@ export function EndSalaryConfigurationForm({
           name="effectiveTo"
           type="month"
           min={record.effectiveFrom.slice(0, 7)}
-          defaultValue={new Date().toISOString().slice(0, 7)}
+          defaultValue={
+            defaultMonth < record.effectiveFrom.slice(0, 7)
+              ? record.effectiveFrom.slice(0, 7)
+              : defaultMonth
+          }
           required
           disabled={pending}
         />

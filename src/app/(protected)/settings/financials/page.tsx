@@ -27,6 +27,7 @@ export default async function FinancialSettingsPage({
   const rawSection = first((await searchParams).section);
   const selectedSection = isFinancialModule(rawSection) ? rawSection : null;
   const settings = await getFinanceSettings();
+  const defaultMonth = new Date().toISOString().slice(0, 7);
   const salaryData =
     selectedSection === "salaries"
       ? await Promise.all([getDeductionTypes(), getSalaryConfigurations()])
@@ -48,6 +49,7 @@ export default async function FinancialSettingsPage({
       <FinancialModuleCards selectedSection={selectedSection} />
       {selectedSection && (
         <FinancialSettingsPanel
+          defaultMonth={defaultMonth}
           selectedSection={selectedSection}
           settings={settings}
           salarySettings={salarySettings}

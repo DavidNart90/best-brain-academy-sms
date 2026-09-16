@@ -18,6 +18,10 @@ export const permissionSchema = z.enum([
   "settings.manage",
   "finance.settings.manage",
   "finance.transactions.manage",
+  "finance.end_term_invoices.read",
+  "finance.end_term_invoices.manage",
+  "finance.outstanding.read",
+  "finance.outstanding.print",
   "library.read",
   "library.collections.manage",
   "library.settings.manage",
@@ -32,6 +36,17 @@ export const roleSchema = z.enum([
   "LIBRARIAN",
 ]);
 export type Role = z.infer<typeof roleSchema>;
+export const roleLabels: Record<Role, string> = {
+  SUPER_ADMIN: "Super Administrator",
+  ADMINISTRATOR: "Administrator",
+  ACCOUNTANT: "Accountant",
+  MANAGEMENT: "Board Member",
+  LIBRARIAN: "Librarian / Book Keeper",
+};
+export function getRoleLabel(role: string | null | undefined) {
+  const parsed = roleSchema.safeParse(role);
+  return parsed.success ? roleLabels[parsed.data] : (role ?? "Unassigned");
+}
 export const accessContextSchema = z.object({
   id: z.uuid(),
   displayName: z.string().max(120),

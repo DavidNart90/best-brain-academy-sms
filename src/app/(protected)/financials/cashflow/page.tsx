@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, ReceiptText, Settings2 } from "lucide-react";
+import { ArrowRight, ReceiptText, Settings2 } from "lucide-react";
 import { Money } from "@/components/data-display/money";
 import {
   PageState,
   PermissionDenied,
 } from "@/components/data-display/page-state";
 import { PageHeader } from "@/components/layout/page-header";
+import { LiveFilterForm } from "@/components/layout/live-filter-form";
 import { Button } from "@/components/ui/button";
 import { CashflowEntryForm } from "@/features/finance/components/cashflow-entry-form";
 import {
@@ -81,7 +82,10 @@ export default async function CashflowPage({
                 {formatDate(businessDate)}
               </h2>
             </div>
-            <form className="flex items-end gap-2" method="get">
+            <LiveFilterForm
+              ariaLabel="Select cashflow business date"
+              className="flex items-end gap-2"
+            >
               <div>
                 <label htmlFor="business-date" className="sr-only">
                   Select business date
@@ -94,10 +98,7 @@ export default async function CashflowPage({
                   className="h-10 rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 />
               </div>
-              <Button type="submit" variant="outline">
-                <CalendarDays /> View date
-              </Button>
-            </form>
+            </LiveFilterForm>
           </div>
         </section>
 

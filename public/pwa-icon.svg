@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Best Brain Academy">
+  <rect width="512" height="512" fill="#BD3B36"/>
+  <path d="M112 142h108c17 0 30 8 36 21 6-13 19-21 36-21h108v235H293c-15 0-27 6-37 19-10-13-22-19-37-19H112V142Z" fill="none" stroke="#FFFFFF" stroke-width="28" stroke-linejoin="round"/>
+  <path d="M256 166v224" fill="none" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round"/>
+  <path d="M155 211h59M155 266h59M298 211h59M298 266h59" fill="none" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
+</svg>

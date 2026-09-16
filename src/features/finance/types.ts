@@ -113,6 +113,15 @@ export type InvoiceDetail = InvoiceListRow & {
     import("@/features/library/types").InvoiceLibraryBalance | null;
 };
 
+export type OutstandingInvoiceRow = InvoiceListRow & {
+  studentId: number;
+};
+
+export type OutstandingFilterOption = {
+  id: number;
+  label: string;
+};
+
 export type GenerateInvoicesResult = {
   createdCount: number;
   created: Array<{
@@ -121,6 +130,51 @@ export type GenerateInvoicesResult = {
     invoiceNumber: string;
   }>;
   skipped: Array<{ studentId: number; reason: string }>;
+};
+
+export type EndTermInvoiceSetup = {
+  ready: boolean;
+  reason: string | null;
+  sourceTermId: number;
+  sourceTermName: string;
+  sourceAcademicYearId: number;
+  sourceAcademicYearName: string;
+  targetTermId: number | null;
+  targetTermName: string | null;
+  targetAcademicYearId: number | null;
+  targetAcademicYearName: string | null;
+  configurationId: number | null;
+  parentNotes: string;
+  studentCount: number;
+  generatedCount: number;
+  remainingCount: number;
+  missingSchoolFeeCount: number;
+  missingProspectusCount: number;
+};
+
+export type EndTermInvoiceGenerationResult = GenerateInvoicesResult & {
+  nextCursor: number | null;
+  hasMore: boolean;
+  batchSize: number;
+};
+
+export type EndTermInvoiceDocument = InvoiceDetail & {
+  previousBalance: string;
+  prospectusAmount: string;
+  parentNotes: string | null;
+  totalToPlanFor: string;
+  sourceTermName: string;
+  sourceAcademicYearName: string;
+};
+
+export type EndTermInvoicePage = {
+  rows: EndTermInvoiceDocument[];
+  total: number;
+  page: number;
+  pageSize: number;
+  query: { q: string; classId: number | null; page: number };
+  classes: Array<{ id: number; name: string }>;
+  setup: EndTermInvoiceSetup;
 };
 export type OpenInvoiceOption = {
   id: number;

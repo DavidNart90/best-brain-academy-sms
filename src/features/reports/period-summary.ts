@@ -96,13 +96,15 @@ function totalRows(rows: FinancialPeriodSummary["rows"]) {
   };
 }
 
+const weekday = new Intl.DateTimeFormat("en-GH", {
+  weekday: "long",
+  timeZone: "UTC",
+});
+
 function weeklyRows(points: FinancialTrendPoint[], filters: ReportFilters) {
   const rows = Array.from({ length: 5 }, (_, index) => {
     const date = addDays(filters.start, index);
-    const label = new Intl.DateTimeFormat("en-GH", {
-      weekday: "long",
-      timeZone: "UTC",
-    }).format(dateFromIso(date));
+    const label = weekday.format(dateFromIso(date));
     return rowForRange(label, date, date, points);
   });
   return {

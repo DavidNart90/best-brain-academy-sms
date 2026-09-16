@@ -5,6 +5,8 @@ import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Brand } from "./brand";
 import { Navigation } from "./navigation";
 import { PageSearch } from "./page-search";
+import { Breadcrumbs } from "./breadcrumbs";
+import { PwaUpdateManager } from "./pwa-update-manager";
 import { LogoutButton } from "./logout-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,16 +16,8 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import type { AccessContext, Role } from "@/lib/permissions/contracts";
+import { roleLabels, type AccessContext } from "@/lib/permissions/contracts";
 import { cn } from "@/lib/utils";
-
-const roleLabels: Record<Role, string> = {
-  SUPER_ADMIN: "Super Administrator",
-  ADMINISTRATOR: "Administrator",
-  ACCOUNTANT: "Accountant",
-  MANAGEMENT: "Management · Read only",
-  LIBRARIAN: "Librarian / Book Keeper",
-};
 
 export function AppShell({
   context,
@@ -112,7 +106,9 @@ export function AppShell({
                 {context.displayName || "Staff account"}
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {role ? roleLabels[role] : "No role assigned"}
+                {role
+                  ? `${roleLabels[role]}${role === "MANAGEMENT" ? " · Read only" : ""}`
+                  : "No role assigned"}
               </p>
             </div>
             <span
@@ -132,9 +128,11 @@ export function AppShell({
           tabIndex={-1}
           className="min-w-0 p-4 sm:p-6 xl:p-7"
         >
+          <Breadcrumbs context={context} />
           {children}
         </main>
       </div>
+      <PwaUpdateManager />
     </div>
   );
 }
