@@ -7,11 +7,12 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
+import { PermissionDenied } from "@/components/data-display/page-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { ChangePasswordForm } from "@/features/auth/components/change-password-form";
 import { ProfileSettingsForm } from "@/features/profile/components/profile-settings-form";
 import { getOwnProfile } from "@/features/profile/server/queries";
-import { requireActiveAccount } from "@/lib/auth/access";
+import { requirePermission } from "@/lib/auth/access";
 import { roleLabels } from "@/lib/permissions/contracts";
 
 export const metadata: Metadata = { title: "Profile settings" };
@@ -31,11 +32,10 @@ export default async function ProfileSettingsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [context, profile, query] = await Promise.all([
-    requireActiveAccount(),
-    getOwnProfile(),
-    searchParams,
-  ]);
+  const context = await requirePermission("dashboard.read");
+  if (!context) return <PermissionDenied />;
+
+  const [profile, query] = await Promise.all([getOwnProfile(), searchParams]);
   const roles = context.roles.map((role) => roleLabels[role]);
   const initials = profile.displayName
     .split(/\s+/)
