@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
 export function DataTablePagination({
@@ -9,6 +10,7 @@ export function DataTablePagination({
   pageSize,
   hrefForPage,
   itemLabel,
+  secondaryAction,
 }: {
   page: number;
   pageCount: number;
@@ -16,6 +18,7 @@ export function DataTablePagination({
   pageSize: number;
   hrefForPage: (page: number) => string;
   itemLabel: string;
+  secondaryAction?: ReactNode;
 }) {
   const first = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const last = Math.min(total, page * pageSize);
@@ -24,7 +27,7 @@ export function DataTablePagination({
       <span>
         Showing {first}–{last} of {total} {itemLabel}
       </span>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <span className="mr-1 hidden sm:inline">
           Page {page} of {pageCount}
         </span>
@@ -50,6 +53,7 @@ export function DataTablePagination({
             Next <ChevronRight />
           </Link>
         </Button>
+        {secondaryAction}
       </div>
     </div>
   );

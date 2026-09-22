@@ -9,6 +9,10 @@ import {
   HandCoins,
   ReceiptText,
 } from "lucide-react";
+import {
+  InMemoryTablePagination,
+  PaginatedRows,
+} from "@/components/data-display/in-memory-table-pagination";
 import { Money } from "@/components/data-display/money";
 import { StatCard } from "@/components/data-display/stat-card";
 import { PageHeader } from "@/components/layout/page-header";
@@ -125,6 +129,12 @@ function FeeControlPanel({
           </dd>
         </div>
         <div className="flex justify-between gap-4 py-3">
+          <dt className="text-muted-foreground">Library expected</dt>
+          <dd className="font-semibold">
+            <Money value={librarySummary.expected} />
+          </dd>
+        </div>
+        <div className="flex justify-between gap-4 py-3">
           <dt className="text-muted-foreground">Library outstanding</dt>
           <dd className="font-semibold">
             <Money value={librarySummary.outstanding} />
@@ -187,25 +197,28 @@ export function FinanceOversightDashboard({
             amount={summary.grossReceipts}
             note="All active income received"
             icon={CircleDollarSign}
-            accent
+            tone="brand"
           />
           <StatCard
             label="Expenses"
             amount={summary.totalExpenses}
             note={`${summary.expenseCount} recorded entries`}
             icon={ArrowUpFromLine}
+            tone="warning"
           />
           <StatCard
             label="Operating net"
             amount={summary.operatingNet}
             note="Receipts less expenses"
             icon={ChartNoAxesCombined}
+            tone="success"
           />
           <StatCard
             label="Cash position"
             amount={summary.finalPosition}
             note="Net after posted salary cash activity"
             icon={HandCoins}
+            tone="success"
           />
         </div>
       </section>
@@ -250,58 +263,65 @@ export function FinanceOversightDashboard({
             </Button>
           </div>
         </div>
-        <div
-          className="table-scroll"
-          tabIndex={0}
-          role="region"
-          aria-label="Recent finance collections"
+        <InMemoryTablePagination
+          total={data.snapshot.recentCollections.length}
+          itemLabel="collections"
         >
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/60 hover:bg-muted/60">
-                <TableHead className="pl-6">Date</TableHead>
-                <TableHead>Reference</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Student / Payer</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead className="pr-6 text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.snapshot.recentCollections.slice(0, 10).map((row) => (
-                <TableRow key={`${row.source}-${row.reference}`}>
-                  <TableCell className="pl-6">{row.businessDate}</TableCell>
-                  <TableCell className="font-mono text-xs font-semibold">
-                    {row.reference}
-                  </TableCell>
-                  <TableCell>{row.source}</TableCell>
-                  <TableCell>
-                    <div className="font-medium">{row.personName}</div>
-                    {row.className ? (
-                      <div className="text-xs text-muted-foreground">
-                        {row.className}
-                      </div>
-                    ) : null}
-                  </TableCell>
-                  <TableCell>{row.paymentMethod}</TableCell>
-                  <TableCell className="pr-6 text-right font-semibold">
-                    <Money value={row.amount} />
-                  </TableCell>
+          <div
+            className="table-scroll"
+            tabIndex={0}
+            role="region"
+            aria-label="Recent finance collections"
+          >
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/60 hover:bg-muted/60">
+                  <TableHead className="pl-6">Date</TableHead>
+                  <TableHead>Reference</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Student / Payer</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead className="pr-6 text-right">Amount</TableHead>
                 </TableRow>
-              ))}
-              {data.snapshot.recentCollections.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="h-28 text-center text-muted-foreground"
-                  >
-                    No collections in this reporting scope.
-                  </TableCell>
-                </TableRow>
-              ) : null}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                <PaginatedRows>
+                  {data.snapshot.recentCollections.map((row) => (
+                    <TableRow key={`${row.source}-${row.reference}`}>
+                      <TableCell className="pl-6">{row.businessDate}</TableCell>
+                      <TableCell className="font-mono text-xs font-semibold">
+                        {row.reference}
+                      </TableCell>
+                      <TableCell>{row.source}</TableCell>
+                      <TableCell>
+                        <div className="font-medium">{row.personName}</div>
+                        {row.className ? (
+                          <div className="text-xs text-muted-foreground">
+                            {row.className}
+                          </div>
+                        ) : null}
+                      </TableCell>
+                      <TableCell>{row.paymentMethod}</TableCell>
+                      <TableCell className="pr-6 text-right font-semibold">
+                        <Money value={row.amount} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </PaginatedRows>
+                {data.snapshot.recentCollections.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="h-28 text-center text-muted-foreground"
+                    >
+                      No collections in this reporting scope.
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
+          </div>
+        </InMemoryTablePagination>
       </section>
     </>
   );

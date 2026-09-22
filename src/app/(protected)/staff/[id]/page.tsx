@@ -7,6 +7,10 @@ import {
   Phone,
 } from "lucide-react";
 import { notFound } from "next/navigation";
+import {
+  InMemoryTablePagination,
+  PaginatedRows,
+} from "@/components/data-display/in-memory-table-pagination";
 import { Money } from "@/components/data-display/money";
 import { PermissionDenied } from "@/components/data-display/page-state";
 import { StatusBadge } from "@/components/data-display/status-badge";
@@ -186,53 +190,63 @@ export default async function StaffProfilePage({
               </p>
             </div>
             {staff.assignments.length ? (
-              <div
-                className="table-scroll"
-                tabIndex={0}
-                role="region"
-                aria-label="Staff class assignment history"
+              <InMemoryTablePagination
+                total={staff.assignments.length}
+                pageSize={10}
+                itemLabel="assignments"
               >
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/70 hover:bg-muted/70">
-                      <TableHead className="px-5">Class</TableHead>
-                      <TableHead>Role / subject</TableHead>
-                      <TableHead>Academic period</TableHead>
-                      <TableHead>Started</TableHead>
-                      <TableHead>Ended</TableHead>
-                      <TableHead className="pr-5">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {staff.assignments.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="px-5 font-semibold">
-                          {item.className}
-                        </TableCell>
-                        <TableCell>
-                          {item.assignmentKind === "head"
-                            ? "Head class teacher"
-                            : item.assignmentKind === "teaching"
-                              ? item.subjectName
-                              : "Class link — role unconfirmed"}
-                        </TableCell>
-                        <TableCell>
-                          {item.academicYearName} · {item.academicTermName}
-                        </TableCell>
-                        <TableCell>{date(item.startedOn)}</TableCell>
-                        <TableCell>{date(item.endedOn)}</TableCell>
-                        <TableCell className="pr-5">
-                          <StatusBadge
-                            status={
-                              item.status === "active" ? "Active" : "Completed"
-                            }
-                          />
-                        </TableCell>
+                <div
+                  className="table-scroll"
+                  tabIndex={0}
+                  role="region"
+                  aria-label="Staff class assignment history"
+                >
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/70 hover:bg-muted/70">
+                        <TableHead className="px-5">Class</TableHead>
+                        <TableHead>Role / subject</TableHead>
+                        <TableHead>Academic period</TableHead>
+                        <TableHead>Started</TableHead>
+                        <TableHead>Ended</TableHead>
+                        <TableHead className="pr-5">Status</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      <PaginatedRows>
+                        {staff.assignments.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="px-5 font-semibold">
+                              {item.className}
+                            </TableCell>
+                            <TableCell>
+                              {item.assignmentKind === "head"
+                                ? "Head class teacher"
+                                : item.assignmentKind === "teaching"
+                                  ? item.subjectName
+                                  : "Class link — role unconfirmed"}
+                            </TableCell>
+                            <TableCell>
+                              {item.academicYearName} · {item.academicTermName}
+                            </TableCell>
+                            <TableCell>{date(item.startedOn)}</TableCell>
+                            <TableCell>{date(item.endedOn)}</TableCell>
+                            <TableCell className="pr-5">
+                              <StatusBadge
+                                status={
+                                  item.status === "active"
+                                    ? "Active"
+                                    : "Completed"
+                                }
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </PaginatedRows>
+                    </TableBody>
+                  </Table>
+                </div>
+              </InMemoryTablePagination>
             ) : (
               <div className="p-8 text-center">
                 <BriefcaseBusiness className="mx-auto size-6 text-muted-foreground" />
@@ -276,54 +290,66 @@ export default async function StaffProfilePage({
                   No salary records have been posted for this staff member.
                 </p>
               ) : (
-                <div
-                  className="table-scroll"
-                  tabIndex={0}
-                  role="region"
-                  aria-label="Staff salary history"
+                <InMemoryTablePagination
+                  total={salaryHistory.length}
+                  pageSize={10}
+                  itemLabel="salary records"
                 >
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/70 hover:bg-muted/70">
-                        <TableHead className="px-5">Month</TableHead>
-                        <TableHead className="text-right">Gross</TableHead>
-                        <TableHead className="text-right">Deductions</TableHead>
-                        <TableHead className="text-right">Net</TableHead>
-                        <TableHead className="pr-5">Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {salaryHistory.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="px-5">
-                            <Link
-                              className="font-semibold text-primary hover:underline"
-                              href={`/financials/salary-deductions/${item.id}`}
-                            >
-                              {date(item.payrollMonth)}
-                            </Link>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Money value={item.grossSalary} />
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Money value={item.totalDeductions} />
-                          </TableCell>
-                          <TableCell className="text-right font-semibold">
-                            <Money value={item.netSalary} />
-                          </TableCell>
-                          <TableCell className="pr-5">
-                            <StatusBadge
-                              status={
-                                item.status === "active" ? "Active" : "Reversed"
-                              }
-                            />
-                          </TableCell>
+                  <div
+                    className="table-scroll"
+                    tabIndex={0}
+                    role="region"
+                    aria-label="Staff salary history"
+                  >
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/70 hover:bg-muted/70">
+                          <TableHead className="px-5">Month</TableHead>
+                          <TableHead className="text-right">Gross</TableHead>
+                          <TableHead className="text-right">
+                            Deductions
+                          </TableHead>
+                          <TableHead className="text-right">Net</TableHead>
+                          <TableHead className="pr-5">Status</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        <PaginatedRows>
+                          {salaryHistory.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="px-5">
+                                <Link
+                                  className="font-semibold text-primary hover:underline"
+                                  href={`/financials/salary-deductions/${item.id}`}
+                                >
+                                  {date(item.payrollMonth)}
+                                </Link>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Money value={item.grossSalary} />
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Money value={item.totalDeductions} />
+                              </TableCell>
+                              <TableCell className="text-right font-semibold">
+                                <Money value={item.netSalary} />
+                              </TableCell>
+                              <TableCell className="pr-5">
+                                <StatusBadge
+                                  status={
+                                    item.status === "active"
+                                      ? "Active"
+                                      : "Reversed"
+                                  }
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </PaginatedRows>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </InMemoryTablePagination>
               )}
             </section>
           )}

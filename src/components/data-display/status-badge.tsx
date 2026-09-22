@@ -17,6 +17,7 @@ const styles = {
   Archived: "bg-muted text-muted-foreground",
   Pending: "bg-warning-soft text-warning",
   Due: "bg-warning-soft text-warning",
+  "Awaiting Remittance": "bg-warning-soft text-warning",
   "Partially Remitted": "bg-warning-soft text-warning",
   Remitted: "bg-success-soft text-success",
   "Not Due": "bg-muted text-muted-foreground",

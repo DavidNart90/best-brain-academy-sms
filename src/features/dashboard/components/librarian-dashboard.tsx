@@ -1,5 +1,9 @@
 import { BookOpen, CircleAlert, HandCoins, UsersRound } from "lucide-react";
 import Link from "next/link";
+import {
+  InMemoryTablePagination,
+  PaginatedRows,
+} from "@/components/data-display/in-memory-table-pagination";
 import { Money } from "@/components/data-display/money";
 import { PageState } from "@/components/data-display/page-state";
 import { StatCard } from "@/components/data-display/stat-card";
@@ -90,7 +94,7 @@ function LibraryCollectionPanel({ data }: { data: LibraryPageResult }) {
 }
 
 function RecentLibraryCollections({ data }: { data: LibraryPageResult }) {
-  const rows = data.collections.slice(0, 8);
+  const rows = data.collections;
 
   return (
     <section className="panel min-w-0 overflow-hidden">
@@ -106,47 +110,55 @@ function RecentLibraryCollections({ data }: { data: LibraryPageResult }) {
         </Button>
       </div>
       {rows.length ? (
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/60">
-              <TableHead className="pl-6">Student</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Reference</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="pr-6">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell className="pl-6">
-                  <p className="font-medium">{row.studentName}</p>
-                  <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-                    {row.admissionNumber}
-                  </p>
-                </TableCell>
-                <TableCell>{row.className}</TableCell>
-                <TableCell className="font-mono text-xs font-semibold">
-                  {row.collectionNumber}
-                </TableCell>
-                <TableCell>
-                  {dateFormatter.format(
-                    new Date(`${row.businessDate}T00:00:00`),
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Money value={row.amount} />
-                </TableCell>
-                <TableCell className="pr-6">
-                  <StatusBadge
-                    status={row.status === "active" ? "Active" : "Reversed"}
-                  />
-                </TableCell>
+        <InMemoryTablePagination
+          total={rows.length}
+          pageSize={8}
+          itemLabel="collections"
+        >
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/60">
+                <TableHead className="pl-6">Student</TableHead>
+                <TableHead>Class</TableHead>
+                <TableHead>Reference</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="pr-6">Status</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              <PaginatedRows>
+                {rows.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell className="pl-6">
+                      <p className="font-medium">{row.studentName}</p>
+                      <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+                        {row.admissionNumber}
+                      </p>
+                    </TableCell>
+                    <TableCell>{row.className}</TableCell>
+                    <TableCell className="font-mono text-xs font-semibold">
+                      {row.collectionNumber}
+                    </TableCell>
+                    <TableCell>
+                      {dateFormatter.format(
+                        new Date(`${row.businessDate}T00:00:00`),
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Money value={row.amount} />
+                    </TableCell>
+                    <TableCell className="pr-6">
+                      <StatusBadge
+                        status={row.status === "active" ? "Active" : "Reversed"}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </PaginatedRows>
+            </TableBody>
+          </Table>
+        </InMemoryTablePagination>
       ) : (
         <div className="p-5 sm:p-6">
           <PageState

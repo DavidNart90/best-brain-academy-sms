@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { AdministratorDirectoryRow } from "../types";
+import { AdministratorDeleteSection } from "./administrator-delete-section";
 import {
   changeAdministratorRole,
   changeAdministratorStatus,
@@ -31,17 +32,20 @@ export function AdministratorAccessDialog({
     account.status === "disabled" ? "disabled" : "active",
   );
   const [confirmed, setConfirmed] = useState(false);
-  const [message, setMessage] = useState("");
+  const [outcome, setOutcome] = useState<{
+    ok: boolean;
+    message: string;
+  } | null>(null);
   const [pending, startTransition] = useTransition();
   const isSelf = account.userId === currentUserId;
   function run(kind: "role" | "status") {
-    setMessage("");
+    setOutcome(null);
     startTransition(async () => {
       const result =
         kind === "role"
           ? await changeAdministratorRole({ userId: account.userId, role })
           : await changeAdministratorStatus({ userId: account.userId, status });
-      setMessage(result.message);
+      setOutcome(result);
       if (result.ok) setConfirmed(false);
     });
   }
@@ -126,9 +130,15 @@ export function AdministratorAccessDialog({
               I confirm this privileged access change for {account.email}.
             </span>
           </label>
-          {message && (
-            <p role="status" className="text-sm text-muted-foreground">
-              {message}
+          {!isSelf && <AdministratorDeleteSection account={account} />}
+          {outcome && (
+            <p
+              role={outcome.ok ? "status" : "alert"}
+              className={
+                outcome.ok ? "text-sm text-success" : "text-sm text-destructive"
+              }
+            >
+              {outcome.message}
             </p>
           )}
         </div>

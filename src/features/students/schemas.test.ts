@@ -7,7 +7,7 @@ import {
 } from "./schemas";
 
 const validStudent = {
-  admissionNumber: "bba/stu/2026/0001",
+  admissionNumber: "bba-001",
   firstName: "  Akosua ",
   middleName: "",
   lastName: "Mensah",
@@ -35,7 +35,7 @@ const validStudent = {
 describe("studentInputSchema", () => {
   it("normalizes a valid onboarding record", () => {
     const result = studentInputSchema.parse(validStudent);
-    expect(result.admissionNumber).toBe("BBA/STU/2026/0001");
+    expect(result.admissionNumber).toBe("BBA-001");
     expect(result.firstName).toBe("Akosua");
     expect(result.middleName).toBeNull();
     expect(result.guardianEmail).toBeNull();

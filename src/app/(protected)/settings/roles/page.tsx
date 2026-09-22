@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { Check, ShieldCheck, UsersRound, X } from "lucide-react";
+import {
+  InMemoryTablePagination,
+  PaginatedRows,
+} from "@/components/data-display/in-memory-table-pagination";
 import { PermissionDenied } from "@/components/data-display/page-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -27,6 +31,7 @@ const permissionLabels: Record<Permission, string> = {
   "staff.manage": "Manage staff and assignments",
   "staff.import": "Import staff",
   "staff.export": "Export staff",
+  "people.lifecycle.manage": "End staff or student active status",
   "financials.read": "View financials",
   "reports.read": "View reports",
   "administrators.manage": "Manage administrator access",
@@ -84,62 +89,72 @@ export default async function RolesAndPermissionsPage() {
           </div>
         </div>
 
-        <div
-          className="table-scroll"
-          tabIndex={0}
-          role="region"
-          aria-label="Role permission matrix"
+        <InMemoryTablePagination
+          total={matrix.permissions.length}
+          pageSize={10}
+          itemLabel="permissions"
         >
-          <Table className="min-w-230">
-            <TableHeader>
-              <TableRow className="bg-muted/70 hover:bg-muted/70">
-                <TableHead className="min-w-64 px-5">Permission</TableHead>
-                {matrix.roles.map((role) => (
-                  <TableHead key={role.code} className="min-w-40 text-center">
-                    {role.label}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {matrix.permissions.map((permission) => (
-                <TableRow key={permission.code}>
-                  <TableCell className="px-5 py-4">
-                    <p className="font-medium">
-                      {permissionLabels[permission.code]}
-                    </p>
-                    <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-                      {permission.code}
-                    </p>
-                  </TableCell>
-                  {matrix.roles.map((role) => {
-                    const granted = permission.roleCodes.includes(role.code);
-                    return (
-                      <TableCell key={role.code} className="text-center">
-                        <span
-                          className={
-                            granted
-                              ? "inline-flex size-7 items-center justify-center rounded-full bg-success-soft text-success"
-                              : "inline-flex size-7 items-center justify-center rounded-full bg-muted text-muted-foreground"
-                          }
-                        >
-                          {granted ? (
-                            <Check className="size-4" aria-hidden="true" />
-                          ) : (
-                            <X className="size-4" aria-hidden="true" />
-                          )}
-                          <span className="sr-only">
-                            {granted ? "Granted" : "Not granted"}
-                          </span>
-                        </span>
-                      </TableCell>
-                    );
-                  })}
+          <div
+            className="table-scroll"
+            tabIndex={0}
+            role="region"
+            aria-label="Role permission matrix"
+          >
+            <Table className="min-w-230">
+              <TableHeader>
+                <TableRow className="bg-muted/70 hover:bg-muted/70">
+                  <TableHead className="min-w-64 px-5">Permission</TableHead>
+                  {matrix.roles.map((role) => (
+                    <TableHead key={role.code} className="min-w-40 text-center">
+                      {role.label}
+                    </TableHead>
+                  ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                <PaginatedRows>
+                  {matrix.permissions.map((permission) => (
+                    <TableRow key={permission.code}>
+                      <TableCell className="px-5 py-4">
+                        <p className="font-medium">
+                          {permissionLabels[permission.code]}
+                        </p>
+                        <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+                          {permission.code}
+                        </p>
+                      </TableCell>
+                      {matrix.roles.map((role) => {
+                        const granted = permission.roleCodes.includes(
+                          role.code,
+                        );
+                        return (
+                          <TableCell key={role.code} className="text-center">
+                            <span
+                              className={
+                                granted
+                                  ? "inline-flex size-7 items-center justify-center rounded-full bg-success-soft text-success"
+                                  : "inline-flex size-7 items-center justify-center rounded-full bg-muted text-muted-foreground"
+                              }
+                            >
+                              {granted ? (
+                                <Check className="size-4" aria-hidden="true" />
+                              ) : (
+                                <X className="size-4" aria-hidden="true" />
+                              )}
+                              <span className="sr-only">
+                                {granted ? "Granted" : "Not granted"}
+                              </span>
+                            </span>
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </PaginatedRows>
+              </TableBody>
+            </Table>
+          </div>
+        </InMemoryTablePagination>
       </section>
 
       <aside className="mt-5 border-l-2 border-primary/55 bg-brand-subtle/55 px-4 py-3">

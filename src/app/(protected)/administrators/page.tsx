@@ -61,7 +61,7 @@ export default async function AdministratorsPage({
     <>
       <PageHeader
         title="Administrators"
-        description="Provision school logins, assign one controlled role and disable access without touching staff records."
+        description="Provision school logins, assign one controlled role, and disable or remove access without touching staff records."
       >
         <AdministratorInviteDialog />
       </PageHeader>

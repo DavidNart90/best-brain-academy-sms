@@ -16,6 +16,7 @@ import {
   ReceiptText,
   School,
   ShieldCheck,
+  UserRoundCog,
   UserPlus,
   Wallet,
   type LucideIcon,
@@ -445,6 +446,16 @@ export default async function SettingsPage() {
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <SettingsDestinationCard
+            item={{
+              href: "/settings/profile",
+              title: "Profile & password",
+              description:
+                "Update your display name and contact number, or securely change your password.",
+              detail: "Personal account settings",
+              icon: UserRoundCog,
+            }}
+          />
           {roleSettings.destinations.map((item) => (
             <SettingsDestinationCard key={item.title} item={item} />
           ))}

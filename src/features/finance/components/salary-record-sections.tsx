@@ -1,4 +1,8 @@
 import { Money } from "@/components/data-display/money";
+import {
+  InMemoryTablePagination,
+  PaginatedRows,
+} from "@/components/data-display/in-memory-table-pagination";
 import { StatusBadge } from "@/components/data-display/status-badge";
 import {
   SalaryDeductionForm,
@@ -112,75 +116,88 @@ function DeductionsTable({
     );
   }
   return (
-    <div
-      className="table-scroll"
-      tabIndex={0}
-      role="region"
-      aria-label="Payroll deductions"
+    <InMemoryTablePagination
+      total={salary.deductions.length}
+      itemLabel="deductions"
+      pageSize={10}
     >
-      <table className="w-full min-w-190 text-sm">
-        <thead className="bg-muted/70">
-          <tr>
-            <th className="px-5 py-3 text-left font-medium">Deduction</th>
-            <th className="py-3 text-left font-medium">Calculation</th>
-            <th className="py-3 text-right font-medium">Amount</th>
-            <th className="py-3 text-left font-medium">Status</th>
-            <th className="px-5 py-3 text-right font-medium">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {salary.deductions.map((item) => {
-            const hasRemittance = remittedDeductionIds.has(item.id);
-            return (
-              <tr className="border-t" key={item.id}>
-                <td className="px-5 py-4">
-                  <p className="font-semibold">{item.deductionTypeName}</p>
-                  <p className="mt-1 font-mono text-xs text-muted-foreground">
-                    {item.deductionNumber}
-                  </p>
-                  {item.reason && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {item.reason}
-                    </p>
-                  )}
-                </td>
-                <td className="py-4">
-                  {item.calculationType === "percentage"
-                    ? `${item.configuredValue}% of gross`
-                    : "Fixed amount"}
-                </td>
-                <td className="py-4 text-right">
-                  <Money value={item.amount} />
-                </td>
-                <td className="py-4">
-                  <StatusBadge
-                    status={item.status === "active" ? "Active" : "Reversed"}
-                  />
-                  {item.reversalNumber && (
-                    <p className="mt-1 font-mono text-xs text-muted-foreground">
-                      {item.reversalNumber}
-                    </p>
-                  )}
-                </td>
-                <td className="px-5 py-4 text-right">
-                  {canManage &&
-                    salary.status === "active" &&
-                    item.status === "active" &&
-                    !hasRemittance && (
-                      <SalaryReverseForm kind="deduction" recordId={item.id} />
-                    )}
-                  {hasRemittance && (
-                    <span className="text-xs text-muted-foreground">
-                      Reverse remittance first
-                    </span>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+      <div
+        className="table-scroll"
+        tabIndex={0}
+        role="region"
+        aria-label="Payroll deductions"
+      >
+        <table className="w-full min-w-190 text-sm">
+          <thead className="bg-muted/70">
+            <tr>
+              <th className="px-5 py-3 text-left font-medium">Deduction</th>
+              <th className="py-3 text-left font-medium">Calculation</th>
+              <th className="py-3 text-right font-medium">Amount</th>
+              <th className="py-3 text-left font-medium">Status</th>
+              <th className="px-5 py-3 text-right font-medium">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <PaginatedRows>
+              {salary.deductions.map((item) => {
+                const hasRemittance = remittedDeductionIds.has(item.id);
+                return (
+                  <tr className="border-t" key={item.id}>
+                    <td className="px-5 py-4">
+                      <p className="font-semibold">{item.deductionTypeName}</p>
+                      <p className="mt-1 font-mono text-xs text-muted-foreground">
+                        {item.deductionNumber}
+                      </p>
+                      {item.reason && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {item.reason}
+                        </p>
+                      )}
+                    </td>
+                    <td className="py-4">
+                      {item.calculationType === "percentage"
+                        ? `${item.configuredValue}% of gross`
+                        : "Fixed amount"}
+                    </td>
+                    <td className="py-4 text-right">
+                      <Money value={item.amount} />
+                    </td>
+                    <td className="py-4">
+                      <StatusBadge
+                        status={
+                          item.status === "active" ? "Active" : "Reversed"
+                        }
+                      />
+                      {item.reversalNumber && (
+                        <p className="mt-1 font-mono text-xs text-muted-foreground">
+                          {item.reversalNumber}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      {canManage &&
+                        salary.status === "active" &&
+                        item.status === "active" &&
+                        !hasRemittance && (
+                          <SalaryReverseForm
+                            kind="deduction"
+                            recordId={item.id}
+                          />
+                        )}
+                      {hasRemittance && (
+                        <span className="text-xs text-muted-foreground">
+                          Reverse remittance first
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </PaginatedRows>
+          </tbody>
+        </table>
+      </div>
+    </InMemoryTablePagination>
   );
 }
 

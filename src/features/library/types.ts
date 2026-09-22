@@ -1,3 +1,5 @@
+import type { TermRateConfiguration } from "@/types/term-rate-configuration";
+
 export type LibraryRateStatus = "unconfigured" | "chargeable" | "not_charged";
 
 export type LibraryRateRow = {
@@ -74,6 +76,7 @@ export type LibraryPageResult = {
   page: number;
   pageSize: number;
   total: number;
+  rateConfiguration: TermRateConfiguration;
 };
 
 export type InvoiceLibraryBalance = {

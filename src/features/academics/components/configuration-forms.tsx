@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfigurationDeleteControl } from "@/components/forms/configuration-delete-control";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -24,6 +25,7 @@ import {
   type SchoolSettingsInput,
 } from "../schemas";
 import {
+  deleteAcademicConfiguration,
   saveAcademicTerm,
   saveAcademicYear,
   saveClass,
@@ -45,7 +47,7 @@ function FormNotice({ result }: { result: ConfigurationActionResult | null }) {
   if (!result) return null;
   return (
     <p
-      role="status"
+      role={result.ok ? "status" : "alert"}
       className={
         result.ok ? "text-sm text-success" : "text-sm text-destructive"
       }
@@ -56,18 +58,29 @@ function FormNotice({ result }: { result: ConfigurationActionResult | null }) {
 }
 
 function FieldError({ message }: { message?: string }) {
-  return message ? <p className="text-xs text-destructive">{message}</p> : null;
+  return message ? (
+    <p role="alert" className="text-xs text-destructive">
+      {message}
+    </p>
+  ) : null;
 }
 
+const invalidFormResult: ConfigurationActionResult = {
+  ok: false,
+  message: "Review the highlighted fields and try again.",
+};
+
 function StatusField({
+  id,
   register,
 }: {
+  id: string;
   register: ReturnType<typeof useForm<AcademicYearFormValues>>["register"];
 }) {
   return (
     <div className="field">
-      <Label htmlFor="status">Status</Label>
-      <select id="status" className="native-select" {...register("status")}>
+      <Label htmlFor={id}>Status</Label>
+      <select id={id} className="native-select" {...register("status")}>
         <option value="active">Active</option>
         <option value="archived">Archived</option>
       </select>
@@ -90,8 +103,21 @@ export function AcademicYearForm({ year }: { year?: AcademicYear }) {
         }
       : { name: "", shortName: "", startsOn: "", endsOn: "", status: "active" },
   });
-  const submit = form.handleSubmit(async (values) =>
-    setResult(await saveAcademicYear(values)),
+  const submit = form.handleSubmit(
+    async (values) => {
+      setResult(null);
+      const outcome = await saveAcademicYear(values);
+      setResult(outcome);
+      if (outcome.ok && !year)
+        form.reset({
+          name: "",
+          shortName: "",
+          startsOn: "",
+          endsOn: "",
+          status: "active",
+        });
+    },
+    () => setResult(invalidFormResult),
   );
   return (
     <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
@@ -121,6 +147,7 @@ export function AcademicYearForm({ year }: { year?: AcademicYear }) {
           type="date"
           {...form.register("startsOn")}
         />
+        <FieldError message={form.formState.errors.startsOn?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`year-end-${year?.id ?? "new"}`}>Ends</Label>
@@ -131,7 +158,10 @@ export function AcademicYearForm({ year }: { year?: AcademicYear }) {
         />
         <FieldError message={form.formState.errors.endsOn?.message} />
       </div>
-      <StatusField register={form.register} />
+      <StatusField
+        id={`year-status-${year?.id ?? "new"}`}
+        register={form.register}
+      />
       <div className="flex items-end">
         <Button type="submit" disabled={form.formState.isSubmitting}>
           <Save />{" "}
@@ -142,8 +172,19 @@ export function AcademicYearForm({ year }: { year?: AcademicYear }) {
               : "Add year"}
         </Button>
       </div>
-      <div className="sm:col-span-2">
+      <div className="flex flex-wrap items-start gap-4 sm:col-span-2">
         <FormNotice result={result} />
+        {year && (
+          <ConfigurationDeleteControl
+            label={`academic year ${year.name}`}
+            onDelete={() =>
+              deleteAcademicConfiguration({
+                kind: "academic_year",
+                id: year.id,
+              })
+            }
+          />
+        )}
       </div>
     </form>
   );
@@ -179,8 +220,23 @@ export function AcademicTermForm({
           status: "active",
         },
   });
-  const submit = form.handleSubmit(async (values) =>
-    setResult(await saveAcademicTerm(values)),
+  const submit = form.handleSubmit(
+    async (values) => {
+      setResult(null);
+      const outcome = await saveAcademicTerm(values);
+      setResult(outcome);
+      if (outcome.ok && !term)
+        form.reset({
+          academicYearId:
+            years.find((year) => year.is_current)?.id ?? years[0]?.id,
+          name: "",
+          sequence: 1,
+          startsOn: null,
+          endsOn: null,
+          status: "active",
+        });
+    },
+    () => setResult(invalidFormResult),
   );
   return (
     <form
@@ -201,6 +257,7 @@ export function AcademicTermForm({
             </option>
           ))}
         </select>
+        <FieldError message={form.formState.errors.academicYearId?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`term-name-${term?.id ?? "new"}`}>Term name</Label>
@@ -209,6 +266,7 @@ export function AcademicTermForm({
           placeholder="Term 1"
           {...form.register("name")}
         />
+        <FieldError message={form.formState.errors.name?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`term-sequence-${term?.id ?? "new"}`}>Order</Label>
@@ -219,6 +277,7 @@ export function AcademicTermForm({
           max={12}
           {...form.register("sequence", { valueAsNumber: true })}
         />
+        <FieldError message={form.formState.errors.sequence?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`term-start-${term?.id ?? "new"}`}>Starts</Label>
@@ -249,7 +308,7 @@ export function AcademicTermForm({
           <option value="archived">Archived</option>
         </select>
       </div>
-      <div className="flex items-center gap-4 sm:col-span-2 lg:col-span-3">
+      <div className="flex flex-wrap items-center gap-4 sm:col-span-2 lg:col-span-3">
         <Button type="submit" disabled={form.formState.isSubmitting}>
           <Save />{" "}
           {form.formState.isSubmitting
@@ -259,6 +318,17 @@ export function AcademicTermForm({
               : "Add term"}
         </Button>
         <FormNotice result={result} />
+        {term && (
+          <ConfigurationDeleteControl
+            label={`academic term ${term.name}`}
+            onDelete={() =>
+              deleteAcademicConfiguration({
+                kind: "academic_term",
+                id: term.id,
+              })
+            }
+          />
+        )}
       </div>
     </form>
   );
@@ -366,8 +436,21 @@ export function ClassForm({ record }: { record?: SchoolClass }) {
           status: "active",
         },
   });
-  const submit = form.handleSubmit(async (values) =>
-    setResult(await saveClass(values)),
+  const submit = form.handleSubmit(
+    async (values) => {
+      setResult(null);
+      const outcome = await saveClass(values);
+      setResult(outcome);
+      if (outcome.ok && !record)
+        form.reset({
+          code: "",
+          name: "",
+          classGroup: "early_years",
+          sortOrder: 140,
+          status: "active",
+        });
+    },
+    () => setResult(invalidFormResult),
   );
   return (
     <form
@@ -381,6 +464,7 @@ export function ClassForm({ record }: { record?: SchoolClass }) {
           id={`class-code-${record?.id ?? "new"}`}
           {...form.register("code")}
         />
+        <FieldError message={form.formState.errors.code?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`class-name-${record?.id ?? "new"}`}>Class name</Label>
@@ -388,6 +472,7 @@ export function ClassForm({ record }: { record?: SchoolClass }) {
           id={`class-name-${record?.id ?? "new"}`}
           {...form.register("name")}
         />
+        <FieldError message={form.formState.errors.name?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`class-group-${record?.id ?? "new"}`}>
@@ -404,6 +489,7 @@ export function ClassForm({ record }: { record?: SchoolClass }) {
             </option>
           ))}
         </select>
+        <FieldError message={form.formState.errors.classGroup?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`class-order-${record?.id ?? "new"}`}>
@@ -414,6 +500,7 @@ export function ClassForm({ record }: { record?: SchoolClass }) {
           type="number"
           {...form.register("sortOrder", { valueAsNumber: true })}
         />
+        <FieldError message={form.formState.errors.sortOrder?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`class-status-${record?.id ?? "new"}`}>Status</Label>
@@ -426,7 +513,7 @@ export function ClassForm({ record }: { record?: SchoolClass }) {
           <option value="archived">Archived</option>
         </select>
       </div>
-      <div className="flex items-center gap-4 sm:col-span-2 lg:col-span-5">
+      <div className="flex flex-wrap items-center gap-4 sm:col-span-2 lg:col-span-5">
         <Button type="submit" disabled={form.formState.isSubmitting}>
           <Save />{" "}
           {form.formState.isSubmitting
@@ -436,6 +523,14 @@ export function ClassForm({ record }: { record?: SchoolClass }) {
               : "Add class"}
         </Button>
         <FormNotice result={result} />
+        {record && (
+          <ConfigurationDeleteControl
+            label={`class ${record.name}`}
+            onDelete={() =>
+              deleteAcademicConfiguration({ kind: "class", id: record.id })
+            }
+          />
+        )}
       </div>
     </form>
   );
@@ -455,8 +550,15 @@ export function LocationForm({ record }: { record?: SchoolLocation }) {
         }
       : { code: "", name: "", sortOrder: 60, status: "active" },
   });
-  const submit = form.handleSubmit(async (values) =>
-    setResult(await saveLocation(values)),
+  const submit = form.handleSubmit(
+    async (values) => {
+      setResult(null);
+      const outcome = await saveLocation(values);
+      setResult(outcome);
+      if (outcome.ok && !record)
+        form.reset({ code: "", name: "", sortOrder: 60, status: "active" });
+    },
+    () => setResult(invalidFormResult),
   );
   return (
     <form
@@ -470,6 +572,7 @@ export function LocationForm({ record }: { record?: SchoolLocation }) {
           id={`location-code-${record?.id ?? "new"}`}
           {...form.register("code")}
         />
+        <FieldError message={form.formState.errors.code?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`location-name-${record?.id ?? "new"}`}>
@@ -479,6 +582,7 @@ export function LocationForm({ record }: { record?: SchoolLocation }) {
           id={`location-name-${record?.id ?? "new"}`}
           {...form.register("name")}
         />
+        <FieldError message={form.formState.errors.name?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`location-order-${record?.id ?? "new"}`}>
@@ -489,6 +593,7 @@ export function LocationForm({ record }: { record?: SchoolLocation }) {
           type="number"
           {...form.register("sortOrder", { valueAsNumber: true })}
         />
+        <FieldError message={form.formState.errors.sortOrder?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`location-status-${record?.id ?? "new"}`}>Status</Label>
@@ -501,7 +606,7 @@ export function LocationForm({ record }: { record?: SchoolLocation }) {
           <option value="archived">Archived</option>
         </select>
       </div>
-      <div className="flex items-center gap-4 sm:col-span-2 lg:col-span-4">
+      <div className="flex flex-wrap items-center gap-4 sm:col-span-2 lg:col-span-4">
         <Button type="submit" disabled={form.formState.isSubmitting}>
           <Save />{" "}
           {form.formState.isSubmitting
@@ -511,6 +616,17 @@ export function LocationForm({ record }: { record?: SchoolLocation }) {
               : "Add location"}
         </Button>
         <FormNotice result={result} />
+        {record && (
+          <ConfigurationDeleteControl
+            label={`location ${record.name}`}
+            onDelete={() =>
+              deleteAcademicConfiguration({
+                kind: "school_location",
+                id: record.id,
+              })
+            }
+          />
+        )}
       </div>
     </form>
   );

@@ -111,11 +111,15 @@ export function StudentForm({
             label="Admission number"
             required
             error={errors.admissionNumber?.message}
-            description="Unique school identifier, for example BBA/STU/2026/0001."
+            description="Use the school format BBA- followed by at least three digits."
           >
             <Input
               id="admission-number"
               autoComplete="off"
+              autoCapitalize="characters"
+              maxLength={40}
+              pattern="BBA-[0-9]{3,36}"
+              placeholder="BBA-001"
               aria-invalid={Boolean(errors.admissionNumber)}
               aria-describedby={describedBy(
                 "admission-number",

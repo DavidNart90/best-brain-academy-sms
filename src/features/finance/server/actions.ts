@@ -6,6 +6,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   baseClassFeesInputSchema,
   cancelInvoiceInputSchema,
+  deleteFinanceConfigurationSchema,
   financeCategoryInputSchema,
   flatFeesInputSchema,
   generateInvoicesInputSchema,
@@ -44,6 +45,18 @@ function databaseMessage(error: { code?: string; message?: string } | null) {
     return error.message ?? "Review the values and try again.";
   if (error.code === "42501") return denied.message;
   return "The change could not be saved. Review the values and try again.";
+}
+
+function deleteMessage(error: { code?: string; message?: string } | null) {
+  if (!error) return "The setting could not be deleted.";
+  if (
+    error.code === "22023" ||
+    error.code === "23503" ||
+    error.code === "P0002"
+  )
+    return error.message ?? "The setting cannot be deleted.";
+  if (error.code === "42501") return denied.message;
+  return "The setting could not be deleted. Archive it instead.";
 }
 
 function refreshFinanceSettings() {
@@ -302,6 +315,28 @@ export async function saveMiscIncomeCategory(
   input: unknown,
 ): Promise<FinanceActionResult> {
   return saveFinanceCategory("misc_income_categories", input);
+}
+
+export async function deleteFinanceConfiguration(
+  input: unknown,
+): Promise<FinanceActionResult> {
+  const access = await canManageFinance();
+  if (!access.ok) return { ok: false, message: access.message };
+  const parsed = deleteFinanceConfigurationSchema.safeParse(input);
+  if (!parsed.success)
+    return { ok: false, message: "Choose a valid setting to delete." };
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase.rpc("delete_finance_configuration", {
+    target_kind: parsed.data.kind,
+    target_id: parsed.data.id,
+  });
+  if (result.error) return { ok: false, message: deleteMessage(result.error) };
+  refreshFinanceSettings();
+  revalidatePath("/financials/salary-deductions");
+  return {
+    ok: true,
+    message: typeof result.data === "string" ? result.data : "Setting deleted.",
+  };
 }
 
 export type GenerateInvoicesActionResult = FinanceActionResult & {

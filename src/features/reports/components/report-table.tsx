@@ -9,7 +9,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import type { ReportFilters, ReportTable as ReportTableData } from "../types";
+import { ReportPrintHeader } from "./report-print-header";
+import type {
+  ReportFilters,
+  ReportIdentity,
+  ReportTable as ReportTableData,
+} from "../types";
 
 const moneyKeys = new Set([
   "amount",
@@ -75,9 +80,11 @@ function presentValue(key: string, value: string | number | null | undefined) {
 export function ReportTable({
   table,
   filters,
+  identity,
 }: {
   table: ReportTableData;
   filters: ReportFilters;
+  identity: ReportIdentity;
 }) {
   const pageCount = Math.max(1, Math.ceil(table.total / table.pageSize));
   return (
@@ -85,7 +92,13 @@ export function ReportTable({
       className="report-document panel min-w-0 overflow-hidden"
       aria-labelledby="report-title"
     >
-      <div className="border-b px-5 py-5 sm:px-6">
+      <ReportPrintHeader
+        identity={identity}
+        title={table.title}
+        periodLabel={`${filters.start} to ${filters.end}`}
+        className="p-5 sm:px-6"
+      />
+      <div className="border-b px-5 py-5 sm:px-6 print:hidden">
         <h2 id="report-title" className="text-base font-semibold">
           {table.title}
         </h2>

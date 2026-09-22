@@ -149,3 +149,5 @@ test-results/
 supabase/.temp/
 .tools/
 .agents/
+scripts/
+docs/

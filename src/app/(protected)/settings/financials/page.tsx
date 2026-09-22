@@ -5,7 +5,10 @@ import {
   isFinancialModule,
 } from "@/features/finance/components/financial-settings-navigation";
 import { FinancialSettingsPanel } from "@/features/finance/components/financial-settings-panel";
-import { getFinanceSettings } from "@/features/finance/server/queries";
+import {
+  getFinancePeriods,
+  getFinanceSettings,
+} from "@/features/finance/server/queries";
 import {
   getDeductionTypes,
   getSalaryConfigurations,
@@ -19,14 +22,24 @@ function first(value: string | string[] | undefined) {
 export default async function FinancialSettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ section?: string | string[] }>;
+  searchParams: Promise<{
+    section?: string | string[];
+    term?: string | string[];
+  }>;
 }) {
   const context = await requirePermission("finance.settings.manage");
   if (!context) return <PermissionDenied />;
 
-  const rawSection = first((await searchParams).section);
+  const params = await searchParams;
+  const rawSection = first(params.section);
   const selectedSection = isFinancialModule(rawSection) ? rawSection : null;
-  const settings = await getFinanceSettings();
+  const periods = await getFinancePeriods();
+  const requestedTermId = Number(first(params.term));
+  const selectedTerm =
+    periods.find((period) => period.id === requestedTermId) ??
+    periods.find((period) => period.isCurrent) ??
+    periods[0];
+  const settings = await getFinanceSettings(selectedTerm?.id);
   const defaultMonth = new Date().toISOString().slice(0, 7);
   const salaryData =
     selectedSection === "salaries"
@@ -44,7 +57,7 @@ export default async function FinancialSettingsPage({
     <>
       <PageHeader
         title="Financial settings"
-        description={`Choose the configuration area you need. The current fee period is ${settings.academicYearName} ${settings.academicTermName}; changes never rewrite posted history.`}
+        description={`Choose the configuration area you need. The selected fee period is ${settings.academicYearName} ${settings.academicTermName}; approved rates are locked for billing.`}
       />
       <FinancialModuleCards selectedSection={selectedSection} />
       {selectedSection && (
@@ -52,6 +65,7 @@ export default async function FinancialSettingsPage({
           defaultMonth={defaultMonth}
           selectedSection={selectedSection}
           settings={settings}
+          periods={periods}
           salarySettings={salarySettings}
         />
       )}

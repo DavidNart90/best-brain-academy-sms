@@ -8,6 +8,7 @@ import {
   academicYearInputSchema,
   classInputSchema,
   currentAcademicContextSchema,
+  deleteAcademicConfigurationSchema,
   locationInputSchema,
   schoolSettingsInputSchema,
 } from "../schemas";
@@ -34,6 +35,19 @@ function databaseMessage(error: { code?: string; message?: string } | null) {
       : "The dates or status conflict with the current academic configuration.";
   if (error.code === "42501") return denied.message;
   return "The change could not be saved. Review the values and try again.";
+}
+
+function deleteMessage(error: { code?: string; message?: string } | null) {
+  if (!error) return "The setting could not be deleted.";
+  if (
+    error.code === "22023" ||
+    error.code === "23503" ||
+    error.code === "23514" ||
+    error.code === "P0002"
+  )
+    return error.message ?? "The setting cannot be deleted.";
+  if (error.code === "42501") return denied.message;
+  return "The setting could not be deleted. Archive it instead.";
 }
 
 function refreshConfiguration() {
@@ -227,6 +241,27 @@ export async function saveSchoolSettings(
     return { ok: false, message: databaseMessage(result.error) };
   refreshConfiguration();
   return { ok: true, message: "School settings updated." };
+}
+
+export async function deleteAcademicConfiguration(
+  input: unknown,
+): Promise<ConfigurationActionResult> {
+  const access = await canManageConfiguration();
+  if (!access.ok) return { ok: false, message: access.message };
+  const parsed = deleteAcademicConfigurationSchema.safeParse(input);
+  if (!parsed.success)
+    return { ok: false, message: "Choose a valid setting to delete." };
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase.rpc("delete_academic_configuration", {
+    target_kind: parsed.data.kind,
+    target_id: parsed.data.id,
+  });
+  if (result.error) return { ok: false, message: deleteMessage(result.error) };
+  refreshConfiguration();
+  return {
+    ok: true,
+    message: typeof result.data === "string" ? result.data : "Setting deleted.",
+  };
 }
 
 export async function setCurrentAcademicContext(

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, Search } from "lucide-react";
+import { DataTablePagination } from "@/components/data-display/data-table-pagination";
 import { Money } from "@/components/data-display/money";
 import {
   PageState,
@@ -24,10 +25,20 @@ export default async function ReceiptsPage({
   if (!context) return <PermissionDenied />;
   const result = await getReceiptsPage(await searchParams);
   const canReverse = hasPermission(context, "finance.transactions.manage");
+  const pageCount = Math.max(1, Math.ceil(result.total / result.pageSize));
   const params = new URLSearchParams();
   if (result.date) params.set("date", result.date);
   if (result.status !== "all") params.set("status", result.status);
   const query = params.toString();
+  const hrefForPage = (page: number) => {
+    const listParams = new URLSearchParams();
+    if (result.q) listParams.set("q", result.q);
+    if (result.date) listParams.set("date", result.date);
+    if (result.status !== "all") listParams.set("status", result.status);
+    if (page > 1) listParams.set("page", String(page));
+    const value = listParams.toString();
+    return value ? `/financials/receipts?${value}` : "/financials/receipts";
+  };
 
   return (
     <>
@@ -172,6 +183,14 @@ export default async function ReceiptsPage({
                 </tbody>
               </table>
             </div>
+            <DataTablePagination
+              page={result.page}
+              pageCount={pageCount}
+              total={result.total}
+              pageSize={result.pageSize}
+              hrefForPage={hrefForPage}
+              itemLabel="receipts"
+            />
           </section>
         )}
       </div>

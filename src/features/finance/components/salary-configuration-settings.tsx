@@ -1,4 +1,8 @@
 import { Money } from "@/components/data-display/money";
+import {
+  InMemoryTablePagination,
+  PaginatedRows,
+} from "@/components/data-display/in-memory-table-pagination";
 import { StatusBadge } from "@/components/data-display/status-badge";
 import {
   EndSalaryConfigurationForm,
@@ -112,45 +116,55 @@ export function SalaryConfigurationSettings({
                 {endedSalaries.length === 1 ? "" : "s"}
               </span>
             </summary>
-            <div
-              className="table-scroll border-t border-border"
-              tabIndex={0}
-              role="region"
-              aria-label="Ended salary configurations"
+            <InMemoryTablePagination
+              total={endedSalaries.length}
+              itemLabel="configurations"
+              pageSize={10}
             >
-              <table className="w-full min-w-190 text-sm">
-                <thead className="bg-muted/70">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium">Staff</th>
-                    <th className="py-3 text-right font-medium">Gross</th>
-                    <th className="py-3 text-left font-medium">Period</th>
-                    <th className="px-4 py-3 text-left font-medium">Reason</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {endedSalaries.map((salary) => (
-                    <tr key={salary.id} className="border-t">
-                      <td className="px-4 py-3">
-                        <p className="font-semibold">{salary.staffName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {salary.staffNumber}
-                        </p>
-                      </td>
-                      <td className="py-3 text-right">
-                        <Money value={salary.grossSalary} />
-                      </td>
-                      <td className="py-3">
-                        {salary.effectiveFrom.slice(0, 7)} to{" "}
-                        {salary.effectiveTo?.slice(0, 7)}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {salary.endReason}
-                      </td>
+              <div
+                className="table-scroll border-t border-border"
+                tabIndex={0}
+                role="region"
+                aria-label="Ended salary configurations"
+              >
+                <table className="w-full min-w-190 text-sm">
+                  <thead className="bg-muted/70">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-medium">Staff</th>
+                      <th className="py-3 text-right font-medium">Gross</th>
+                      <th className="py-3 text-left font-medium">Period</th>
+                      <th className="px-4 py-3 text-left font-medium">
+                        Reason
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    <PaginatedRows>
+                      {endedSalaries.map((salary) => (
+                        <tr key={salary.id} className="border-t">
+                          <td className="px-4 py-3">
+                            <p className="font-semibold">{salary.staffName}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {salary.staffNumber}
+                            </p>
+                          </td>
+                          <td className="py-3 text-right">
+                            <Money value={salary.grossSalary} />
+                          </td>
+                          <td className="py-3">
+                            {salary.effectiveFrom.slice(0, 7)} to{" "}
+                            {salary.effectiveTo?.slice(0, 7)}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {salary.endReason}
+                          </td>
+                        </tr>
+                      ))}
+                    </PaginatedRows>
+                  </tbody>
+                </table>
+              </div>
+            </InMemoryTablePagination>
           </details>
         )}
       </div>

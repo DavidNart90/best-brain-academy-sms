@@ -309,7 +309,8 @@ function DispatchSalaryBatchAction({
           <h3 className="mt-1 font-semibold">Dispatch all salaries</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {eligibleCount} outstanding · <Money value={outstandingTotal} /> net
-            pay. SSNIT stays separate.
+            pay. Employee SSNIT withheld from gross salary is remitted
+            separately.
           </p>
         </div>
       </div>
@@ -359,7 +360,7 @@ function DispatchSalaryBatchAction({
                   <p className="mt-2 text-muted-foreground">
                     {skippedCount} fully paid{" "}
                     {skippedCount === 1 ? "record" : "records"} will be skipped.
-                    SSNIT is not included.
+                    SSNIT remittance is not included in the employee payment.
                   </p>
                 </div>
                 <FormField id="salary-batch-date" label="Payment date" required>

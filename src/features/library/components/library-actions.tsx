@@ -110,8 +110,10 @@ export function LibraryRateForm({
 
 export function GenerateLibraryChargesButton({
   academicTermId,
+  disabled = false,
 }: {
   academicTermId: number;
+  disabled?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -138,7 +140,7 @@ export function GenerateLibraryChargesButton({
           {message}
         </p>
       )}
-      <Button type="button" onClick={run} disabled={pending}>
+      <Button type="button" onClick={run} disabled={pending || disabled}>
         {pending ? <LoaderCircle className="animate-spin" /> : <FileStack />}
         {pending ? "Generating…" : "Generate term charges"}
       </Button>

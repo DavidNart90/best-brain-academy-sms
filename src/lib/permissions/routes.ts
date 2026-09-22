@@ -155,6 +155,13 @@ export const appRoutes: AppRoute[] = [
     description: "Role-specific workspace settings and responsibilities.",
   },
   {
+    href: "/settings/profile",
+    title: "Profile Settings",
+    permission: "dashboard.read",
+    phase: 6,
+    description: "Personal account details and password security.",
+  },
+  {
     href: "/settings/school",
     title: "School Settings",
     permission: "settings.manage",

@@ -62,7 +62,7 @@ export default async function SalaryDeductionsPage({
     <>
       <PageHeader
         title="Salaries & deductions"
-        description="Monthly salary calculations, employee payment status and SSNIT remittance status. Posting a salary does not mark it paid."
+        description="Monthly salary calculations, employee net payments and SSNIT remittances. Paying net salary does not remit the contribution withheld for SSNIT."
       >
         <Button asChild variant="outline">
           <Link href="/settings/financials#staff-salaries">
@@ -159,10 +159,10 @@ export default async function SalaryDeductionsPage({
               label="Payroll deductions"
               value={result.totalDeductions}
             />
-            <InlineAmount label="SSNIT due" value={result.ssnitDue} />
+            <InlineAmount label="SSNIT withheld" value={result.ssnitDue} />
             <InlineAmount label="SSNIT remitted" value={result.ssnitRemitted} />
             <InlineAmount
-              label="SSNIT outstanding"
+              label="Awaiting remittance"
               value={result.ssnitOutstanding}
             />
             <span className="text-muted-foreground">
@@ -272,7 +272,7 @@ export default async function SalaryDeductionsPage({
                                 : row.cashPosition?.ssnitStatus === "partial"
                                   ? "Partially Remitted"
                                   : row.cashPosition?.ssnitStatus === "due"
-                                    ? "Due"
+                                    ? "Awaiting Remittance"
                                     : "Not Due"
                           }
                         />

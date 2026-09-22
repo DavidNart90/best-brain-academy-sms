@@ -96,6 +96,10 @@ export async function buildStudentTemplate(reference: StudentReferenceData) {
       "Required",
       "Admission Number, First Name, Last Name, Gender, Admission Date, Status, Academic Year, Term, Class, Student Location, Has Disability, Religious Denomination, Guardian Name, Guardian Relationship and Guardian Phone.",
     ],
+    [
+      "Admission numbers",
+      "Use BBA- followed by at least three digits, beginning with BBA-001.",
+    ],
     ["Dates", "Use YYYY-MM-DD. Date of Birth is optional."],
     [
       "Disability",
@@ -180,6 +184,17 @@ export async function buildStudentTemplate(reference: StudentReferenceData) {
     M: "'Reference Data'!$G$2:$G$3",
   };
   for (let row = 2; row <= MAX_IMPORT_ROWS + 1; row += 1) {
+    students.getCell(`A${row}`).dataValidation = {
+      type: "custom",
+      allowBlank: false,
+      formulae: [
+        `=AND(LEFT(A${row},4)="BBA-",LEN(A${row})>=7,LEN(A${row})<=40,ISNUMBER(--RIGHT(A${row},LEN(A${row})-4)))`,
+      ],
+      showErrorMessage: true,
+      errorTitle: "Use the admission number format",
+      error:
+        "Enter BBA- followed by at least three digits, for example BBA-001.",
+    };
     for (const [column, formula] of Object.entries(validationRanges)) {
       students.getCell(`${column}${row}`).dataValidation = {
         type: "list",

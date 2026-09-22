@@ -32,7 +32,19 @@ export default async function ReportsPage({
   const selectedTerm = report.options.academicTerms.find(
     (term) => term.id === report.filters.academicTermId,
   );
-  const periodLabel = `${selectedTerm?.name ?? "Selected period"} · ${report.filters.start} to ${report.filters.end}`;
+  const periodName =
+    report.filters.period === "weekly"
+      ? "Weekly · Monday to Friday"
+      : report.filters.period === "monthly"
+        ? "Monthly"
+        : report.filters.period === "academic-cycle"
+          ? "Academic cycle"
+          : (selectedTerm?.name ?? "Academic term");
+  const termContext =
+    report.filters.period === "weekly" || report.filters.period === "monthly"
+      ? selectedTerm?.name
+      : null;
+  const periodLabel = `${periodName}${termContext ? ` · ${termContext}` : ""} · ${report.filters.start} to ${report.filters.end}`;
 
   return (
     <>
@@ -60,9 +72,14 @@ export default async function ReportsPage({
           snapshot={report.snapshot}
           periodLabel={periodLabel}
           periodSummary={report.periodSummary}
+          identity={report.identity}
         />
       ) : report.table ? (
-        <ReportTable table={report.table} filters={report.filters} />
+        <ReportTable
+          table={report.table}
+          filters={report.filters}
+          identity={report.identity}
+        />
       ) : (
         <PageState
           title="Choose a report"

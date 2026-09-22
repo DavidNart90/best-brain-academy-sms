@@ -7,6 +7,7 @@ import type { Json } from "@/types/database";
 import {
   enrollmentChangeSchema,
   guardianLinkSchema,
+  studentExitSchema,
   studentInputSchema,
 } from "../schemas";
 
@@ -28,8 +29,52 @@ function studentDatabaseMessage(error: { code?: string; message?: string }) {
       : "That admission number already belongs to a student.";
   if (error.code === "23514" || error.code === "23503")
     return "The selected academic year, term, class or student location is no longer available.";
+  if (error.code === "22023")
+    return error.message ?? "Review the student details and try again.";
   if (error.code === "42501") return denied.message;
   return "The student could not be added. Review the details and try again.";
+}
+
+export async function endStudentActiveStatus(
+  input: unknown,
+): Promise<StudentActionResult> {
+  const access = await requireRateLimitedPermission(
+    "people.lifecycle.manage",
+    "people-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
+  const parsed = studentExitSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Check the exit details.",
+    };
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase.rpc("end_student_active_status", {
+    target_student_id: parsed.data.studentId,
+    target_exit_status: parsed.data.exitStatus,
+    target_effective_on: parsed.data.effectiveOn,
+    target_reason: parsed.data.reason,
+    target_confirmation: parsed.data.confirmationAdmissionNumber,
+  });
+  if (result.error)
+    return { ok: false, message: studentDatabaseMessage(result.error) };
+  const response = result.data as {
+    invoicesCancelled?: unknown;
+    paidInvoicesPreserved?: unknown;
+  } | null;
+  const cancelled = Number(response?.invoicesCancelled ?? 0);
+  const preserved = Number(response?.paidInvoicesPreserved ?? 0);
+  revalidatePath("/students");
+  revalidatePath(`/students/${parsed.data.studentId}`);
+  revalidatePath(`/students/${parsed.data.studentId}/finance`);
+  revalidatePath("/financials");
+  revalidatePath("/reports");
+  return {
+    ok: true,
+    message: `Student status ended. ${cancelled} open fee ${cancelled === 1 ? "invoice was" : "invoices were"} cancelled; ${preserved} paid ${preserved === 1 ? "invoice remains" : "invoices remain"} in the financial history.`,
+    studentId: parsed.data.studentId,
+  };
 }
 
 export async function createStudent(

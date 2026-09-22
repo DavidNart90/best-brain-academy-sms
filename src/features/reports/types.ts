@@ -80,14 +80,29 @@ export type FinancialSummary = {
   admissionCollected: string;
   miscellaneousCollected: string;
   grossReceipts: string;
+  otherExpenses: string;
+  salaryPayments: string;
+  ssnitRemittances: string;
   totalExpenses: string;
   operatingNet: string;
   salaryDeductions: string;
+  ssnitWithheld: string;
+  ssnitRemittedToDate: string;
+  ssnitOutstanding: string;
   finalPosition: string;
   receiptCount: number;
   expenseCount: number;
   deductionCount: number;
   reversalCount: number;
+};
+
+export type ReportIdentity = {
+  schoolName: string;
+  schoolAddress: string | null;
+  schoolPhone: string | null;
+  schoolEmail: string | null;
+  schoolMotto: string | null;
+  schoolLogoPath: string | null;
 };
 
 export type FinancialTrendPoint = {

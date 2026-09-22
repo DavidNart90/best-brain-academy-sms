@@ -20,15 +20,21 @@ const codeSchema = z
 const statusSchema = z.enum(["active", "archived"]);
 const sortOrderSchema = z.coerce.number().int().min(1).max(999);
 
-export const moneyAmountSchema = z
+const normalizedMoneyAmountSchema = z
   .string()
   .trim()
   .regex(/^\d{1,12}(\.\d{1,2})?$/, "Enter a valid amount, e.g. 120.00")
   .transform((value) => {
     const [whole, fraction = ""] = value.split(".");
     return `${whole}.${fraction.padEnd(2, "0")}`;
-  })
-  .refine((value) => Number(value) > 0, "Amount must be greater than zero.");
+  });
+
+export const moneyAmountSchema = normalizedMoneyAmountSchema.refine(
+  (value) => Number(value) > 0,
+  "Amount must be greater than zero.",
+);
+
+const transportAmountSchema = normalizedMoneyAmountSchema;
 
 export const baseClassFeeRowSchema = z.object({
   classId: idSchema,
@@ -44,7 +50,7 @@ export const baseClassFeesInputSchema = z.object({
 export const transportChargeRowSchema = z.object({
   schoolLocationId: idSchema,
   rateId: optionalIdSchema,
-  amount: moneyAmountSchema,
+  amount: transportAmountSchema,
 });
 export const transportChargesInputSchema = z.object({
   academicYearId: idSchema,
@@ -64,7 +70,7 @@ export const flatFeesInputSchema = z.object({
 export const paymentMethodInputSchema = z.object({
   id: optionalIdSchema,
   code: codeSchema,
-  name: z.string().trim().min(2).max(60),
+  name: z.string().trim().min(2, "Enter a payment method name.").max(60),
   requiresReference: z
     .union([z.boolean(), z.enum(["true", "false"])])
     .transform((value) =>
@@ -77,9 +83,21 @@ export const paymentMethodInputSchema = z.object({
 export const financeCategoryInputSchema = z.object({
   id: optionalIdSchema,
   code: codeSchema,
-  name: z.string().trim().min(2).max(80),
+  name: z.string().trim().min(2, "Enter a category name.").max(80),
   sortOrder: sortOrderSchema,
   status: statusSchema,
+});
+
+export const financeConfigurationKinds = [
+  "payment_method",
+  "expense_category",
+  "misc_income_category",
+  "salary_deduction_type",
+] as const;
+
+export const deleteFinanceConfigurationSchema = z.object({
+  kind: z.enum(financeConfigurationKinds),
+  id: idSchema,
 });
 
 export type BaseClassFeesInput = z.infer<typeof baseClassFeesInputSchema>;
@@ -95,6 +113,9 @@ export type PaymentMethodFormValues = z.input<typeof paymentMethodInputSchema>;
 export type FinanceCategoryInput = z.infer<typeof financeCategoryInputSchema>;
 export type FinanceCategoryFormValues = z.input<
   typeof financeCategoryInputSchema
+>;
+export type DeleteFinanceConfigurationInput = z.infer<
+  typeof deleteFinanceConfigurationSchema
 >;
 
 export const invoiceStatuses = [

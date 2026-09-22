@@ -56,6 +56,10 @@ export const administratorStatusChangeSchema = z.object({
   userId: z.uuid(),
   status: z.enum(administratorStatuses),
 });
+export const administratorAccountDeletionSchema = z.object({
+  userId: z.uuid(),
+  confirmationEmail: z.string().trim().toLowerCase().pipe(z.email()),
+});
 export const administratorImportModeSchema = z.enum(["preview", "confirm"]);
 
 export type AdministratorInvitation = z.infer<

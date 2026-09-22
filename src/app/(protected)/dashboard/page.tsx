@@ -31,7 +31,7 @@ export default async function DashboardPage({
   const variant = resolveDashboardVariant(context.roles);
 
   if (variant === "administrator") {
-    const data = await getAdministratorDashboardData();
+    const data = await getAdministratorDashboardData(raw);
     return <AdministratorDashboard data={data} />;
   }
 

@@ -21,10 +21,7 @@ const strongPassword = z
 
 export const passwordChangeSchema = z
   .object({
-    currentPassword: z
-      .string()
-      .min(1, "Enter your temporary password.")
-      .max(128),
+    currentPassword: z.string().min(1, "Enter your current password.").max(128),
     newPassword: strongPassword,
     confirmPassword: z.string().max(128),
   })

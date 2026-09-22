@@ -30,6 +30,7 @@ const labels: Record<string, string> = {
   reports: "Reports",
   administrators: "Administrators",
   settings: "Settings",
+  profile: "Profile settings",
   school: "School settings",
   academics: "Academic settings",
   roles: "Roles & permissions",
