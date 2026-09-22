@@ -61,10 +61,9 @@ export async function POST(request: NextRequest) {
   const context = accessError ? null : parseAccessContext(access, user.id);
   if (!context || context.status !== "active" || context.roles.length === 0)
     return json({ error: "Your account does not have access." }, 403);
-  if (!context.mustChangePassword)
-    return json({ error: "This account setup step is already complete." }, 409);
   if (!user.email)
     return json({ error: "Your account cannot be verified." }, 400);
+  const completingInitialSetup = context.mustChangePassword;
 
   const limit = await consumeAuthenticatedRateLimit("password-change");
   if (limit.status === "unavailable")
@@ -87,10 +86,7 @@ export async function POST(request: NextRequest) {
       password: parsed.data.currentPassword,
     });
   if (verificationError || verified.user?.id !== user.id)
-    return json(
-      { error: "Your temporary password could not be verified." },
-      400,
-    );
+    return json({ error: "Your current password is incorrect." }, 400);
 
   const { error } = await supabase.auth.updateUser({
     current_password: parsed.data.currentPassword,
@@ -102,22 +98,29 @@ export async function POST(request: NextRequest) {
         error:
           error.status === 429
             ? "Too many attempts. Please wait before trying again."
-            : "Your temporary password could not be verified.",
+            : "Your password could not be changed. Check your current password and try again.",
       },
       error.status === 429 ? 429 : 400,
     );
 
   await supabase.auth.signOut({ scope: "others" });
-  const { data: refreshed } = await supabase.rpc("get_access_context");
-  const refreshedContext = parseAccessContext(refreshed, user.id);
-  if (!refreshedContext || refreshedContext.mustChangePassword)
-    return json(
-      {
-        error:
-          "Your password changed, but account setup needs administrator review.",
-      },
-      409,
-    );
+  if (completingInitialSetup) {
+    const { data: refreshed } = await supabase.rpc("get_access_context");
+    const refreshedContext = parseAccessContext(refreshed, user.id);
+    if (!refreshedContext || refreshedContext.mustChangePassword)
+      return json(
+        {
+          error:
+            "Your password changed, but account setup needs administrator review.",
+        },
+        409,
+      );
+  }
 
-  return json({ ok: true, next: "/dashboard" });
+  return json({
+    ok: true,
+    next: completingInitialSetup
+      ? "/dashboard"
+      : "/settings/profile?notice=password-updated",
+  });
 }

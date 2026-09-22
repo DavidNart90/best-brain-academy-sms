@@ -10,6 +10,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  InMemoryTablePagination,
+  PaginatedRows,
+} from "@/components/data-display/in-memory-table-pagination";
+import {
   Dialog,
   DialogClose,
   DialogContent,
@@ -204,54 +208,63 @@ export function SpreadsheetImportDialog({
                         : "Fix errors and preview again"}
                     </span>
                   </div>
-                  <div
-                    className="table-scroll max-h-80 rounded-lg border"
-                    tabIndex={0}
-                    role="region"
-                    aria-label={`${entityLabel} import preview`}
+                  <InMemoryTablePagination
+                    total={preview.rows.length}
+                    pageSize={10}
+                    itemLabel="import rows"
+                    className="rounded-b-lg border-x border-b"
                   >
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/70 hover:bg-muted/70">
-                          <TableHead>Row</TableHead>
-                          {columns.map((column) => (
-                            <TableHead key={column.key}>
-                              {column.label}
-                            </TableHead>
-                          ))}
-                          <TableHead>Validation</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {preview.rows.map((row) => (
-                          <TableRow key={row.rowNumber}>
-                            <TableCell>{row.rowNumber}</TableCell>
+                    <div
+                      className="table-scroll max-h-80 rounded-t-lg border"
+                      tabIndex={0}
+                      role="region"
+                      aria-label={`${entityLabel} import preview`}
+                    >
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/70 hover:bg-muted/70">
+                            <TableHead>Row</TableHead>
                             {columns.map((column) => (
-                              <TableCell
-                                key={column.key}
-                                className="whitespace-nowrap"
-                              >
-                                {row.values[column.key] || "—"}
-                              </TableCell>
+                              <TableHead key={column.key}>
+                                {column.label}
+                              </TableHead>
                             ))}
-                            <TableCell className="min-w-64">
-                              {row.errors.length === 0 ? (
-                                <span className="font-medium text-success">
-                                  Valid
-                                </span>
-                              ) : (
-                                <ul className="list-disc space-y-1 pl-4 text-xs text-destructive">
-                                  {row.errors.map((error) => (
-                                    <li key={error}>{error}</li>
-                                  ))}
-                                </ul>
-                              )}
-                            </TableCell>
+                            <TableHead>Validation</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          <PaginatedRows>
+                            {preview.rows.map((row) => (
+                              <TableRow key={row.rowNumber}>
+                                <TableCell>{row.rowNumber}</TableCell>
+                                {columns.map((column) => (
+                                  <TableCell
+                                    key={column.key}
+                                    className="whitespace-nowrap"
+                                  >
+                                    {row.values[column.key] || "—"}
+                                  </TableCell>
+                                ))}
+                                <TableCell className="min-w-64">
+                                  {row.errors.length === 0 ? (
+                                    <span className="font-medium text-success">
+                                      Valid
+                                    </span>
+                                  ) : (
+                                    <ul className="list-disc space-y-1 pl-4 text-xs text-destructive">
+                                      {row.errors.map((error) => (
+                                        <li key={error}>{error}</li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </PaginatedRows>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </InMemoryTablePagination>
                   {preview.canConfirm && (
                     <label className="mt-4 flex items-start gap-3 rounded-lg border bg-muted/25 p-4 text-sm">
                       <input

@@ -1,6 +1,11 @@
 import Link from "next/link";
+import {
+  InMemoryTablePagination,
+  PaginatedRows,
+} from "@/components/data-display/in-memory-table-pagination";
 import { PageHeader } from "@/components/layout/page-header";
 import { LiveFilterForm } from "@/components/layout/live-filter-form";
+import { TermRateWorkflow } from "@/components/forms/term-rate-workflow";
 import { Money } from "@/components/data-display/money";
 import {
   PageState,
@@ -83,6 +88,15 @@ export default async function FeeStructurePage({
           </select>
         </div>
       </LiveFilterForm>
+      <div className="mb-5 print:hidden">
+        <TermRateWorkflow
+          canManage={canManage}
+          configuration={settings.rateConfiguration}
+          domain="school_fees"
+          termId={settings.academicTermId}
+          termLabel={selected.label}
+        />
+      </div>
       <section className="finance-document panel p-5 sm:p-6">
         <DocumentHeader title="Fee structure" reference={selected.label} />
         <h3 className="mt-6 text-base font-semibold">Term school fees</h3>
@@ -90,49 +104,60 @@ export default async function FeeStructurePage({
           Each total includes the base class fee plus the charge for the
           student’s transport location.
         </p>
-        <div
-          className="table-scroll mt-4"
-          role="region"
-          aria-label="Term fee schedule"
-          tabIndex={0}
+        <InMemoryTablePagination
+          total={settings.baseClassFees.length}
+          pageSize={10}
+          itemLabel="classes"
+          className="-mx-5 sm:-mx-6"
         >
-          <table className="fee-schedule w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/70">
-                <th className="p-3 text-left font-medium">Class</th>
-                <th className="p-3 text-right font-medium">Base fee</th>
-                {settings.transportCharges.map((location) => (
-                  <th
-                    key={location.schoolLocationId}
-                    className="p-3 text-right font-medium"
-                  >
-                    {location.locationName}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {settings.baseClassFees.map((row) => (
-                <tr key={row.classId} className="border-b last:border-0">
-                  <th className="whitespace-nowrap p-3 text-left font-medium">
-                    {row.className}
-                  </th>
-                  <td className="p-3 text-right">
-                    <Rate amount={row.amount} />
-                  </td>
+          <div
+            className="table-scroll mt-4"
+            role="region"
+            aria-label="Term fee schedule"
+            tabIndex={0}
+          >
+            <table className="fee-schedule w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/70">
+                  <th className="p-3 text-left font-medium">Class</th>
+                  <th className="p-3 text-right font-medium">Base fee</th>
                   {settings.transportCharges.map((location) => (
-                    <td
+                    <th
                       key={location.schoolLocationId}
-                      className="p-3 text-right"
+                      className="p-3 text-right font-medium"
                     >
-                      <Rate amount={feeTotal(row.amount, location.amount)} />
-                    </td>
+                      {location.locationName}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                <PaginatedRows printAll>
+                  {settings.baseClassFees.map((row) => (
+                    <tr key={row.classId} className="border-b last:border-0">
+                      <th className="whitespace-nowrap p-3 text-left font-medium">
+                        {row.className}
+                      </th>
+                      <td className="p-3 text-right">
+                        <Rate amount={row.amount} />
+                      </td>
+                      {settings.transportCharges.map((location) => (
+                        <td
+                          key={location.schoolLocationId}
+                          className="p-3 text-right"
+                        >
+                          <Rate
+                            amount={feeTotal(row.amount, location.amount)}
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </PaginatedRows>
+              </tbody>
+            </table>
+          </div>
+        </InMemoryTablePagination>
         <h3 className="mt-6 text-sm font-semibold">
           Transport component included in the totals above
         </h3>
@@ -171,7 +196,7 @@ export default async function FeeStructurePage({
           zero.
         </p>
       </section>
-      {canManage && (
+      {canManage && settings.rateConfiguration.status === "draft" && (
         <details className="configuration-disclosure mt-5 print:hidden">
           <summary>
             <strong>Edit fees for {selected.label}</strong>

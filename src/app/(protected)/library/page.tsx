@@ -7,6 +7,10 @@ import {
   Settings2,
 } from "lucide-react";
 import { DataTablePagination } from "@/components/data-display/data-table-pagination";
+import {
+  InMemoryTablePagination,
+  PaginatedRows,
+} from "@/components/data-display/in-memory-table-pagination";
 import { Money } from "@/components/data-display/money";
 import { PermissionDenied } from "@/components/data-display/page-state";
 import { StatCard } from "@/components/data-display/stat-card";
@@ -16,6 +20,7 @@ import { LiveFilterForm } from "@/components/layout/live-filter-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TermRateWorkflow } from "@/components/forms/term-rate-workflow";
 import {
   Table,
   TableBody,
@@ -56,6 +61,8 @@ export default async function LibraryPage({
   const result = await getLibraryPage(await searchParams);
   const canCollect = hasPermission(context, "library.collections.manage");
   const canConfigure = hasPermission(context, "library.settings.manage");
+  const canEditRates =
+    canConfigure && result.rateConfiguration.status === "draft";
   const selectedTerm = result.terms.find(
     (term) => term.id === result.selectedTermId,
   );
@@ -80,6 +87,7 @@ export default async function LibraryPage({
         {canCollect && (
           <GenerateLibraryChargesButton
             academicTermId={result.selectedTermId}
+            disabled={result.rateConfiguration.status !== "approved"}
           />
         )}
       </PageHeader>
@@ -140,6 +148,14 @@ export default async function LibraryPage({
             </Button>
           </LiveFilterForm>
         </section>
+
+        <TermRateWorkflow
+          canManage={canConfigure}
+          configuration={result.rateConfiguration}
+          domain="library_prospectus"
+          termId={result.selectedTermId}
+          termLabel={selectedTerm?.label ?? "Selected term"}
+        />
 
         <section
           className="grid gap-4 sm:grid-cols-3"
@@ -267,53 +283,63 @@ export default async function LibraryPage({
               aria-hidden="true"
             />
           </div>
-          <div
-            className="table-scroll"
-            tabIndex={0}
-            aria-label="Library term rates"
+          <InMemoryTablePagination
+            total={result.rates.length}
+            itemLabel="rates"
+            pageSize={10}
           >
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/60">
-                  <TableHead className="pl-6">Class</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Term amount</TableHead>
-                  {canConfigure && (
-                    <TableHead className="pr-6 text-right">Configure</TableHead>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.rates.map((rate) => (
-                  <TableRow key={rate.classId}>
-                    <TableCell className="pl-6 font-medium">
-                      {rate.className}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="rounded-full">
-                        {rate.status === "unconfigured"
-                          ? "Not configured"
-                          : rate.status === "not_charged"
-                            ? "Not charged"
-                            : "Configured"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {rate.amount ? <Money value={rate.amount} /> : "—"}
-                    </TableCell>
-                    {canConfigure && (
-                      <TableCell className="pr-6 text-right">
-                        <LibraryRateForm
-                          rate={rate}
-                          academicTermId={result.selectedTermId}
-                        />
-                      </TableCell>
+            <div
+              className="table-scroll"
+              tabIndex={0}
+              aria-label="Library term rates"
+            >
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/60">
+                    <TableHead className="pl-6">Class</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Term amount</TableHead>
+                    {canEditRates && (
+                      <TableHead className="pr-6 text-right">
+                        Configure
+                      </TableHead>
                     )}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  <PaginatedRows>
+                    {result.rates.map((rate) => (
+                      <TableRow key={rate.classId}>
+                        <TableCell className="pl-6 font-medium">
+                          {rate.className}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="rounded-full">
+                            {rate.status === "unconfigured"
+                              ? "Not configured"
+                              : rate.status === "not_charged"
+                                ? "Not charged"
+                                : "Configured"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {rate.amount ? <Money value={rate.amount} /> : "—"}
+                        </TableCell>
+                        {canEditRates && (
+                          <TableCell className="pr-6 text-right">
+                            <LibraryRateForm
+                              rate={rate}
+                              academicTermId={result.selectedTermId}
+                            />
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </PaginatedRows>
+                </TableBody>
+              </Table>
+            </div>
+          </InMemoryTablePagination>
         </section>
 
         <section className="panel min-w-0 overflow-hidden">
@@ -325,85 +351,95 @@ export default async function LibraryPage({
               Latest Books &amp; Prospectus collection references across terms.
             </p>
           </div>
-          <div
-            className="table-scroll"
-            tabIndex={0}
-            aria-label="Recent Library collections"
+          <InMemoryTablePagination
+            total={result.collections.length}
+            itemLabel="collections"
+            pageSize={10}
           >
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/60">
-                  <TableHead className="pl-6">Reference</TableHead>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Class</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Method</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  {canCollect && (
-                    <TableHead className="pr-6 text-right">Action</TableHead>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.collections.map((collection) => (
-                  <TableRow key={collection.id}>
-                    <TableCell className="pl-6 font-medium">
-                      {collection.collectionNumber}
-                      {collection.reversalNumber && (
-                        <p className="mt-0.5 text-xs text-destructive">
-                          {collection.reversalNumber}
-                        </p>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {collection.studentName}
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {collection.admissionNumber}
-                      </p>
-                    </TableCell>
-                    <TableCell>{collection.className}</TableCell>
-                    <TableCell>{date(collection.businessDate)}</TableCell>
-                    <TableCell>{collection.paymentMethod}</TableCell>
-                    <TableCell className="text-right">
-                      <Money value={collection.amount} />
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge
-                        status={
-                          collection.status === "active" ? "Active" : "Reversed"
-                        }
-                      />
-                    </TableCell>
+            <div
+              className="table-scroll"
+              tabIndex={0}
+              aria-label="Recent Library collections"
+            >
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/60">
+                    <TableHead className="pl-6">Reference</TableHead>
+                    <TableHead>Student</TableHead>
+                    <TableHead>Class</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Method</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Status</TableHead>
                     {canCollect && (
-                      <TableCell className="pr-6 text-right">
-                        {collection.status === "active" ? (
-                          <LibraryReversalDialog
-                            collectionId={collection.id}
-                            collectionNumber={collection.collectionNumber}
-                          />
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            Retained
-                          </span>
-                        )}
-                      </TableCell>
+                      <TableHead className="pr-6 text-right">Action</TableHead>
                     )}
                   </TableRow>
-                ))}
-                {result.collections.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={canCollect ? 8 : 7}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      No Library collections have been recorded.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  <PaginatedRows>
+                    {result.collections.map((collection) => (
+                      <TableRow key={collection.id}>
+                        <TableCell className="pl-6 font-medium">
+                          {collection.collectionNumber}
+                          {collection.reversalNumber && (
+                            <p className="mt-0.5 text-xs text-destructive">
+                              {collection.reversalNumber}
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {collection.studentName}
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {collection.admissionNumber}
+                          </p>
+                        </TableCell>
+                        <TableCell>{collection.className}</TableCell>
+                        <TableCell>{date(collection.businessDate)}</TableCell>
+                        <TableCell>{collection.paymentMethod}</TableCell>
+                        <TableCell className="text-right">
+                          <Money value={collection.amount} />
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge
+                            status={
+                              collection.status === "active"
+                                ? "Active"
+                                : "Reversed"
+                            }
+                          />
+                        </TableCell>
+                        {canCollect && (
+                          <TableCell className="pr-6 text-right">
+                            {collection.status === "active" ? (
+                              <LibraryReversalDialog
+                                collectionId={collection.id}
+                                collectionNumber={collection.collectionNumber}
+                              />
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                Retained
+                              </span>
+                            )}
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </PaginatedRows>
+                  {result.collections.length === 0 && (
+                    <TableRow>
+                      <TableCell
+                        colSpan={canCollect ? 8 : 7}
+                        className="h-24 text-center text-muted-foreground"
+                      >
+                        No Library collections have been recorded.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </InMemoryTablePagination>
         </section>
       </div>
     </>

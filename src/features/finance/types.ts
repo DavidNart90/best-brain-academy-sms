@@ -1,3 +1,5 @@
+import type { TermRateConfiguration } from "@/types/term-rate-configuration";
+
 export type FeeComponentScope = "class" | "location" | "flat";
 
 export type FeeComponent = {
@@ -59,6 +61,7 @@ export type FinanceSettings = {
   academicYearName: string;
   academicTermId: number;
   academicTermName: string;
+  rateConfiguration: TermRateConfiguration;
   baseClassFees: BaseClassFeeRow[];
   transportCharges: TransportChargeRow[];
   flatFees: FlatFeeRow[];
@@ -150,6 +153,8 @@ export type EndTermInvoiceSetup = {
   remainingCount: number;
   missingSchoolFeeCount: number;
   missingProspectusCount: number;
+  schoolFeeConfigurationStatus: TermRateConfiguration["status"];
+  libraryConfigurationStatus: TermRateConfiguration["status"];
 };
 
 export type EndTermInvoiceGenerationResult = GenerateInvoicesResult & {

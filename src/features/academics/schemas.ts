@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 const idSchema = z.coerce.number().int().positive();
+const optionalIdSchema = z
+  .union([idSchema, z.literal(""), z.null(), z.undefined()])
+  .transform((value) => (value ? Number(value) : null));
 const dateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a valid calendar date.");
@@ -11,9 +14,9 @@ const statusSchema = z.enum(["active", "archived"]);
 
 export const academicYearInputSchema = z
   .object({
-    id: idSchema.optional(),
-    name: z.string().trim().min(3).max(32),
-    shortName: z.string().trim().min(3).max(16),
+    id: optionalIdSchema,
+    name: z.string().trim().min(3, "Enter an academic year.").max(32),
+    shortName: z.string().trim().min(3, "Enter a short label.").max(16),
     startsOn: dateSchema,
     endsOn: dateSchema,
     status: statusSchema.default("active"),
@@ -25,9 +28,9 @@ export const academicYearInputSchema = z
 
 export const academicTermInputSchema = z
   .object({
-    id: idSchema.optional(),
+    id: optionalIdSchema,
     academicYearId: idSchema,
-    name: z.string().trim().min(2).max(40),
+    name: z.string().trim().min(2, "Enter a term name.").max(40),
     sequence: z.coerce.number().int().min(1).max(12),
     startsOn: optionalDateSchema,
     endsOn: optionalDateSchema,
@@ -58,7 +61,7 @@ export const classGroups = [
 ] as const;
 
 export const classInputSchema = z.object({
-  id: idSchema.optional(),
+  id: optionalIdSchema,
   code: z
     .string()
     .trim()
@@ -67,14 +70,14 @@ export const classInputSchema = z.object({
       /^[A-Z0-9_]{2,20}$/,
       "Use 2–20 uppercase letters, numbers or underscores.",
     ),
-  name: z.string().trim().min(2).max(80),
+  name: z.string().trim().min(2, "Enter a class name.").max(80),
   classGroup: z.enum(classGroups),
   sortOrder: z.coerce.number().int().min(1).max(999),
   status: statusSchema.default("active"),
 });
 
 export const locationInputSchema = z.object({
-  id: idSchema.optional(),
+  id: optionalIdSchema,
   code: z
     .string()
     .trim()
@@ -83,7 +86,7 @@ export const locationInputSchema = z.object({
       /^[A-Z0-9_]{2,32}$/,
       "Use 2–32 uppercase letters, numbers or underscores.",
     ),
-  name: z.string().trim().min(2).max(120),
+  name: z.string().trim().min(2, "Enter a location name.").max(120),
   sortOrder: z.coerce.number().int().min(1).max(999),
   status: statusSchema.default("active"),
 });
@@ -112,6 +115,18 @@ export const currentAcademicContextSchema = z.object({
   academicTermId: idSchema,
 });
 
+export const academicConfigurationKinds = [
+  "academic_year",
+  "academic_term",
+  "class",
+  "school_location",
+] as const;
+
+export const deleteAcademicConfigurationSchema = z.object({
+  kind: z.enum(academicConfigurationKinds),
+  id: idSchema,
+});
+
 export const classListQuerySchema = z.object({
   q: z.string().trim().max(80).catch(""),
   status: z.enum(["all", "active", "archived"]).catch("active"),
@@ -125,6 +140,9 @@ export type LocationInput = z.infer<typeof locationInputSchema>;
 export type SchoolSettingsInput = z.infer<typeof schoolSettingsInputSchema>;
 export type CurrentAcademicContextInput = z.infer<
   typeof currentAcademicContextSchema
+>;
+export type DeleteAcademicConfigurationInput = z.infer<
+  typeof deleteAcademicConfigurationSchema
 >;
 export type AcademicYearFormValues = z.input<typeof academicYearInputSchema>;
 export type AcademicTermFormValues = z.input<typeof academicTermInputSchema>;

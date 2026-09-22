@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { Save } from "lucide-react";
+import { ConfigurationDeleteControl } from "@/components/forms/configuration-delete-control";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { deleteFinanceConfiguration } from "../server/actions";
 import { saveDeductionType } from "../server/salary-actions";
 import type { DeductionType } from "../types";
 
@@ -18,8 +20,10 @@ export function DeductionTypeForm({ record }: { record?: DeductionType }) {
   );
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setPending(true);
-    const form = new FormData(event.currentTarget);
+    setMessage(null);
+    const form = new FormData(formElement);
     const result = await saveDeductionType({
       id: record?.id ?? null,
       code: String(form.get("code") ?? ""),
@@ -34,6 +38,10 @@ export function DeductionTypeForm({ record }: { record?: DeductionType }) {
       status: String(form.get("status") ?? "active"),
     });
     setMessage({ ok: result.ok, text: result.message });
+    if (result.ok && !record) {
+      formElement.reset();
+      setCalculationType("fixed");
+    }
     setPending(false);
   }
   return (
@@ -168,7 +176,7 @@ export function DeductionTypeForm({ record }: { record?: DeductionType }) {
         />
         Apply automatically
       </label>
-      <div className="flex items-center gap-4 sm:col-span-2 lg:col-span-4">
+      <div className="flex flex-wrap items-center gap-4 sm:col-span-2 lg:col-span-4">
         <Button type="submit" disabled={pending}>
           <Save />
           {pending
@@ -186,6 +194,17 @@ export function DeductionTypeForm({ record }: { record?: DeductionType }) {
           >
             {message.text}
           </p>
+        )}
+        {record && (
+          <ConfigurationDeleteControl
+            label={`deduction type ${record.name}`}
+            onDelete={() =>
+              deleteFinanceConfiguration({
+                kind: "salary_deduction_type",
+                id: record.id,
+              })
+            }
+          />
         )}
       </div>
     </form>

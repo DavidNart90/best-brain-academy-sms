@@ -2,15 +2,11 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { FormField } from "@/components/forms/form-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  archiveStaff,
-  assignStaffClass,
-  endStaffAssignment,
-} from "../server/actions";
+import { assignStaffClass, endStaffAssignment } from "../server/actions";
 import type { StaffProfile, StaffReferenceData } from "../types";
 
 export function StaffProfileActions({
@@ -234,24 +230,6 @@ export function StaffProfileActions({
             </Button>
           </form>
         ))}
-      {staff.status !== "archived" && (
-        <Button
-          type="button"
-          variant="outline"
-          className="text-destructive"
-          disabled={pending}
-          onClick={() => {
-            if (
-              window.confirm(
-                "Archive this staff record? Assignment and audit history will remain available.",
-              )
-            )
-              void run(() => archiveStaff(staff.id));
-          }}
-        >
-          <Archive /> Archive staff record
-        </Button>
-      )}
     </div>
   );
 }

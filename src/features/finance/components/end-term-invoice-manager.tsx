@@ -40,7 +40,9 @@ export function EndTermInvoiceManager({
     Array<{ studentId: number; reason: string }>
   >([]);
   const noteLocked = setup.generatedCount > 0;
-  const canGenerate = Boolean(setup.configurationId && setup.targetTermId);
+  const canGenerate = Boolean(
+    setup.ready && setup.configurationId && setup.targetTermId,
+  );
   const printQuery = classId ? `?classId=${classId}` : "";
 
   async function saveNotes() {
@@ -183,6 +185,18 @@ export function EndTermInvoiceManager({
               {setup.missingProspectusCount}
             </dd>
           </div>
+          <div className="flex justify-between gap-4 py-3">
+            <dt className="text-muted-foreground">School-fee approval</dt>
+            <dd className="font-semibold capitalize">
+              {setup.schoolFeeConfigurationStatus.replace("_", " ")}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4 py-3">
+            <dt className="text-muted-foreground">Prospectus approval</dt>
+            <dd className="font-semibold capitalize">
+              {setup.libraryConfigurationStatus.replace("_", " ")}
+            </dd>
+          </div>
         </dl>
       </div>
 
@@ -192,7 +206,9 @@ export function EndTermInvoiceManager({
           <p className="mt-1 text-muted-foreground">{setup.reason}</p>
           {canManage &&
           (setup.missingSchoolFeeCount > 0 ||
-            setup.missingProspectusCount > 0) ? (
+            setup.missingProspectusCount > 0 ||
+            setup.schoolFeeConfigurationStatus !== "approved" ||
+            setup.libraryConfigurationStatus !== "approved") ? (
             <div className="mt-3 flex flex-wrap gap-2">
               <Button asChild variant="outline" size="sm">
                 <Link href="/financials/fees">Configure school fees</Link>

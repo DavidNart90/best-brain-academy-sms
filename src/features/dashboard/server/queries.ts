@@ -91,7 +91,7 @@ export async function getFinancialDashboardData(
 ) {
   const options = await getReportingOptions();
   const filters = resolveReportFilters(
-    { view: "outstanding", classId: raw.classId },
+    { view: "outstanding", classId: raw.classId, page: raw.feePage },
     options,
   );
   const [snapshot, outstanding] = await Promise.all([
@@ -110,8 +110,15 @@ export async function getFinancialDashboardData(
   };
 }
 
-export async function getAdministratorDashboardData(): Promise<AdministratorDashboardData> {
+export async function getAdministratorDashboardData(
+  raw: RawQuery = {},
+): Promise<AdministratorDashboardData> {
   const supabase = await createServerSupabaseClient();
+  const requestedPage = Number(firstValue(raw.feePage));
+  const outstandingPage =
+    Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const outstandingPageSize = 8;
+  const outstandingOffset = (outstandingPage - 1) * outstandingPageSize;
   const currentTerm = await supabase
     .from("academic_terms")
     .select("id,name,starts_on,ends_on,academic_year_id")
@@ -175,7 +182,7 @@ export async function getAdministratorDashboardData(): Promise<AdministratorDash
       outstandingRequest
         .order("outstanding", { ascending: false })
         .order("id", { ascending: false })
-        .limit(8),
+        .range(outstandingOffset, outstandingOffset + outstandingPageSize - 1),
     ]);
   if (
     students.error ||
@@ -224,6 +231,8 @@ export async function getAdministratorDashboardData(): Promise<AdministratorDash
     activeStaff: staff.count ?? 0,
     teachingStaff: teachers.count ?? 0,
     openBalances: outstanding.count ?? 0,
+    outstandingPage,
+    outstandingPageSize,
     currentTermLabel: currentTerm.data
       ? `${year.data?.name ?? "Academic year"} · ${currentTerm.data.name}`
       : "No current term",

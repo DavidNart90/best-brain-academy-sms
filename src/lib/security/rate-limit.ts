@@ -17,6 +17,7 @@ export const rateLimitBucketSchema = z.enum([
   "library-write",
   "password-change",
   "people-write",
+  "profile-write",
   "report-export",
 ]);
 export type RateLimitBucket = z.infer<typeof rateLimitBucketSchema>;

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Save } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { ConfigurationDeleteControl } from "@/components/forms/configuration-delete-control";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,7 @@ import {
   type PaymentMethodInput,
 } from "../schemas";
 import {
+  deleteFinanceConfiguration,
   saveExpenseCategory,
   saveMiscIncomeCategory,
   savePaymentMethod,
@@ -27,7 +29,7 @@ function Notice({ result }: { result: FinanceActionResult | null }) {
   if (!result) return null;
   return (
     <p
-      role="status"
+      role={result.ok ? "status" : "alert"}
       className={
         result.ok ? "text-sm text-success" : "text-sm text-destructive"
       }
@@ -36,6 +38,19 @@ function Notice({ result }: { result: FinanceActionResult | null }) {
     </p>
   );
 }
+
+function FieldError({ message }: { message?: string }) {
+  return message ? (
+    <p role="alert" className="text-xs text-destructive">
+      {message}
+    </p>
+  ) : null;
+}
+
+const invalidFormResult: FinanceActionResult = {
+  ok: false,
+  message: "Review the highlighted fields and try again.",
+};
 
 export function PaymentMethodForm({ record }: { record?: PaymentMethod }) {
   const [result, setResult] = useState<FinanceActionResult | null>(null);
@@ -58,8 +73,21 @@ export function PaymentMethodForm({ record }: { record?: PaymentMethod }) {
           status: "active",
         },
   });
-  const submit = form.handleSubmit(async (values) =>
-    setResult(await savePaymentMethod(values)),
+  const submit = form.handleSubmit(
+    async (values) => {
+      setResult(null);
+      const outcome = await savePaymentMethod(values);
+      setResult(outcome);
+      if (outcome.ok && !record)
+        form.reset({
+          code: "",
+          name: "",
+          requiresReference: false,
+          sortOrder: 50,
+          status: "active",
+        });
+    },
+    () => setResult(invalidFormResult),
   );
   return (
     <form
@@ -73,6 +101,7 @@ export function PaymentMethodForm({ record }: { record?: PaymentMethod }) {
           id={`method-code-${record?.id ?? "new"}`}
           {...form.register("code")}
         />
+        <FieldError message={form.formState.errors.code?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`method-name-${record?.id ?? "new"}`}>Name</Label>
@@ -80,6 +109,7 @@ export function PaymentMethodForm({ record }: { record?: PaymentMethod }) {
           id={`method-name-${record?.id ?? "new"}`}
           {...form.register("name")}
         />
+        <FieldError message={form.formState.errors.name?.message} />
       </div>
       <label className="flex min-h-10 items-center gap-2 self-end text-sm">
         <input
@@ -98,6 +128,7 @@ export function PaymentMethodForm({ record }: { record?: PaymentMethod }) {
           type="number"
           {...form.register("sortOrder", { valueAsNumber: true })}
         />
+        <FieldError message={form.formState.errors.sortOrder?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`method-status-${record?.id ?? "new"}`}>Status</Label>
@@ -110,7 +141,7 @@ export function PaymentMethodForm({ record }: { record?: PaymentMethod }) {
           <option value="archived">Archived</option>
         </select>
       </div>
-      <div className="flex items-center gap-4 sm:col-span-2 lg:col-span-5">
+      <div className="flex flex-wrap items-center gap-4 sm:col-span-2 lg:col-span-5">
         <Button type="submit" disabled={form.formState.isSubmitting}>
           <Save />{" "}
           {form.formState.isSubmitting
@@ -120,6 +151,17 @@ export function PaymentMethodForm({ record }: { record?: PaymentMethod }) {
               : "Add method"}
         </Button>
         <Notice result={result} />
+        {record && (
+          <ConfigurationDeleteControl
+            label={`payment method ${record.name}`}
+            onDelete={() =>
+              deleteFinanceConfiguration({
+                kind: "payment_method",
+                id: record.id,
+              })
+            }
+          />
+        )}
       </div>
     </form>
   );
@@ -149,12 +191,17 @@ export function FinanceCategoryForm({
         }
       : { code: "", name: "", sortOrder: 50, status: "active" },
   });
-  const submit = form.handleSubmit(async (values) =>
-    setResult(
-      await (kind === "expense" ? saveExpenseCategory : saveMiscIncomeCategory)(
-        values,
-      ),
-    ),
+  const submit = form.handleSubmit(
+    async (values) => {
+      setResult(null);
+      const outcome = await (
+        kind === "expense" ? saveExpenseCategory : saveMiscIncomeCategory
+      )(values);
+      setResult(outcome);
+      if (outcome.ok && !record)
+        form.reset({ code: "", name: "", sortOrder: 50, status: "active" });
+    },
+    () => setResult(invalidFormResult),
   );
   return (
     <form
@@ -168,6 +215,7 @@ export function FinanceCategoryForm({
           id={`${kind}-code-${record?.id ?? "new"}`}
           {...form.register("code")}
         />
+        <FieldError message={form.formState.errors.code?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`${kind}-name-${record?.id ?? "new"}`}>Name</Label>
@@ -175,6 +223,7 @@ export function FinanceCategoryForm({
           id={`${kind}-name-${record?.id ?? "new"}`}
           {...form.register("name")}
         />
+        <FieldError message={form.formState.errors.name?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`${kind}-order-${record?.id ?? "new"}`}>
@@ -185,6 +234,7 @@ export function FinanceCategoryForm({
           type="number"
           {...form.register("sortOrder", { valueAsNumber: true })}
         />
+        <FieldError message={form.formState.errors.sortOrder?.message} />
       </div>
       <div className="field">
         <Label htmlFor={`${kind}-status-${record?.id ?? "new"}`}>Status</Label>
@@ -197,7 +247,7 @@ export function FinanceCategoryForm({
           <option value="archived">Archived</option>
         </select>
       </div>
-      <div className="flex items-center gap-4 sm:col-span-2 lg:col-span-4">
+      <div className="flex flex-wrap items-center gap-4 sm:col-span-2 lg:col-span-4">
         <Button type="submit" disabled={form.formState.isSubmitting}>
           <Save />{" "}
           {form.formState.isSubmitting
@@ -207,6 +257,20 @@ export function FinanceCategoryForm({
               : "Add category"}
         </Button>
         <Notice result={result} />
+        {record && (
+          <ConfigurationDeleteControl
+            label={`${kind === "expense" ? "expense" : "income"} category ${record.name}`}
+            onDelete={() =>
+              deleteFinanceConfiguration({
+                kind:
+                  kind === "expense"
+                    ? "expense_category"
+                    : "misc_income_category",
+                id: record.id,
+              })
+            }
+          />
+        )}
       </div>
     </form>
   );

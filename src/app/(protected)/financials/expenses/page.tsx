@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, Search } from "lucide-react";
+import { DataTablePagination } from "@/components/data-display/data-table-pagination";
 import { Money } from "@/components/data-display/money";
 import {
   PageState,
@@ -24,6 +25,16 @@ export default async function ExpensesPage({
   if (!context) return <PermissionDenied />;
   const result = await getExpensesPage(await searchParams);
   const canVoid = hasPermission(context, "finance.transactions.manage");
+  const pageCount = Math.max(1, Math.ceil(result.total / result.pageSize));
+  const hrefForPage = (page: number) => {
+    const params = new URLSearchParams();
+    if (result.q) params.set("q", result.q);
+    if (result.date) params.set("date", result.date);
+    if (result.status !== "all") params.set("status", result.status);
+    if (page > 1) params.set("page", String(page));
+    const query = params.toString();
+    return query ? `/financials/expenses?${query}` : "/financials/expenses";
+  };
 
   return (
     <>
@@ -162,6 +173,14 @@ export default async function ExpensesPage({
                 </tbody>
               </table>
             </div>
+            <DataTablePagination
+              page={result.page}
+              pageCount={pageCount}
+              total={result.total}
+              pageSize={result.pageSize}
+              hrefForPage={hrefForPage}
+              itemLabel="expenses"
+            />
           </section>
         )}
       </div>

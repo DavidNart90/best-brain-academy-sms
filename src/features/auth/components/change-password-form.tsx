@@ -85,7 +85,11 @@ function PasswordField({
   );
 }
 
-export function ChangePasswordForm() {
+export function ChangePasswordForm({
+  mode = "first-login",
+}: {
+  mode?: "first-login" | "settings";
+}) {
   const [error, setError] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
   const {
@@ -129,7 +133,9 @@ export function ChangePasswordForm() {
     >
       <PasswordField
         id="current-password"
-        label="Temporary password"
+        label={
+          mode === "first-login" ? "Temporary password" : "Current password"
+        }
         autoComplete="current-password"
         error={errors.currentPassword?.message}
         registration={register("currentPassword")}
@@ -189,7 +195,11 @@ export function ChangePasswordForm() {
 
       <Button type="submit" className="h-11 w-full" disabled={isSubmitting}>
         {isSubmitting && <LoaderCircle className="size-4 animate-spin" />}
-        {isSubmitting ? "Securing account…" : "Set new password"}
+        {isSubmitting
+          ? "Securing account…"
+          : mode === "first-login"
+            ? "Set new password"
+            : "Change password"}
       </Button>
     </form>
   );

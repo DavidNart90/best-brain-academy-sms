@@ -12,6 +12,7 @@ import type {
   RecentCollection,
   ReportAccess,
   ReportFilters,
+  ReportIdentity,
   ReportingPeriod,
   ReportTable,
   ReportView,
@@ -97,6 +98,16 @@ function monthBounds(value: string) {
   return { start: isoFromDate(start), end: isoFromDate(end) };
 }
 
+function termForRange(options: ReportingPeriod, start: string, end: string) {
+  const overlapsRange = (term: ReportingPeriod["academicTerms"][number]) =>
+    term.startsOn <= end && term.endsOn >= start;
+  return (
+    options.academicTerms.find(
+      (term) => term.isCurrent && overlapsRange(term),
+    ) ?? options.academicTerms.find(overlapsRange)
+  );
+}
+
 function normalizeBreakdown(value: unknown): FinancialBreakdown[] {
   return asArray(value).map((entry) => {
     const row = asRecord(entry);
@@ -134,9 +145,15 @@ function normalizeSnapshot(value: unknown): FinancialSnapshot {
     admissionCollected: asMoney(summary.admissionCollected),
     miscellaneousCollected: asMoney(summary.miscellaneousCollected),
     grossReceipts: asMoney(summary.grossReceipts),
+    otherExpenses: asMoney(summary.otherExpenses),
+    salaryPayments: asMoney(summary.salaryPayments),
+    ssnitRemittances: asMoney(summary.ssnitRemittances),
     totalExpenses: asMoney(summary.totalExpenses),
     operatingNet: asMoney(summary.operatingNet),
     salaryDeductions: asMoney(summary.salaryDeductions),
+    ssnitWithheld: asMoney(summary.ssnitWithheld),
+    ssnitRemittedToDate: asMoney(summary.ssnitRemittedToDate),
+    ssnitOutstanding: asMoney(summary.ssnitOutstanding),
     finalPosition: asMoney(summary.finalPosition),
     receiptCount: asNumber(summary.receiptCount),
     expenseCount: asNumber(summary.expenseCount),
@@ -177,6 +194,24 @@ function normalizeSnapshot(value: unknown): FinancialSnapshot {
     classCollections: normalizeBreakdown(snapshot.classCollections),
     reversals: normalizeBreakdown(snapshot.reversals),
     recentCollections,
+  };
+}
+
+async function getReportIdentity(): Promise<ReportIdentity> {
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase
+    .from("school_settings")
+    .select("school_name,address,phone,email,motto,logo_path")
+    .eq("id", 1)
+    .maybeSingle();
+  if (result.error) throw new Error(reportError);
+  return {
+    schoolName: result.data?.school_name ?? "Best Brain Academy",
+    schoolAddress: result.data?.address ?? null,
+    schoolPhone: result.data?.phone ?? null,
+    schoolEmail: result.data?.email ?? null,
+    schoolMotto: result.data?.motto ?? null,
+    schoolLogoPath: result.data?.logo_path ?? null,
   };
 }
 
@@ -329,22 +364,25 @@ export function resolveReportFilters(
 
   if (parsed.view === "financial-summary" && parsed.period === "weekly") {
     const start = mondayFor(parsed.start ?? todayDate());
+    const end = addDays(start, 4);
+    const reportingTerm = termForRange(options, start, end);
     return {
       ...parsed,
       start,
-      end: addDays(start, 4),
-      academicYearId: undefined,
-      academicTermId: undefined,
+      end,
+      academicYearId: reportingTerm?.academicYearId,
+      academicTermId: reportingTerm?.id,
     };
   }
 
   if (parsed.view === "financial-summary" && parsed.period === "monthly") {
     const bounds = monthBounds(parsed.start ?? todayDate());
+    const reportingTerm = termForRange(options, bounds.start, bounds.end);
     return {
       ...parsed,
       ...bounds,
-      academicYearId: undefined,
-      academicTermId: undefined,
+      academicYearId: reportingTerm?.academicYearId,
+      academicTermId: reportingTerm?.id,
     };
   }
 
@@ -916,7 +954,10 @@ export async function getReportTable(
 }
 
 export async function getReportPage(raw: RawQuery, access: ReportAccess) {
-  const options = await getReportingOptions();
+  const [options, identity] = await Promise.all([
+    getReportingOptions(),
+    getReportIdentity(),
+  ]);
   const requestedView = firstValue(raw.view);
   const fallbackView: ReportView = access.financials
     ? "financial-summary"
@@ -941,7 +982,15 @@ export async function getReportPage(raw: RawQuery, access: ReportAccess) {
   const periodSummary = snapshot
     ? buildFinancialPeriodSummary(snapshot.daily, filters, options)
     : null;
-  return { options, filters, snapshot, periodSummary, table, accessDenied };
+  return {
+    options,
+    identity,
+    filters,
+    snapshot,
+    periodSummary,
+    table,
+    accessDenied,
+  };
 }
 
 export async function getReportExport(raw: RawQuery, access: ReportAccess) {

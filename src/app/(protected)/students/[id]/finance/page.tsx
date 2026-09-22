@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import {
+  InMemoryTablePagination,
+  PaginatedRows,
+} from "@/components/data-display/in-memory-table-pagination";
 import { Money } from "@/components/data-display/money";
 import {
   PageState,
@@ -89,65 +93,73 @@ export default async function StudentFinancePage({
               Historical invoice snapshots and current balances.
             </p>
           </div>
-          <div
-            className="table-scroll"
-            tabIndex={0}
-            role="region"
-            aria-label="Student invoices"
+          <InMemoryTablePagination
+            total={history.invoices.length}
+            pageSize={10}
+            itemLabel="invoices"
           >
-            <table className="w-full min-w-170 text-sm">
-              <thead className="bg-muted/70">
-                <tr>
-                  <th className="px-5 py-3 text-left font-medium">Invoice</th>
-                  <th className="py-3 text-left font-medium">Issued</th>
-                  <th className="py-3 text-left font-medium">
-                    Class / location
-                  </th>
-                  <th className="py-3 text-right font-medium">Total</th>
-                  <th className="py-3 text-right font-medium">Paid</th>
-                  <th className="py-3 text-right font-medium">Outstanding</th>
-                  <th className="px-5 py-3 text-left font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.invoices.map((invoice) => (
-                  <tr key={invoice.id} className="border-t">
-                    <td className="px-5 py-4">
-                      <Link
-                        href={`/financials/invoices/${invoice.id}`}
-                        className="font-mono text-xs font-semibold text-primary hover:underline"
-                      >
-                        {invoice.invoice_number}
-                      </Link>
-                    </td>
-                    <td className="py-4">{invoice.issued_on}</td>
-                    <td className="py-4">
-                      {invoice.class_name_snapshot} ·{" "}
-                      {invoice.location_name_snapshot}
-                    </td>
-                    <td className="py-4 text-right">
-                      <Money value={invoice.total} />
-                    </td>
-                    <td className="py-4 text-right">
-                      <Money value={invoice.amountPaid} />
-                    </td>
-                    <td className="py-4 text-right font-semibold">
-                      <Money value={invoice.outstanding} />
-                    </td>
-                    <td className="px-5 py-4">
-                      <StatusBadge
-                        status={
-                          invoiceStatus[
-                            invoice.status as keyof typeof invoiceStatus
-                          ]
-                        }
-                      />
-                    </td>
+            <div
+              className="table-scroll"
+              tabIndex={0}
+              role="region"
+              aria-label="Student invoices"
+            >
+              <table className="w-full min-w-170 text-sm">
+                <thead className="bg-muted/70">
+                  <tr>
+                    <th className="px-5 py-3 text-left font-medium">Invoice</th>
+                    <th className="py-3 text-left font-medium">Issued</th>
+                    <th className="py-3 text-left font-medium">
+                      Class / location
+                    </th>
+                    <th className="py-3 text-right font-medium">Total</th>
+                    <th className="py-3 text-right font-medium">Paid</th>
+                    <th className="py-3 text-right font-medium">Outstanding</th>
+                    <th className="px-5 py-3 text-left font-medium">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  <PaginatedRows printAll>
+                    {history.invoices.map((invoice) => (
+                      <tr key={invoice.id} className="border-t">
+                        <td className="px-5 py-4">
+                          <Link
+                            href={`/financials/invoices/${invoice.id}`}
+                            className="font-mono text-xs font-semibold text-primary hover:underline"
+                          >
+                            {invoice.invoice_number}
+                          </Link>
+                        </td>
+                        <td className="py-4">{invoice.issued_on}</td>
+                        <td className="py-4">
+                          {invoice.class_name_snapshot} ·{" "}
+                          {invoice.location_name_snapshot}
+                        </td>
+                        <td className="py-4 text-right">
+                          <Money value={invoice.total} />
+                        </td>
+                        <td className="py-4 text-right">
+                          <Money value={invoice.amountPaid} />
+                        </td>
+                        <td className="py-4 text-right font-semibold">
+                          <Money value={invoice.outstanding} />
+                        </td>
+                        <td className="px-5 py-4">
+                          <StatusBadge
+                            status={
+                              invoiceStatus[
+                                invoice.status as keyof typeof invoiceStatus
+                              ]
+                            }
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </PaginatedRows>
+                </tbody>
+              </table>
+            </div>
+          </InMemoryTablePagination>
         </section>
         <section
           className="panel overflow-hidden"
@@ -161,49 +173,61 @@ export default async function StudentFinancePage({
               Posted payments remain visible when later reversed.
             </p>
           </div>
-          <div
-            className="table-scroll"
-            tabIndex={0}
-            role="region"
-            aria-label="Student school-fee payments"
+          <InMemoryTablePagination
+            total={history.payments.length}
+            pageSize={10}
+            itemLabel="payments"
           >
-            <table className="w-full min-w-[560px] text-sm">
-              <thead className="bg-muted/70">
-                <tr>
-                  <th className="px-5 py-3 text-left font-medium">Payment</th>
-                  <th className="py-3 text-left font-medium">Invoice</th>
-                  <th className="py-3 text-left font-medium">Business date</th>
-                  <th className="py-3 text-right font-medium">Amount</th>
-                  <th className="px-5 py-3 text-left font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.payments.map((payment) => (
-                  <tr key={payment.id} className="border-t">
-                    <td className="px-5 py-4 font-mono text-xs">
-                      {payment.payment_number}
-                    </td>
-                    <td className="py-4">
-                      {history.invoices.find(
-                        (invoice) => invoice.id === payment.invoice_id,
-                      )?.invoice_number ?? "—"}
-                    </td>
-                    <td className="py-4">{payment.business_date}</td>
-                    <td className="py-4 text-right">
-                      <Money value={payment.amount} />
-                    </td>
-                    <td className="px-5 py-4">
-                      <StatusBadge
-                        status={
-                          payment.status === "active" ? "Active" : "Reversed"
-                        }
-                      />
-                    </td>
+            <div
+              className="table-scroll"
+              tabIndex={0}
+              role="region"
+              aria-label="Student school-fee payments"
+            >
+              <table className="w-full min-w-[560px] text-sm">
+                <thead className="bg-muted/70">
+                  <tr>
+                    <th className="px-5 py-3 text-left font-medium">Payment</th>
+                    <th className="py-3 text-left font-medium">Invoice</th>
+                    <th className="py-3 text-left font-medium">
+                      Business date
+                    </th>
+                    <th className="py-3 text-right font-medium">Amount</th>
+                    <th className="px-5 py-3 text-left font-medium">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  <PaginatedRows printAll>
+                    {history.payments.map((payment) => (
+                      <tr key={payment.id} className="border-t">
+                        <td className="px-5 py-4 font-mono text-xs">
+                          {payment.payment_number}
+                        </td>
+                        <td className="py-4">
+                          {history.invoices.find(
+                            (invoice) => invoice.id === payment.invoice_id,
+                          )?.invoice_number ?? "—"}
+                        </td>
+                        <td className="py-4">{payment.business_date}</td>
+                        <td className="py-4 text-right">
+                          <Money value={payment.amount} />
+                        </td>
+                        <td className="px-5 py-4">
+                          <StatusBadge
+                            status={
+                              payment.status === "active"
+                                ? "Active"
+                                : "Reversed"
+                            }
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </PaginatedRows>
+                </tbody>
+              </table>
+            </div>
+          </InMemoryTablePagination>
         </section>
       </div>
     </>

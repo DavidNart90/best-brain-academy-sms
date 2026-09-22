@@ -47,10 +47,10 @@ async function getOptions(
       .limit(25),
     supabase
       .from("academic_terms")
-      .select("id,academic_year_id,name,sequence,is_current,status")
+      .select("id,academic_year_id,name,sequence,is_current,status,starts_on")
       .eq("status", "active")
-      .order("academic_year_id", { ascending: false })
-      .order("sequence")
+      .order("starts_on")
+      .order("id")
       .limit(100),
     supabase
       .from("classes")
@@ -128,35 +128,43 @@ export async function getLibraryPage(
       );
   }
 
-  const [rates, charges, totals, methods, collections] = await Promise.all([
-    ratesRequest,
-    chargesRequest
-      .order("class_name_snapshot")
-      .order("student_name_snapshot")
-      .order("id")
-      .range(offset, offset + pageSize - 1),
-    summaryRequest,
-    supabase
-      .from("payment_methods")
-      .select("id,name,requires_reference")
-      .eq("status", "active")
-      .order("sort_order")
-      .limit(50),
-    supabase
-      .from("library_collections")
-      .select(
-        "id,collection_number,student_name_snapshot,admission_number_snapshot,class_name_snapshot,amount,business_date,payment_method_name_snapshot,status,reversal_number",
-      )
-      .order("business_date", { ascending: false })
-      .order("id", { ascending: false })
-      .limit(25),
-  ]);
+  const [rates, charges, totals, methods, collections, rateConfiguration] =
+    await Promise.all([
+      ratesRequest,
+      chargesRequest
+        .order("class_name_snapshot")
+        .order("student_name_snapshot")
+        .order("id")
+        .range(offset, offset + pageSize - 1),
+      summaryRequest,
+      supabase
+        .from("payment_methods")
+        .select("id,name,requires_reference")
+        .eq("status", "active")
+        .order("sort_order")
+        .limit(50),
+      supabase
+        .from("library_collections")
+        .select(
+          "id,collection_number,student_name_snapshot,admission_number_snapshot,class_name_snapshot,amount,business_date,payment_method_name_snapshot,status,reversal_number",
+        )
+        .order("business_date", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(25),
+      supabase
+        .from("term_rate_configurations")
+        .select("source_academic_term_id,status,approved_at")
+        .eq("academic_term_id", selectedTermId)
+        .eq("domain", "library_prospectus")
+        .maybeSingle(),
+    ]);
   if (
     rates.error ||
     charges.error ||
     totals.error ||
     methods.error ||
-    collections.error
+    collections.error ||
+    rateConfiguration.error
   )
     throw new Error(loadError);
 
@@ -187,6 +195,16 @@ export async function getLibraryPage(
       reversalNumber: row.reversal_number,
     }),
   );
+  const selectedTermIndex = termOptions.findIndex(
+    (term) => term.id === selectedTermId,
+  );
+  const previousTerm =
+    selectedTermIndex > 0 ? (termOptions[selectedTermIndex - 1] ?? null) : null;
+  const sourceTerm = rateConfiguration.data?.source_academic_term_id
+    ? termOptions.find(
+        (term) => term.id === rateConfiguration.data?.source_academic_term_id,
+      )
+    : null;
 
   return {
     terms: termOptions,
@@ -217,6 +235,16 @@ export async function getLibraryPage(
     page,
     pageSize,
     total: charges.count ?? 0,
+    rateConfiguration: {
+      status:
+        (rateConfiguration.data?.status as "draft" | "approved" | undefined) ??
+        "not_started",
+      sourceTermId: rateConfiguration.data?.source_academic_term_id ?? null,
+      sourceTermLabel: sourceTerm?.label ?? null,
+      previousTermId: previousTerm?.id ?? null,
+      previousTermLabel: previousTerm?.label ?? null,
+      approvedAt: rateConfiguration.data?.approved_at ?? null,
+    },
   };
 }
 

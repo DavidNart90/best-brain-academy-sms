@@ -141,6 +141,20 @@ export const endStaffAssignmentSchema = z.object({
   endedOn: date,
 });
 export const staffIdSchema = z.coerce.number().int().positive();
+export const staffRemovalSchema = z.object({
+  staffId: staffIdSchema,
+  effectiveOn: date,
+  reason: z
+    .string()
+    .trim()
+    .min(5, "Explain why this staff member is leaving.")
+    .max(300, "Keep the reason to 300 characters or fewer."),
+  confirmationStaffNumber: z
+    .string()
+    .trim()
+    .min(1, "Type the staff ID to confirm.")
+    .max(40),
+});
 export const importModeSchema = z.enum(["preview", "confirm"]);
 export const staffUpdateSchema = z
   .object({
@@ -185,5 +199,6 @@ export type StaffInput = z.infer<typeof staffInputSchema>;
 export type StaffFormValues = z.input<typeof staffInputSchema>;
 export type StaffListQuery = z.infer<typeof staffListQuerySchema>;
 export type StaffAssignmentInput = z.infer<typeof staffAssignmentSchema>;
+export type StaffRemovalInput = z.infer<typeof staffRemovalSchema>;
 export type StaffUpdateInput = z.infer<typeof staffUpdateSchema>;
 export type StaffUpdateFormValues = z.input<typeof staffUpdateSchema>;

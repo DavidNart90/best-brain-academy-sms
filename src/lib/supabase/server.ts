@@ -12,6 +12,7 @@ export async function createServerSupabaseClient(writable = false) {
   const cookieStore = await cookies();
   return createServerClient<Database>(env.url, env.publishableKey, {
     cookies: {
+      encode: "tokens-only",
       getAll: () => cookieStore.getAll(),
       setAll(cookiesToSet) {
         // Proxy owns refresh during rendering; actions must persist cookie writes.

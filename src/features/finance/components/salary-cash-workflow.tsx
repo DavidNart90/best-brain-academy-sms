@@ -1,4 +1,8 @@
 import Link from "next/link";
+import {
+  InMemoryTablePagination,
+  PaginatedRows,
+} from "@/components/data-display/in-memory-table-pagination";
 import { Money } from "@/components/data-display/money";
 import {
   StatusBadge,
@@ -31,7 +35,7 @@ function salaryStatus(position: SalaryCashPosition): StatusLabel {
 function ssnitStatus(position: SalaryCashPosition): StatusLabel {
   if (position.ssnitStatus === "remitted") return "Remitted";
   if (position.ssnitStatus === "partial") return "Partially Remitted";
-  if (position.ssnitStatus === "due") return "Due";
+  if (position.ssnitStatus === "due") return "Awaiting Remittance";
   if (position.ssnitStatus === "reversed") return "Reversed";
   return "Not Due";
 }
@@ -111,18 +115,22 @@ function SsnitRemittancePanel({
         <div>
           <h2 className="text-base font-semibold">SSNIT remittance</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Record the employee contribution only when it is remitted to SSNIT.
+            Net salary has already excluded this employee contribution. It
+            remains a school liability until the school pays it to SSNIT.
           </p>
         </div>
         <StatusBadge status={ssnitStatus(salary.cashPosition)} />
       </div>
       <dl className="mt-5 grid grid-cols-3 gap-4 border-y py-4">
-        <CashMetric label="SSNIT due" value={salary.cashPosition.ssnitDue} />
         <CashMetric
-          label="Remitted"
+          label="Withheld from salary"
+          value={salary.cashPosition.ssnitDue}
+        />
+        <CashMetric
+          label="Remitted to SSNIT"
           value={salary.cashPosition.ssnitRemitted}
         />
-        <CashMetric label="Outstanding" value={outstanding} strong />
+        <CashMetric label="Awaiting remittance" value={outstanding} strong />
       </dl>
       {canManage && salary.status === "active" && outstanding !== "0.00" && (
         <SalaryCashForm
@@ -162,75 +170,85 @@ function CashActivityTable({ salary, canManage }: WorkflowProps) {
           No salary payment or SSNIT remittance has been recorded.
         </p>
       ) : (
-        <div
-          className="table-scroll"
-          tabIndex={0}
-          role="region"
-          aria-label="Salary cash activity"
+        <InMemoryTablePagination
+          total={salary.cashEntries.length}
+          itemLabel="entries"
+          pageSize={10}
         >
-          <table className="w-full min-w-210 text-sm">
-            <thead className="bg-muted/70">
-              <tr>
-                <th className="px-5 py-3 text-left font-medium">Entry</th>
-                <th className="py-3 text-left font-medium">Type</th>
-                <th className="py-3 text-left font-medium">Date</th>
-                <th className="py-3 text-left font-medium">Method</th>
-                <th className="py-3 text-right font-medium">Amount</th>
-                <th className="py-3 text-left font-medium">Status</th>
-                <th className="px-5 py-3 text-right font-medium">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {salary.cashEntries.map((entry) => (
-                <tr className="border-t" key={entry.id}>
-                  <td className="px-5 py-4">
-                    <Link
-                      href={`/financials/expenses/document?id=${entry.id}`}
-                      className="font-mono text-xs font-semibold text-primary hover:underline"
-                    >
-                      {entry.expenseNumber}
-                    </Link>
-                    {(entry.externalReference || entry.notes) && (
-                      <p className="mt-1 max-w-64 text-xs text-muted-foreground">
-                        {entry.externalReference ?? entry.notes}
-                      </p>
-                    )}
-                  </td>
-                  <td className="py-4">
-                    {entry.kind === "salary_payment"
-                      ? "Employee payment"
-                      : "SSNIT remittance"}
-                  </td>
-                  <td className="py-4">{entry.businessDate}</td>
-                  <td className="py-4">{entry.paymentMethod}</td>
-                  <td className="py-4 text-right font-semibold">
-                    <Money value={entry.amount} />
-                  </td>
-                  <td className="py-4">
-                    <StatusBadge
-                      status={entry.status === "active" ? "Active" : "Reversed"}
-                    />
-                    {entry.reversalNumber && (
-                      <p className="mt-1 font-mono text-xs text-muted-foreground">
-                        {entry.reversalNumber}
-                      </p>
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    {canManage &&
-                      salary.status === "active" &&
-                      entry.status === "active" && (
-                        <SalaryCashReverseForm
-                          salaryRecordId={salary.id}
-                          expenseId={entry.id}
-                        />
-                      )}
-                  </td>
+          <div
+            className="table-scroll"
+            tabIndex={0}
+            role="region"
+            aria-label="Salary cash activity"
+          >
+            <table className="w-full min-w-210 text-sm">
+              <thead className="bg-muted/70">
+                <tr>
+                  <th className="px-5 py-3 text-left font-medium">Entry</th>
+                  <th className="py-3 text-left font-medium">Type</th>
+                  <th className="py-3 text-left font-medium">Date</th>
+                  <th className="py-3 text-left font-medium">Method</th>
+                  <th className="py-3 text-right font-medium">Amount</th>
+                  <th className="py-3 text-left font-medium">Status</th>
+                  <th className="px-5 py-3 text-right font-medium">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                <PaginatedRows>
+                  {salary.cashEntries.map((entry) => (
+                    <tr className="border-t" key={entry.id}>
+                      <td className="px-5 py-4">
+                        <Link
+                          href={`/financials/expenses/document?id=${entry.id}`}
+                          className="font-mono text-xs font-semibold text-primary hover:underline"
+                        >
+                          {entry.expenseNumber}
+                        </Link>
+                        {(entry.externalReference || entry.notes) && (
+                          <p className="mt-1 max-w-64 text-xs text-muted-foreground">
+                            {entry.externalReference ?? entry.notes}
+                          </p>
+                        )}
+                      </td>
+                      <td className="py-4">
+                        {entry.kind === "salary_payment"
+                          ? "Employee payment"
+                          : "SSNIT remittance"}
+                      </td>
+                      <td className="py-4">{entry.businessDate}</td>
+                      <td className="py-4">{entry.paymentMethod}</td>
+                      <td className="py-4 text-right font-semibold">
+                        <Money value={entry.amount} />
+                      </td>
+                      <td className="py-4">
+                        <StatusBadge
+                          status={
+                            entry.status === "active" ? "Active" : "Reversed"
+                          }
+                        />
+                        {entry.reversalNumber && (
+                          <p className="mt-1 font-mono text-xs text-muted-foreground">
+                            {entry.reversalNumber}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        {canManage &&
+                          salary.status === "active" &&
+                          entry.status === "active" && (
+                            <SalaryCashReverseForm
+                              salaryRecordId={salary.id}
+                              expenseId={entry.id}
+                            />
+                          )}
+                      </td>
+                    </tr>
+                  ))}
+                </PaginatedRows>
+              </tbody>
+            </table>
+          </div>
+        </InMemoryTablePagination>
       )}
     </section>
   );

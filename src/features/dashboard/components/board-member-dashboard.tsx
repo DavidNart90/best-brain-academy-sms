@@ -102,37 +102,42 @@ export function BoardMemberDashboard({ data }: { data: BoardDashboardData }) {
           amount={summary.grossReceipts}
           note="Fees, feeding, admission and other active income"
           icon={CircleDollarSign}
-          accent
+          tone="brand"
         />
         <StatCard
           label="Expenses"
           amount={summary.totalExpenses}
           note="All active school expenses"
           icon={ArrowUpFromLine}
+          tone="warning"
         />
         <StatCard
           label="Fees expected"
           amount={summary.expectedFees}
           note="Valid student invoices issued"
           icon={ReceiptText}
+          tone="brand"
         />
         <StatCard
           label="Net revenue"
           amount={summary.operatingNet}
           note="School revenue less active expenses"
           icon={ChartNoAxesCombined}
+          tone="success"
         />
         <StatCard
           label="Fees outstanding"
           amount={summary.outstandingFees}
           note="Current unpaid invoice balances"
           icon={CircleAlert}
+          tone="warning"
         />
         <StatCard
           label="Fees paid"
           amount={summary.schoolFeesCollected}
           note="Active school-fee payments"
           icon={HandCoins}
+          tone="success"
         />
       </section>
 

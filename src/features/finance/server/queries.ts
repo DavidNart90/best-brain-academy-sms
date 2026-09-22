@@ -3,6 +3,7 @@ import "server-only";
 import { getInvoiceLibraryBalance } from "@/features/library/server/queries";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { TermRateConfigurationStatus } from "@/types/term-rate-configuration";
 import {
   normalizeOutstandingQuery,
   type OutstandingSearchParams,
@@ -46,6 +47,7 @@ export async function getFinancePeriods() {
     supabase
       .from("academic_terms")
       .select("id,name,academic_year_id,is_current")
+      .order("starts_on", { ascending: false })
       .order("id", { ascending: false })
       .limit(150),
     supabase
@@ -69,11 +71,13 @@ export async function getFinanceSettings(
   const termQuery = supabase
     .from("academic_terms")
     .select("id,name,academic_year_id");
-  const term = await (
-    academicTermId
+  const [periods, term] = await Promise.all([
+    getFinancePeriods(),
+    (academicTermId
       ? termQuery.eq("id", academicTermId)
       : termQuery.eq("is_current", true)
-  ).maybeSingle();
+    ).maybeSingle(),
+  ]);
   if (term.error || !term.data) throw new Error(loadError);
   const year = await supabase
     .from("academic_years")
@@ -91,6 +95,7 @@ export async function getFinanceSettings(
     methods,
     expenseCategories,
     miscCategories,
+    rateConfiguration,
   ] = await Promise.all([
     supabase
       .from("classes")
@@ -129,6 +134,12 @@ export async function getFinanceSettings(
       .select("id,code,name,sort_order,status")
       .order("sort_order")
       .limit(50),
+    supabase
+      .from("term_rate_configurations")
+      .select("source_academic_term_id,status,approved_at")
+      .eq("academic_term_id", term.data.id)
+      .eq("domain", "school_fees")
+      .maybeSingle(),
   ]);
   if (
     classes.error ||
@@ -137,7 +148,8 @@ export async function getFinanceSettings(
     rates.error ||
     methods.error ||
     expenseCategories.error ||
-    miscCategories.error
+    miscCategories.error ||
+    rateConfiguration.error
   )
     throw new Error(loadError);
 
@@ -224,12 +236,36 @@ export async function getFinanceSettings(
     sortOrder: row.sort_order,
     status: row.status as "active" | "archived",
   });
+  const selectedTermId = term.data.id;
+  const selectedPeriodIndex = periods.findIndex(
+    (period) => period.id === selectedTermId,
+  );
+  const previousPeriod =
+    selectedPeriodIndex >= 0
+      ? (periods[selectedPeriodIndex + 1] ?? null)
+      : null;
+  const sourcePeriod = rateConfiguration.data?.source_academic_term_id
+    ? periods.find(
+        (period) =>
+          period.id === rateConfiguration.data?.source_academic_term_id,
+      )
+    : null;
 
   return {
     academicYearId: year.data.id,
     academicYearName: year.data.name,
     academicTermId: term.data.id,
     academicTermName: term.data.name,
+    rateConfiguration: {
+      status:
+        (rateConfiguration.data?.status as "draft" | "approved" | undefined) ??
+        "not_started",
+      sourceTermId: rateConfiguration.data?.source_academic_term_id ?? null,
+      sourceTermLabel: sourcePeriod?.label ?? null,
+      previousTermId: previousPeriod?.id ?? null,
+      previousTermLabel: previousPeriod?.label ?? null,
+      approvedAt: rateConfiguration.data?.approved_at ?? null,
+    },
     baseClassFees,
     transportCharges,
     flatFees,
@@ -462,131 +498,105 @@ export async function getReceiptsPage(
       : "";
   const statusFilter =
     status === "reversed" ? "reversed" : status === "active" ? "active" : "all";
+  const requestedPage = Number(firstValue(raw.page));
+  const page =
+    Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const pageSize = 25;
+  const offset = (page - 1) * pageSize;
   const supabase = await createServerSupabaseClient();
-  let paymentRequest = supabase
-    .from("receipts")
+  let request = supabase
+    .from("financial_activity_report")
     .select(
-      "id,receipt_number,student_name_snapshot,amount,business_date,status,reversal_number,payment_id",
+      "record_id,source,document_reference,person_name,category,amount,business_date,status,reversal_reference,created_at",
+      { count: "exact" },
     )
-    .order("business_date", { ascending: false });
-  let feedingRequest = supabase
-    .from("feeding_receipts")
-    .select(
-      "id,receipt_number,student_name_snapshot,amount,business_date,status,reversal_number",
-    )
-    .order("business_date", { ascending: false });
-  let admissionRequest = supabase
-    .from("admission_receipts")
-    .select(
-      "id,receipt_number,student_name_snapshot,amount,business_date,status,reversal_number",
-    )
-    .order("business_date", { ascending: false });
-  let miscellaneousRequest = supabase
-    .from("misc_receipts")
-    .select(
-      "id,receipt_number,payer_name,description,amount,business_date,status,reversal_number",
-    )
-    .order("business_date", { ascending: false });
-  if (statusFilter !== "all") {
-    paymentRequest = paymentRequest.eq("status", statusFilter);
-    feedingRequest = feedingRequest.eq("status", statusFilter);
-    admissionRequest = admissionRequest.eq("status", statusFilter);
-    miscellaneousRequest = miscellaneousRequest.eq("status", statusFilter);
-  }
-  if (date) {
-    paymentRequest = paymentRequest.eq("business_date", date);
-    feedingRequest = feedingRequest.eq("business_date", date);
-    admissionRequest = admissionRequest.eq("business_date", date);
-    miscellaneousRequest = miscellaneousRequest.eq("business_date", date);
-  }
+    .eq("record_kind", "income");
+  if (statusFilter !== "all") request = request.eq("status", statusFilter);
+  if (date) request = request.eq("business_date", date);
   if (q) {
     const pattern = `%${q}%`;
-    paymentRequest = paymentRequest.or(
-      `receipt_number.ilike.${pattern},student_name_snapshot.ilike.${pattern}`,
-    );
-    feedingRequest = feedingRequest.or(
-      `receipt_number.ilike.${pattern},student_name_snapshot.ilike.${pattern}`,
-    );
-    admissionRequest = admissionRequest.or(
-      `receipt_number.ilike.${pattern},student_name_snapshot.ilike.${pattern}`,
-    );
-    miscellaneousRequest = miscellaneousRequest.or(
-      `receipt_number.ilike.${pattern},payer_name.ilike.${pattern},description.ilike.${pattern}`,
+    request = request.or(
+      `document_reference.ilike.${pattern},person_name.ilike.${pattern},source.ilike.${pattern},category.ilike.${pattern}`,
     );
   }
-  const [payments, feeding, admission, miscellaneous] = await Promise.all([
-    paymentRequest.limit(25),
-    feedingRequest.limit(25),
-    admissionRequest.limit(25),
-    miscellaneousRequest.limit(25),
-  ]);
-  if (payments.error || feeding.error || admission.error || miscellaneous.error)
+  const result = await request
+    .order("business_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + pageSize - 1);
+  if (result.error)
     throw new Error(
       "Receipts could not be loaded. Try again or contact an administrator.",
     );
-  const rows: FinanceReceiptRow[] = [
-    ...payments.data.map((row) => ({
-      id: row.id,
-      receiptNumber: row.receipt_number,
-      source: "School fee" as const,
-      person: row.student_name_snapshot,
-      description: "School-fee payment",
-      amount: formatRateAmount(row.amount),
-      businessDate: row.business_date,
-      status: row.status,
-      reversalNumber: row.reversal_number,
-      sourceId: row.payment_id,
-      reversalOperation: "reverse_school_fee_payment" as const,
-    })),
-    ...feeding.data.map((row) => ({
-      id: row.id,
-      receiptNumber: row.receipt_number,
-      source: "Feeding" as const,
-      person: row.student_name_snapshot ?? "Daily aggregate",
-      description: row.student_name_snapshot
-        ? "Feeding collection"
-        : "Daily feeding total",
-      amount: formatRateAmount(row.amount),
-      businessDate: row.business_date,
-      status: row.status,
-      reversalNumber: row.reversal_number,
-      sourceId: row.id,
-      reversalOperation: "reverse_feeding_receipt" as const,
-    })),
-    ...admission.data.map((row) => ({
-      id: row.id,
-      receiptNumber: row.receipt_number,
-      source: "Admission" as const,
-      person: row.student_name_snapshot ?? "Daily aggregate",
-      description: row.student_name_snapshot
-        ? "Admission collection"
-        : "Daily admission total",
-      amount: formatRateAmount(row.amount),
-      businessDate: row.business_date,
-      status: row.status,
-      reversalNumber: row.reversal_number,
-      sourceId: row.id,
-      reversalOperation: "reverse_admission_receipt" as const,
-    })),
-    ...miscellaneous.data.map((row) => ({
-      id: row.id,
-      receiptNumber: row.receipt_number,
-      source: "Miscellaneous" as const,
-      person: row.payer_name ?? "Unattributed payer",
-      description: row.description,
-      amount: formatRateAmount(row.amount),
-      businessDate: row.business_date,
-      status: row.status,
-      reversalNumber: row.reversal_number,
-      sourceId: row.id,
-      reversalOperation: "reverse_misc_receipt" as const,
-    })),
-  ].sort((left, right) =>
-    `${right.businessDate}-${right.id}`.localeCompare(
-      `${left.businessDate}-${left.id}`,
-    ),
+  const miscellaneousIds = result.data
+    .filter((row) => row.source === "Miscellaneous")
+    .map((row) => Number(row.record_id));
+  const miscellaneous = miscellaneousIds.length
+    ? await supabase
+        .from("misc_receipts")
+        .select("id,description")
+        .in("id", miscellaneousIds)
+    : { data: [], error: null };
+  if (miscellaneous.error)
+    throw new Error(
+      "Receipts could not be loaded. Try again or contact an administrator.",
+    );
+  const descriptionById = new Map(
+    miscellaneous.data.map((row) => [row.id, row.description]),
   );
-  return { rows: rows.slice(0, 50), date, status: statusFilter, q };
+  const rows: FinanceReceiptRow[] = result.data.map((row) => {
+    const source =
+      row.source === "School fees"
+        ? "School fee"
+        : row.source === "Feeding" ||
+            row.source === "Admission" ||
+            row.source === "Miscellaneous"
+          ? row.source
+          : "Miscellaneous";
+    const description =
+      source === "School fee"
+        ? "School-fee payment"
+        : source === "Feeding"
+          ? row.person_name === "Daily aggregate"
+            ? "Daily feeding total"
+            : "Feeding collection"
+          : source === "Admission"
+            ? row.person_name === "Daily aggregate"
+              ? "Daily admission total"
+              : "Admission collection"
+            : (descriptionById.get(Number(row.record_id)) ??
+              row.category ??
+              "Miscellaneous collection");
+    const reversalOperation =
+      source === "School fee"
+        ? ("reverse_school_fee_payment" as const)
+        : source === "Feeding"
+          ? ("reverse_feeding_receipt" as const)
+          : source === "Admission"
+            ? ("reverse_admission_receipt" as const)
+            : ("reverse_misc_receipt" as const);
+    return {
+      id: Number(row.record_id),
+      receiptNumber: row.document_reference ?? "—",
+      source,
+      person: row.person_name ?? "Unattributed payer",
+      description,
+      amount: formatRateAmount(row.amount ?? 0),
+      businessDate: row.business_date ?? "",
+      status: row.status ?? "active",
+      reversalNumber: row.reversal_reference,
+      sourceId: Number(row.record_id),
+      reversalOperation,
+    };
+  });
+  return {
+    rows,
+    total: result.count ?? 0,
+    page,
+    pageSize,
+    date,
+    status: statusFilter,
+    q,
+  };
 }
 
 export async function getExpensesPage(
@@ -603,15 +613,20 @@ export async function getExpensesPage(
       : "";
   const statusFilter =
     status === "reversed" ? "reversed" : status === "active" ? "active" : "all";
+  const requestedPage = Number(firstValue(raw.page));
+  const page =
+    Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const pageSize = 25;
+  const offset = (page - 1) * pageSize;
   const supabase = await createServerSupabaseClient();
   let request = supabase
     .from("expenses")
     .select(
       "id,expense_number,description,amount,business_date,status,reversal_number,expense_category_name_snapshot,payment_method_name_snapshot",
+      { count: "exact" },
     )
     .order("business_date", { ascending: false })
-    .order("id", { ascending: false })
-    .limit(50);
+    .order("id", { ascending: false });
   if (statusFilter !== "all") request = request.eq("status", statusFilter);
   if (date) request = request.eq("business_date", date);
   if (q) {
@@ -620,7 +635,7 @@ export async function getExpensesPage(
       `expense_number.ilike.${pattern},description.ilike.${pattern},expense_category_name_snapshot.ilike.${pattern},payment_method_name_snapshot.ilike.${pattern}`,
     );
   }
-  const result = await request;
+  const result = await request.range(offset, offset + pageSize - 1);
   if (result.error)
     throw new Error(
       "Expenses could not be loaded. Try again or contact an administrator.",
@@ -637,6 +652,9 @@ export async function getExpensesPage(
       status: row.status,
       reversalNumber: row.reversal_number,
     })),
+    total: result.count ?? 0,
+    page,
+    pageSize,
     date,
     status: statusFilter,
     q,
@@ -1004,6 +1022,8 @@ function normalizeEndTermSetup(value: unknown): EndTermInvoiceSetup {
     remainingCount: number("remainingCount"),
     missingSchoolFeeCount: number("missingSchoolFeeCount"),
     missingProspectusCount: number("missingProspectusCount"),
+    schoolFeeConfigurationStatus: "not_started",
+    libraryConfigurationStatus: "not_started",
   };
 }
 
@@ -1058,7 +1078,45 @@ export async function getEndTermInvoiceSetup() {
   const result = await supabase.rpc("get_end_term_invoice_setup", {});
   if (result.error)
     throw new Error("End-of-term invoice setup could not be loaded.");
-  return normalizeEndTermSetup(result.data);
+  const setup = normalizeEndTermSetup(result.data);
+  if (!setup.targetTermId) return setup;
+  const configurations = await supabase
+    .from("term_rate_configurations")
+    .select("domain,status")
+    .eq("academic_term_id", setup.targetTermId)
+    .in("domain", ["school_fees", "library_prospectus"])
+    .limit(2);
+  if (configurations.error)
+    throw new Error("End-of-term rate approvals could not be loaded.");
+  const statusFor = (domain: string): TermRateConfigurationStatus =>
+    (configurations.data.find((item) => item.domain === domain)?.status as
+      "draft" | "approved" | undefined) ?? "not_started";
+  const schoolFeeConfigurationStatus = statusFor("school_fees");
+  const libraryConfigurationStatus = statusFor("library_prospectus");
+  if (
+    schoolFeeConfigurationStatus !== "approved" ||
+    libraryConfigurationStatus !== "approved"
+  ) {
+    const reason =
+      schoolFeeConfigurationStatus !== "approved" &&
+      libraryConfigurationStatus !== "approved"
+        ? "Approve the next-term school fees and Books & Prospectus drafts before generation."
+        : schoolFeeConfigurationStatus !== "approved"
+          ? "Approve the next-term school-fee draft before generation."
+          : "Approve the next-term Books & Prospectus draft before generation.";
+    return {
+      ...setup,
+      ready: false,
+      reason,
+      schoolFeeConfigurationStatus,
+      libraryConfigurationStatus,
+    };
+  }
+  return {
+    ...setup,
+    schoolFeeConfigurationStatus,
+    libraryConfigurationStatus,
+  };
 }
 
 export async function getEndTermInvoicesPage(

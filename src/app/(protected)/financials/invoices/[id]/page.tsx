@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import {
+  InMemoryTablePagination,
+  PaginatedRows,
+} from "@/components/data-display/in-memory-table-pagination";
 import { Money } from "@/components/data-display/money";
 import { PermissionDenied } from "@/components/data-display/page-state";
 import { StatusBadge } from "@/components/data-display/status-badge";
@@ -117,54 +121,65 @@ export default async function InvoiceDetailPage({
           </div>
         </dl>
 
-        <div className="mt-6 overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/70">
-              <tr>
-                <th className="px-4 py-2 text-left font-medium">Description</th>
-                <th className="px-4 py-2 text-right font-medium">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoice.lines.map((line) => (
-                <tr key={line.id} className="border-t">
-                  <td className="px-4 py-2">{line.description}</td>
+        <InMemoryTablePagination
+          total={invoice.lines.length}
+          pageSize={10}
+          itemLabel="invoice lines"
+          className="rounded-b-lg border-x border-b"
+        >
+          <div className="mt-6 overflow-hidden rounded-t-lg border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/70">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium">
+                    Description
+                  </th>
+                  <th className="px-4 py-2 text-right font-medium">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <PaginatedRows printAll>
+                  {invoice.lines.map((line) => (
+                    <tr key={line.id} className="border-t">
+                      <td className="px-4 py-2">{line.description}</td>
+                      <td className="px-4 py-2 text-right">
+                        <Money value={line.amount} />
+                      </td>
+                    </tr>
+                  ))}
+                </PaginatedRows>
+              </tbody>
+              <tfoot>
+                <tr className="border-t">
+                  <td className="px-4 py-2 text-right font-medium">Subtotal</td>
                   <td className="px-4 py-2 text-right">
-                    <Money value={line.amount} />
+                    <Money value={invoice.subtotal} />
                   </td>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="border-t">
-                <td className="px-4 py-2 text-right font-medium">Subtotal</td>
-                <td className="px-4 py-2 text-right">
-                  <Money value={invoice.subtotal} />
-                </td>
-              </tr>
-              <tr className="border-t">
-                <td className="px-4 py-2 text-right font-semibold">Total</td>
-                <td className="px-4 py-2 text-right font-semibold">
-                  <Money value={invoice.total} />
-                </td>
-              </tr>
-              <tr className="border-t">
-                <td className="px-4 py-2 text-right">Amount paid</td>
-                <td className="px-4 py-2 text-right">
-                  <Money value={invoice.amountPaid} />
-                </td>
-              </tr>
-              <tr className="border-t bg-muted/40">
-                <td className="px-4 py-2 text-right font-semibold">
-                  Outstanding balance
-                </td>
-                <td className="px-4 py-2 text-right font-semibold">
-                  <Money value={invoice.outstanding} />
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+                <tr className="border-t">
+                  <td className="px-4 py-2 text-right font-semibold">Total</td>
+                  <td className="px-4 py-2 text-right font-semibold">
+                    <Money value={invoice.total} />
+                  </td>
+                </tr>
+                <tr className="border-t">
+                  <td className="px-4 py-2 text-right">Amount paid</td>
+                  <td className="px-4 py-2 text-right">
+                    <Money value={invoice.amountPaid} />
+                  </td>
+                </tr>
+                <tr className="border-t bg-muted/40">
+                  <td className="px-4 py-2 text-right font-semibold">
+                    Outstanding balance
+                  </td>
+                  <td className="px-4 py-2 text-right font-semibold">
+                    <Money value={invoice.outstanding} />
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </InMemoryTablePagination>
 
         {invoice.libraryBalance && (
           <div className="mt-6 overflow-hidden rounded-lg border border-primary/25">
@@ -180,36 +195,44 @@ export default async function InvoiceDetailPage({
                 status={statusLabels[invoice.libraryBalance.status]}
               />
             </div>
-            <table className="w-full text-sm">
-              <thead className="bg-muted/40">
-                <tr>
-                  <th className="px-4 py-2 text-left font-medium">
-                    Description
-                  </th>
-                  <th className="px-4 py-2 text-right font-medium">Billed</th>
-                  <th className="px-4 py-2 text-right font-medium">Paid</th>
-                  <th className="px-4 py-2 text-right font-medium">
-                    Library balance
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-t">
-                  <td className="px-4 py-3">
-                    {invoice.libraryBalance.description}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Money value={invoice.libraryBalance.expected} />
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Money value={invoice.libraryBalance.paid} />
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold">
-                    <Money value={invoice.libraryBalance.outstanding} />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <InMemoryTablePagination
+              total={1}
+              pageSize={10}
+              itemLabel="library charges"
+            >
+              <table className="w-full text-sm">
+                <thead className="bg-muted/40">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium">
+                      Description
+                    </th>
+                    <th className="px-4 py-2 text-right font-medium">Billed</th>
+                    <th className="px-4 py-2 text-right font-medium">Paid</th>
+                    <th className="px-4 py-2 text-right font-medium">
+                      Library balance
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <PaginatedRows printAll>
+                    <tr className="border-t">
+                      <td className="px-4 py-3">
+                        {invoice.libraryBalance.description}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Money value={invoice.libraryBalance.expected} />
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Money value={invoice.libraryBalance.paid} />
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold">
+                        <Money value={invoice.libraryBalance.outstanding} />
+                      </td>
+                    </tr>
+                  </PaginatedRows>
+                </tbody>
+              </table>
+            </InMemoryTablePagination>
           </div>
         )}
 

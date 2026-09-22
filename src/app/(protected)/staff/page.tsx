@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/table";
 import { StaffFilters } from "@/features/staff/components/staff-filters";
 import { StaffImportDialog } from "@/features/staff/components/staff-import-dialog";
+import { StaffRemovalAction } from "@/features/staff/components/staff-removal-action";
 import { getStaffPage } from "@/features/staff/server/queries";
 import { requirePermission } from "@/lib/auth/access";
 import { hasPermission } from "@/lib/permissions/contracts";
@@ -66,6 +67,7 @@ export default async function StaffPage({
   const canManage = hasPermission(context, "staff.manage");
   const canImport = hasPermission(context, "staff.import");
   const canExport = hasPermission(context, "staff.export");
+  const canManageLifecycle = hasPermission(context, "people.lifecycle.manage");
   const pageCount = Math.max(1, Math.ceil(result.total / result.pageSize));
   const exportHref = hrefFor(result.query).replace(
     "/staff",
@@ -202,7 +204,12 @@ export default async function StaffPage({
                       <TableHead>Position</TableHead>
                       <TableHead>Assigned classes</TableHead>
                       <TableHead>Contact</TableHead>
-                      <TableHead className="pr-5">Status</TableHead>
+                      <TableHead>Status</TableHead>
+                      {canManageLifecycle && (
+                        <TableHead className="pr-5 text-right">
+                          Actions
+                        </TableHead>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -232,9 +239,22 @@ export default async function StaffPage({
                             {member.email ?? "No email"}
                           </p>
                         </TableCell>
-                        <TableCell className="pr-5">
+                        <TableCell>
                           <StatusBadge status={labels[member.status]} />
                         </TableCell>
+                        {canManageLifecycle && (
+                          <TableCell className="pr-5 text-right">
+                            {member.status === "active" ? (
+                              <StaffRemovalAction
+                                staffId={member.id}
+                                staffName={member.fullName}
+                                staffNumber={member.staffNumber}
+                              />
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>

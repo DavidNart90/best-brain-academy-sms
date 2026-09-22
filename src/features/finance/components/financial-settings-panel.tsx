@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { StatusBadge } from "@/components/data-display/status-badge";
+import { TermRateWorkflow } from "@/components/forms/term-rate-workflow";
+import { LiveFilterForm } from "@/components/layout/live-filter-form";
 import type {
   DeductionType,
   FinanceCategory,
@@ -27,24 +29,67 @@ type SalarySettings = {
   availableStaff: SalaryConfigurationStaffOption[];
 };
 
-function FeesSettings({ settings }: { settings: FinanceSettings }) {
+type FinancePeriod = { id: number; label: string; isCurrent: boolean };
+
+function FeesSettings({
+  periods,
+  settings,
+}: {
+  periods: FinancePeriod[];
+  settings: FinanceSettings;
+}) {
   return (
     <>
-      <BaseClassFeesForm
-        academicYearId={settings.academicYearId}
-        academicTermId={settings.academicTermId}
-        rows={settings.baseClassFees}
+      <LiveFilterForm
+        ariaLabel="Select fee configuration term"
+        className="panel flex flex-wrap items-end gap-3 p-5"
+      >
+        <input type="hidden" name="section" value="fees" />
+        <div className="field min-w-[min(100%,20rem)]">
+          <label htmlFor="financial-settings-term" className="field-label">
+            Academic year / term
+          </label>
+          <select
+            id="financial-settings-term"
+            name="term"
+            defaultValue={settings.academicTermId}
+            className="native-select w-full"
+          >
+            {periods.map((period) => (
+              <option key={period.id} value={period.id}>
+                {period.label}
+                {period.isCurrent ? " · Current" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      </LiveFilterForm>
+      <TermRateWorkflow
+        canManage
+        configuration={settings.rateConfiguration}
+        domain="school_fees"
+        termId={settings.academicTermId}
+        termLabel={`${settings.academicYearName} · ${settings.academicTermName}`}
       />
-      <TransportChargesForm
-        academicYearId={settings.academicYearId}
-        academicTermId={settings.academicTermId}
-        rows={settings.transportCharges}
-      />
-      <FlatFeesForm
-        academicYearId={settings.academicYearId}
-        academicTermId={settings.academicTermId}
-        flatFees={settings.flatFees}
-      />
+      {settings.rateConfiguration.status === "draft" ? (
+        <>
+          <BaseClassFeesForm
+            academicYearId={settings.academicYearId}
+            academicTermId={settings.academicTermId}
+            rows={settings.baseClassFees}
+          />
+          <TransportChargesForm
+            academicYearId={settings.academicYearId}
+            academicTermId={settings.academicTermId}
+            rows={settings.transportCharges}
+          />
+          <FlatFeesForm
+            academicYearId={settings.academicYearId}
+            academicTermId={settings.academicTermId}
+            flatFees={settings.flatFees}
+          />
+        </>
+      ) : null}
     </>
   );
 }
@@ -305,11 +350,13 @@ function CategoriesSettings({ settings }: { settings: FinanceSettings }) {
 
 export function FinancialSettingsPanel({
   defaultMonth,
+  periods,
   salarySettings,
   selectedSection,
   settings,
 }: {
   defaultMonth: string;
+  periods: FinancePeriod[];
   salarySettings: SalarySettings | null;
   selectedSection: FinancialModuleId;
   settings: FinanceSettings;
@@ -346,7 +393,9 @@ export function FinancialSettingsPanel({
       </div>
 
       <div className="space-y-5">
-        {selectedSection === "fees" && <FeesSettings settings={settings} />}
+        {selectedSection === "fees" && (
+          <FeesSettings periods={periods} settings={settings} />
+        )}
         {selectedSection === "salaries" && salarySettings && (
           <SalarySettingsModule
             defaultMonth={defaultMonth}

@@ -8,5 +8,7 @@ export function createBrowserSupabaseClient() {
   const env = getPublicEnvironment();
   if (!env)
     throw new Error("Supabase public configuration is missing or invalid.");
-  return createBrowserClient<Database>(env.url, env.publishableKey);
+  return createBrowserClient<Database>(env.url, env.publishableKey, {
+    cookies: { encode: "tokens-only" },
+  });
 }

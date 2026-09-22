@@ -63,25 +63,28 @@ export function FinancialDashboard({
             amount={snapshot.summary.expectedFees}
             note="Valid invoices issued"
             icon={CircleDollarSign}
+            tone="brand"
           />
           <StatCard
             label="Fees collected"
             amount={snapshot.summary.schoolFeesCollected}
             note="Active school-fee payments"
             icon={HandCoins}
-            accent
+            tone="success"
           />
           <StatCard
             label="Outstanding fees"
             amount={snapshot.summary.outstandingFees}
             note="Current invoice balances"
             icon={CircleAlert}
+            tone="warning"
           />
           <StatCard
             label="Total expenses"
             amount={snapshot.summary.totalExpenses}
             note="Active expenses in period"
             icon={ArrowUpFromLine}
+            tone="warning"
           />
         </div>
       </div>

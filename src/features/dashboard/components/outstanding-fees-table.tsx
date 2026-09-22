@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DataTablePagination } from "@/components/data-display/data-table-pagination";
 import { Money } from "@/components/data-display/money";
 import { StatusBadge } from "@/components/data-display/status-badge";
 import { LiveFilterForm } from "@/components/layout/live-filter-form";
@@ -23,6 +24,14 @@ function reportHref(classId?: number) {
   return `/reports?${query.toString()}`;
 }
 
+function dashboardHref(page: number, classId?: number) {
+  const query = new URLSearchParams();
+  if (classId) query.set("classId", String(classId));
+  if (page > 1) query.set("feePage", String(page));
+  const value = query.toString();
+  return value ? `/dashboard?${value}` : "/dashboard";
+}
+
 export function OutstandingFeesTable({
   table,
   classes,
@@ -32,6 +41,7 @@ export function OutstandingFeesTable({
   classes: Array<{ id: number; name: string }>;
   classId?: number;
 }) {
+  const pageCount = Math.max(1, Math.ceil(table.total / table.pageSize));
   return (
     <section className="panel min-w-0 overflow-hidden">
       <div className="flex flex-col gap-4 border-b p-5 sm:p-6 lg:flex-row lg:items-end lg:justify-between">
@@ -144,15 +154,19 @@ export function OutstandingFeesTable({
           </TableBody>
         </Table>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-4 text-xs text-muted-foreground sm:px-6">
-        <span>
-          Showing {table.rows.length} of {table.total} open balance
-          {table.total === 1 ? "" : "s"}
-        </span>
-        <Button variant="outline" size="sm" asChild>
-          <Link href={reportHref(classId)}>Open full outstanding report</Link>
-        </Button>
-      </div>
+      <DataTablePagination
+        page={table.page}
+        pageCount={pageCount}
+        total={table.total}
+        pageSize={table.pageSize}
+        itemLabel="open balances"
+        hrefForPage={(page) => dashboardHref(page, classId)}
+        secondaryAction={
+          <Button variant="outline" size="sm" asChild>
+            <Link href={reportHref(classId)}>Open full report</Link>
+          </Button>
+        }
+      />
     </section>
   );
 }

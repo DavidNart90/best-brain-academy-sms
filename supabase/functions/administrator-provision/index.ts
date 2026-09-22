@@ -13,6 +13,16 @@ type Invitation = {
 type PreparedInvitation = Omit<Invitation, "temporaryPassword"> & {
   requestId: string;
 };
+type DeleteAccountRequest = {
+  operation: "delete";
+  userId: string;
+  confirmationEmail: string;
+};
+type PreparedDeletion = {
+  requestId: string;
+  userId: string;
+  email: string;
+};
 const MAX_BODY_BYTES = 64 * 1024;
 
 const json = (body: unknown, status = 200) =>
@@ -82,6 +92,21 @@ function isInvitation(value: unknown): value is Invitation {
   );
 }
 
+function isDeleteAccountRequest(value: unknown): value is DeleteAccountRequest {
+  if (!value || typeof value !== "object") return false;
+  const row = value as Record<string, unknown>;
+  return (
+    row.operation === "delete" &&
+    typeof row.userId === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      row.userId,
+    ) &&
+    typeof row.confirmationEmail === "string" &&
+    row.confirmationEmail.length <= 254 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.confirmationEmail)
+  );
+}
+
 Deno.serve(async (request: Request) => {
   if (request.method !== "POST")
     return json({ message: "Method not allowed." }, 405);
@@ -125,7 +150,7 @@ Deno.serve(async (request: Request) => {
   } | null;
   if (rateLimit.error || typeof decision?.allowed !== "boolean")
     return json(
-      { message: "Account creation is temporarily unavailable." },
+      { message: "Account changes are temporarily unavailable." },
       503,
     );
   if (!decision.allowed) {
@@ -154,6 +179,85 @@ Deno.serve(async (request: Request) => {
       error instanceof RangeError ? 413 : 400,
     );
   }
+
+  if (isDeleteAccountRequest(payload)) {
+    const prepared = await caller.rpc(
+      "prepare_administrator_account_deletion",
+      {
+        p_target_user_id: payload.userId,
+        p_confirmed_email: payload.confirmationEmail,
+      },
+    );
+    if (prepared.error)
+      return json(
+        {
+          message:
+            prepared.error.code === "42501"
+              ? "Your account cannot manage administrators."
+              : prepared.error.code === "22023"
+                ? prepared.error.message
+                : prepared.error.code === "23505"
+                  ? "An account deletion is already in progress."
+                  : "The account cannot be deleted.",
+        },
+        prepared.error.code === "42501" ? 403 : 400,
+      );
+
+    const deletion = prepared.data as PreparedDeletion | null;
+    if (
+      !deletion?.requestId ||
+      deletion.userId !== payload.userId ||
+      deletion.email !== payload.confirmationEmail.trim().toLowerCase()
+    )
+      return json(
+        { message: "The account deletion could not be prepared." },
+        500,
+      );
+
+    const removed = await admin.auth.admin.deleteUser(payload.userId);
+    if (removed.error) {
+      await admin.rpc("finalize_administrator_account_deletion", {
+        p_request_id: deletion.requestId,
+        p_succeeded: false,
+        p_error_message: "Auth account deletion failed.",
+      });
+      return json(
+        {
+          message:
+            "The account could not be deleted. If it has recorded school activity, disable it instead.",
+        },
+        409,
+      );
+    }
+
+    let finalized = await admin.rpc("finalize_administrator_account_deletion", {
+      p_request_id: deletion.requestId,
+      p_succeeded: true,
+      p_error_message: null,
+    });
+    if (finalized.error) {
+      finalized = await admin.rpc("finalize_administrator_account_deletion", {
+        p_request_id: deletion.requestId,
+        p_succeeded: true,
+        p_error_message: null,
+      });
+    }
+    if (finalized.error)
+      return json(
+        {
+          message:
+            "The login was deleted, but its audit record needs administrator review.",
+        },
+        500,
+      );
+
+    return json({
+      deleted: true,
+      userId: payload.userId,
+      message: "Account deleted.",
+    });
+  }
+
   const invitations = (payload as { invitations?: unknown })?.invitations;
   if (
     !Array.isArray(invitations) ||

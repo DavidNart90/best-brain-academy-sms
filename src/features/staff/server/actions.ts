@@ -7,8 +7,8 @@ import type { Json } from "@/types/database";
 import {
   endStaffAssignmentSchema,
   staffAssignmentSchema,
-  staffIdSchema,
   staffInputSchema,
+  staffRemovalSchema,
   staffUpdateSchema,
   requestKeySchema,
 } from "../schemas";
@@ -161,26 +161,42 @@ export async function updateStaff(input: unknown): Promise<StaffActionResult> {
   };
 }
 
-export async function archiveStaff(input: unknown): Promise<StaffActionResult> {
+export async function removeStaffFromSchool(
+  input: unknown,
+): Promise<StaffActionResult> {
   const access = await requireRateLimitedPermission(
-    "staff.manage",
+    "people.lifecycle.manage",
     "people-write",
   );
   if (!access.ok) return { ok: false, message: access.message };
-  const parsed = staffIdSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, message: "Staff record not found." };
+  const parsed = staffRemovalSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Check the removal details.",
+    };
   const supabase = await createServerSupabaseClient();
-  const result = await supabase.rpc("archive_staff", {
-    target_staff_id: parsed.data,
+  const result = await supabase.rpc("remove_staff_from_school", {
+    target_staff_id: parsed.data.staffId,
+    target_effective_on: parsed.data.effectiveOn,
+    target_reason: parsed.data.reason,
+    target_confirmation: parsed.data.confirmationStaffNumber,
   });
   if (result.error)
     return { ok: false, message: databaseMessage(result.error) };
+  const response = result.data as {
+    unpaidSalaryRecordsReversed?: unknown;
+    paidSalaryRecordsPreserved?: unknown;
+  } | null;
+  const reversed = Number(response?.unpaidSalaryRecordsReversed ?? 0);
+  const preserved = Number(response?.paidSalaryRecordsPreserved ?? 0);
   revalidatePath("/staff");
-  revalidatePath(`/staff/${parsed.data}`);
+  revalidatePath(`/staff/${parsed.data.staffId}`);
+  revalidatePath("/financials/salary-deductions");
+  revalidatePath("/reports");
   return {
     ok: true,
-    message:
-      "Staff record archived; assignments and audit history were preserved.",
-    staffId: parsed.data,
+    message: `Staff removed from active operations. ${reversed} unpaid salary ${reversed === 1 ? "record was" : "records were"} reversed; ${preserved} paid ${preserved === 1 ? "record remains" : "records remain"} in the audit history.`,
+    staffId: parsed.data.staffId,
   };
 }

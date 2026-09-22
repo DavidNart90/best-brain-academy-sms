@@ -5,6 +5,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
+import { DataTablePagination } from "@/components/data-display/data-table-pagination";
 import { PageState } from "@/components/data-display/page-state";
 import { StatCard } from "@/components/data-display/stat-card";
 import { PageHeader } from "@/components/layout/page-header";
@@ -72,6 +73,10 @@ function AdministratorOutstandingPanel({
 }: {
   data: AdministratorDashboardData;
 }) {
+  const pageCount = Math.max(
+    1,
+    Math.ceil(data.openBalances / data.outstandingPageSize),
+  );
   return (
     <section className="panel min-w-0 overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b p-5 sm:p-6">
@@ -95,17 +100,16 @@ function AdministratorOutstandingPanel({
           />
         </div>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-4 text-xs text-muted-foreground sm:px-6">
-        <span>
-          {data.openBalances} open balance
-          {data.openBalances === 1 ? "" : "s"} in this term
-        </span>
-        {data.outstandingRows.length ? (
-          <span className="font-medium text-foreground">
-            Top {data.outstandingRows.length} shown
-          </span>
-        ) : null}
-      </div>
+      <DataTablePagination
+        page={data.outstandingPage}
+        pageCount={pageCount}
+        total={data.openBalances}
+        pageSize={data.outstandingPageSize}
+        itemLabel="open balances"
+        hrefForPage={(page) =>
+          page > 1 ? `/dashboard?feePage=${page}` : "/dashboard"
+        }
+      />
     </section>
   );
 }

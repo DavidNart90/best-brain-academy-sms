@@ -30,6 +30,9 @@ export const studentStatuses = [
   "withdrawn",
 ] as const;
 export const studentGenders = ["female", "male"] as const;
+export const admissionNumberPattern = /^BBA-\d{3,36}$/;
+export const admissionNumberMessage =
+  "Use BBA- followed by at least three digits, for example BBA-001.";
 
 export const studentInputSchema = z
   .object({
@@ -37,10 +40,7 @@ export const studentInputSchema = z
       .string()
       .trim()
       .toUpperCase()
-      .regex(
-        /^[A-Z0-9][A-Z0-9/-]{2,39}$/,
-        "Use 3–40 letters, numbers, slashes or hyphens.",
-      ),
+      .regex(admissionNumberPattern, admissionNumberMessage),
     firstName: requiredName("First name"),
     middleName: optionalText(80),
     lastName: requiredName("Last name"),
@@ -159,6 +159,22 @@ export const enrollmentChangeSchema = z.object({
   startedOn: dateSchema,
 });
 
+export const studentExitSchema = z.object({
+  studentId: studentIdSchema,
+  exitStatus: z.enum(["inactive", "graduated", "withdrawn"]),
+  effectiveOn: dateSchema,
+  reason: z
+    .string()
+    .trim()
+    .min(5, "Explain why the student is leaving.")
+    .max(300, "Keep the reason to 300 characters or fewer."),
+  confirmationAdmissionNumber: z
+    .string()
+    .trim()
+    .min(1, "Type the admission number to confirm.")
+    .max(40),
+});
+
 export type StudentInput = z.infer<typeof studentInputSchema>;
 export type StudentFormValues = z.input<typeof studentInputSchema>;
 export type StudentListQuery = z.infer<typeof studentListQuerySchema>;
@@ -166,3 +182,4 @@ export type GuardianLinkInput = z.infer<typeof guardianLinkSchema>;
 export type GuardianLinkFormValues = z.input<typeof guardianLinkSchema>;
 export type EnrollmentChangeInput = z.infer<typeof enrollmentChangeSchema>;
 export type EnrollmentChangeFormValues = z.input<typeof enrollmentChangeSchema>;
+export type StudentExitInput = z.infer<typeof studentExitSchema>;

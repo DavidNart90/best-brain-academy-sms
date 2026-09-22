@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Brand } from "./brand";
 import { Navigation } from "./navigation";
@@ -72,7 +73,7 @@ export function AppShell({
           compact ? "lg:pl-[72px]" : "lg:pl-[232px]",
         )}
       >
-        <header className="app-topbar flex h-[72px] items-center justify-between gap-3 border-b border-border bg-card px-4 sm:px-7">
+        <header className="app-topbar sticky top-0 z-20 flex h-[72px] items-center justify-between gap-3 border-b border-border bg-card px-4 sm:px-7">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
@@ -100,7 +101,11 @@ export function AppShell({
             </Sheet>
             <PageSearch context={context} />
           </div>
-          <div className="flex shrink-0 items-center gap-3">
+          <Link
+            href="/settings/profile"
+            aria-label="Open profile settings"
+            className="flex shrink-0 items-center gap-3 rounded-lg p-1 outline-none transition-colors hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          >
             <div className="hidden text-right sm:block">
               <p className="text-[13px] font-semibold">
                 {context.displayName || "Staff account"}
@@ -121,7 +126,7 @@ export function AppShell({
                 .join("")
                 .slice(0, 2) || "ST"}
             </span>
-          </div>
+          </Link>
         </header>
         <main
           id="main-content"

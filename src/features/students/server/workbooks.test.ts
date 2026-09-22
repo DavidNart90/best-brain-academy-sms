@@ -60,7 +60,7 @@ const reference: StudentReferenceData = {
 };
 
 const validRow = [
-  "BBA/STU/2026/0001",
+  "BBA-001",
   "Akosua",
   "",
   "Mensah",
@@ -144,7 +144,7 @@ describe("student Excel workflow", () => {
       canConfirm: true,
     });
     expect(parsed.validRows[0]).toMatchObject({
-      admissionNumber: "BBA/STU/2026/0001",
+      admissionNumber: "BBA-001",
       academicYearId: 1,
       academicTermId: 1,
       classId: 5,
@@ -170,7 +170,7 @@ describe("student Excel workflow", () => {
   it("includes disability and denomination in exports", async () => {
     const row: StudentDirectoryRow = {
       id: 1,
-      admissionNumber: "BBA/STU/2026/0001",
+      admissionNumber: "BBA-001",
       fullName: "Akosua Mensah",
       gender: "female",
       admissionDate: "2026-09-08",
@@ -206,7 +206,7 @@ describe("student Excel workflow", () => {
     const duplicate = [...validRow];
     duplicate[1] = "Ama";
     const invalid = [...validRow];
-    invalid[0] = "BBA/STU/2026/0002";
+    invalid[0] = "BBA-002";
     invalid[4] = "Unknown";
     invalid[10] = "Missing class";
     const parsed = await parseStudentWorkbook(
@@ -224,7 +224,7 @@ describe("student Excel workflow", () => {
   });
 
   it("flags admission numbers already stored in the database", async () => {
-    existingStudents.admissions = [{ admission_number: "BBA/STU/2026/0001" }];
+    existingStudents.admissions = [{ admission_number: "BBA-001" }];
     const parsed = await parseStudentWorkbook(
       await workbookFile([validRow]),
       reference,
@@ -255,7 +255,7 @@ describe("student Excel workflow", () => {
       ],
     };
     const nextYear = [...validRow];
-    nextYear[0] = "BBA/STU/2027/0001";
+    nextYear[0] = "BBA-003";
     nextYear[8] = "2027/2028";
     const parsed = await parseStudentWorkbook(
       await workbookFile([nextYear], multiYearReference),

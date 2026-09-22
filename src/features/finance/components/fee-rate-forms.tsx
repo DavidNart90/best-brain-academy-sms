@@ -136,7 +136,8 @@ export function TransportChargesForm({
       <h3 className="text-sm font-semibold">Location / transport charges</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         Applies per transport location for the selected term, based on how far a
-        student stays from school.
+        student stays from school. Enter 0.00 for locations that do not pay a
+        transport charge.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {rows.map((row, index) => (

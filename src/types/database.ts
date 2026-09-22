@@ -199,6 +199,56 @@ export type Database = {
           },
         ];
       };
+      administrator_deletion_requests: {
+        Row: {
+          completed_at: string | null;
+          created_at: string;
+          failure_reason: string | null;
+          id: string;
+          requested_by: string;
+          status: string;
+          target_account_status: string;
+          target_display_name: string;
+          target_email: string;
+          target_role_code: string | null;
+          target_user_id: string;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string;
+          failure_reason?: string | null;
+          id?: string;
+          requested_by: string;
+          status?: string;
+          target_account_status: string;
+          target_display_name: string;
+          target_email: string;
+          target_role_code?: string | null;
+          target_user_id: string;
+        };
+        Update: {
+          completed_at?: string | null;
+          created_at?: string;
+          failure_reason?: string | null;
+          id?: string;
+          requested_by?: string;
+          status?: string;
+          target_account_status?: string;
+          target_display_name?: string;
+          target_email?: string;
+          target_role_code?: string | null;
+          target_user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "administrator_deletion_requests_requested_by_fkey";
+            columns: ["requested_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       administrator_provisioning_requests: {
         Row: {
           account_status: string;
@@ -2693,6 +2743,7 @@ export type Database = {
           date_joined: string | null;
           date_of_birth: string | null;
           email: string | null;
+          employment_ended_on: string | null;
           first_name: string | null;
           id: number;
           known_subjects: string[];
@@ -2701,6 +2752,9 @@ export type Database = {
           phone: string | null;
           position: string;
           recorded_name: string | null;
+          removal_reason: string | null;
+          removed_at: string | null;
+          removed_by: string | null;
           staff_number: string;
           staff_type: string;
           status: string;
@@ -2713,6 +2767,7 @@ export type Database = {
           date_joined?: string | null;
           date_of_birth?: string | null;
           email?: string | null;
+          employment_ended_on?: string | null;
           first_name?: string | null;
           id?: never;
           known_subjects?: string[];
@@ -2721,6 +2776,9 @@ export type Database = {
           phone?: string | null;
           position: string;
           recorded_name?: string | null;
+          removal_reason?: string | null;
+          removed_at?: string | null;
+          removed_by?: string | null;
           staff_number: string;
           staff_type: string;
           status?: string;
@@ -2733,6 +2791,7 @@ export type Database = {
           date_joined?: string | null;
           date_of_birth?: string | null;
           email?: string | null;
+          employment_ended_on?: string | null;
           first_name?: string | null;
           id?: never;
           known_subjects?: string[];
@@ -2741,6 +2800,9 @@ export type Database = {
           phone?: string | null;
           position?: string;
           recorded_name?: string | null;
+          removal_reason?: string | null;
+          removed_at?: string | null;
+          removed_by?: string | null;
           staff_number?: string;
           staff_type?: string;
           status?: string;
@@ -2751,6 +2813,13 @@ export type Database = {
           {
             foreignKeyName: "staff_created_by_fkey";
             columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_removed_by_fkey";
+            columns: ["removed_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
@@ -3060,6 +3129,10 @@ export type Database = {
           photo_path: string | null;
           previous_school: string | null;
           religious_denomination: string;
+          school_exit_on: string | null;
+          school_exit_reason: string | null;
+          school_exit_recorded_at: string | null;
+          school_exit_recorded_by: string | null;
           status: string;
           updated_at: string;
           updated_by: string;
@@ -3081,6 +3154,10 @@ export type Database = {
           photo_path?: string | null;
           previous_school?: string | null;
           religious_denomination: string;
+          school_exit_on?: string | null;
+          school_exit_reason?: string | null;
+          school_exit_recorded_at?: string | null;
+          school_exit_recorded_by?: string | null;
           status?: string;
           updated_at?: string;
           updated_by: string;
@@ -3102,6 +3179,10 @@ export type Database = {
           photo_path?: string | null;
           previous_school?: string | null;
           religious_denomination?: string;
+          school_exit_on?: string | null;
+          school_exit_reason?: string | null;
+          school_exit_recorded_at?: string | null;
+          school_exit_recorded_by?: string | null;
           status?: string;
           updated_at?: string;
           updated_by?: string;
@@ -3115,7 +3196,92 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "students_school_exit_recorded_by_fkey";
+            columns: ["school_exit_recorded_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "students_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      term_rate_configurations: {
+        Row: {
+          academic_term_id: number;
+          approved_at: string | null;
+          approved_by: string | null;
+          created_at: string;
+          created_by: string | null;
+          domain: string;
+          id: number;
+          source_academic_term_id: number | null;
+          status: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          academic_term_id: number;
+          approved_at?: string | null;
+          approved_by?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          domain: string;
+          id?: never;
+          source_academic_term_id?: number | null;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          academic_term_id?: number;
+          approved_at?: string | null;
+          approved_by?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          domain?: string;
+          id?: never;
+          source_academic_term_id?: number | null;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "term_rate_configurations_academic_term_id_fkey";
+            columns: ["academic_term_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_terms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "term_rate_configurations_approved_by_fkey";
+            columns: ["approved_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "term_rate_configurations_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "term_rate_configurations_source_academic_term_id_fkey";
+            columns: ["source_academic_term_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_terms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "term_rate_configurations_updated_by_fkey";
             columns: ["updated_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
@@ -3281,6 +3447,10 @@ export type Database = {
       };
     };
     Functions: {
+      approve_term_rate_configuration: {
+        Args: { target_academic_term_id: number; target_domain: string };
+        Returns: Json;
+      };
       archive_staff: { Args: { target_staff_id: number }; Returns: Json };
       assign_staff_class: {
         Args: { payload: Json; target_staff_id: number };
@@ -3304,6 +3474,14 @@ export type Database = {
       };
       create_staff: { Args: { payload: Json }; Returns: Json };
       create_student: { Args: { payload: Json }; Returns: Json };
+      delete_academic_configuration: {
+        Args: { target_id: number; target_kind: string };
+        Returns: string;
+      };
+      delete_finance_configuration: {
+        Args: { target_id: number; target_kind: string };
+        Returns: string;
+      };
       dispatch_salary_batch: {
         Args: {
           request_key: string;
@@ -3328,12 +3506,30 @@ export type Database = {
         };
         Returns: Json;
       };
+      end_student_active_status: {
+        Args: {
+          target_confirmation: string;
+          target_effective_on: string;
+          target_exit_status: string;
+          target_reason: string;
+          target_student_id: number;
+        };
+        Returns: Json;
+      };
       finalize_administrator_invitation: {
         Args: {
           error_message?: string;
           request_id: string;
           succeeded: boolean;
           target_user_id: string;
+        };
+        Returns: Json;
+      };
+      finalize_administrator_account_deletion: {
+        Args: {
+          p_error_message?: string;
+          p_request_id: string;
+          p_succeeded: boolean;
         };
         Returns: Json;
       };
@@ -3417,6 +3613,21 @@ export type Database = {
       };
       prepare_administrator_invitations: {
         Args: { payload: Json };
+        Returns: Json;
+      };
+      prepare_administrator_account_deletion: {
+        Args: { p_confirmed_email: string; p_target_user_id: string };
+        Returns: Json;
+      };
+      prepare_term_rate_configuration: {
+        Args: { target_academic_term_id: number; target_domain: string };
+        Returns: Json;
+      };
+      update_own_profile: {
+        Args: {
+          profile_display_name: string;
+          profile_phone?: string | null;
+        };
         Returns: Json;
       };
       record_admission_receipt: {
@@ -3554,6 +3765,15 @@ export type Database = {
           target_invoice_id: number;
           target_notes?: string;
           target_payment_method_id: number;
+        };
+        Returns: Json;
+      };
+      remove_staff_from_school: {
+        Args: {
+          target_confirmation: string;
+          target_effective_on: string;
+          target_reason: string;
+          target_staff_id: number;
         };
         Returns: Json;
       };

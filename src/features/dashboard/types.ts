@@ -35,6 +35,8 @@ export type AdministratorDashboardData = {
   activeStaff: number;
   teachingStaff: number;
   openBalances: number;
+  outstandingPage: number;
+  outstandingPageSize: number;
   currentTermLabel: string;
   classEnrollment: ClassEnrollmentSummary[];
   outstandingRows: OutstandingInvoiceRow[];

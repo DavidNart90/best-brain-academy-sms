@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/table";
 import { StudentFilters } from "@/features/students/components/student-filters";
 import { StudentImportDialog } from "@/features/students/components/student-import-dialog";
+import { StudentExitAction } from "@/features/students/components/student-exit-action";
 import {
   getStudentPage,
   getStudentReferenceData,
@@ -81,6 +82,7 @@ export default async function StudentsPage({
   const canManage = hasPermission(context, "students.manage");
   const canImport = hasPermission(context, "students.import");
   const canExport = hasPermission(context, "students.export");
+  const canManageLifecycle = hasPermission(context, "people.lifecycle.manage");
   const pageCount = Math.max(1, Math.ceil(result.total / result.pageSize));
   const notice = Array.isArray(rawQuery.notice)
     ? rawQuery.notice[0]
@@ -232,7 +234,12 @@ export default async function StudentsPage({
                       <TableHead>Academic period</TableHead>
                       <TableHead>Student location</TableHead>
                       <TableHead>Guardian</TableHead>
-                      <TableHead className="pr-5">Status</TableHead>
+                      <TableHead>Status</TableHead>
+                      {canManageLifecycle && (
+                        <TableHead className="pr-5 text-right">
+                          Actions
+                        </TableHead>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -266,9 +273,22 @@ export default async function StudentsPage({
                             {student.guardianPhone}
                           </p>
                         </TableCell>
-                        <TableCell className="pr-5">
+                        <TableCell>
                           <StatusBadge status={statusLabels[student.status]} />
                         </TableCell>
+                        {canManageLifecycle && (
+                          <TableCell className="pr-5 text-right">
+                            {student.status === "active" ? (
+                              <StudentExitAction
+                                studentId={student.id}
+                                studentName={student.fullName}
+                                admissionNumber={student.admissionNumber}
+                              />
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>

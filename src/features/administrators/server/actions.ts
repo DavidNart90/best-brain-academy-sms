@@ -5,6 +5,7 @@ import { requirePermission } from "@/lib/auth/access";
 import { requireRateLimitedPermission } from "@/lib/security/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
+  administratorAccountDeletionSchema,
   administratorInvitationBatchSchema,
   administratorRoleChangeSchema,
   administratorStatusChangeSchema,
@@ -116,5 +117,45 @@ export async function changeAdministratorStatus(
       parsed.data.status === "disabled"
         ? "Account disabled. Existing app access is denied immediately."
         : "Account enabled. Access now follows its assigned role.",
+  };
+}
+
+export async function deleteAdministratorAccount(
+  input: unknown,
+): Promise<AdministratorActionResult> {
+  if (!(await requirePermission("administrators.manage"))) return denied;
+  const parsed = administratorAccountDeletionSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false,
+      message: "Type the administrator email address exactly to confirm.",
+    };
+
+  const supabase = await createServerSupabaseClient(true);
+  const result = await supabase.functions.invoke("administrator-provision", {
+    body: {
+      operation: "delete",
+      userId: parsed.data.userId,
+      confirmationEmail: parsed.data.confirmationEmail,
+    },
+  });
+  if (result.error) {
+    let message =
+      "The account could not be deleted. If it has recorded school activity, disable it instead.";
+    const context = "context" in result.error ? result.error.context : null;
+    if (context instanceof Response) {
+      const body = (await context.json().catch(() => null)) as {
+        message?: string;
+      } | null;
+      if (body?.message) message = body.message;
+    }
+    return { ok: false, message };
+  }
+
+  revalidatePath("/administrators");
+  revalidatePath("/settings/roles");
+  return {
+    ok: true,
+    message: "Account deleted. Its login, profile and role were removed.",
   };
 }
