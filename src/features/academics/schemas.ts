@@ -2,7 +2,8 @@ import { z } from "zod";
 
 const idSchema = z.coerce.number().int().positive();
 const optionalIdSchema = z
-  .union([idSchema, z.literal(""), z.null(), z.undefined()])
+  .union([idSchema, z.literal(""), z.null()])
+  .optional()
   .transform((value) => (value ? Number(value) : null));
 const dateSchema = z
   .string()
