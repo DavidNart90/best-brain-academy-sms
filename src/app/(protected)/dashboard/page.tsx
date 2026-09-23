@@ -7,7 +7,6 @@ import { AdministratorDashboard } from "@/features/dashboard/components/administ
 import { BoardMemberDashboard } from "@/features/dashboard/components/board-member-dashboard";
 import { FinancialDashboard } from "@/features/dashboard/components/dashboard";
 import { FinanceOversightDashboard } from "@/features/dashboard/components/finance-oversight-dashboard";
-import { LibrarianDashboard } from "@/features/dashboard/components/librarian-dashboard";
 import { resolveDashboardVariant } from "@/features/dashboard/role";
 import {
   getAdministratorDashboardData,
@@ -15,7 +14,6 @@ import {
   getFinancialDashboardData,
   getSuperAdminOperationsData,
 } from "@/features/dashboard/server/queries";
-import { getLibraryPage } from "@/features/library/server/queries";
 import { getLibraryFinancialSummary } from "@/features/library/server/queries";
 import { requirePermission } from "@/lib/auth/access";
 
@@ -33,11 +31,6 @@ export default async function DashboardPage({
   if (variant === "administrator") {
     const data = await getAdministratorDashboardData(raw);
     return <AdministratorDashboard data={data} />;
-  }
-
-  if (variant === "librarian") {
-    const data = await getLibraryPage({});
-    return <LibrarianDashboard data={data} />;
   }
 
   if (variant === "board-member") {

@@ -159,7 +159,7 @@ export function EndTermInvoiceDocument({
       <p className="mt-5 text-xs leading-5 text-muted-foreground">
         Quote {invoice.invoiceNumber} when paying the new-term school fees. Any
         previous balance must be paid against its original invoice; Books &
-        Prospectus is collected separately by the Librarian / Book Keeper.
+        Prospectus is collected separately through Books & Prospectus.
       </p>
     </section>
   );

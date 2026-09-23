@@ -141,9 +141,9 @@ export function AdministratorDashboard({
             accent
           />
           <StatCard
-            label="New admissions"
-            amount={String(data.admissionsThisTerm)}
-            note="Admitted this term"
+            label="Admissions today"
+            amount={String(data.admissionsToday)}
+            note={`${data.admissionsThisTerm} admitted this term`}
             icon={UserRoundPlus}
             format="number"
           />

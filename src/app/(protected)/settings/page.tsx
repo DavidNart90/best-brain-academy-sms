@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowUpRight,
-  BookOpenCheck,
   BriefcaseBusiness,
   Building2,
   CalendarRange,
@@ -104,14 +103,38 @@ const settingsByRole: Record<DashboardVariant, RoleSettings> = {
   administrator: {
     title: "Administrator settings",
     description:
-      "Review the academic context and open the tools used for student onboarding and fee follow-up.",
-    accessLabel: "Student administration",
+      "Manage school and academic setup alongside student onboarding, Books & Prospectus and fee follow-up.",
+    accessLabel: "School administration",
     sectionTitle: "Administration workspace",
     sectionDescription:
       "These destinations match the Administrator's daily responsibilities.",
-    noteTitle: "Financial boundary",
-    note: "Administrators can view and print outstanding fees, but cannot record or reverse payments.",
+    noteTitle: "Operational boundary",
+    note: "Administrators manage school, academic and Books & Prospectus configuration. They can view and print outstanding fees, but cannot record or reverse Finance transactions.",
     destinations: [
+      {
+        href: "/settings/school",
+        title: "School settings",
+        description:
+          "Maintain the school identity, crest, contact details and transport locations.",
+        detail: "Manage school configuration",
+        icon: Building2,
+      },
+      {
+        href: "/settings/academics",
+        title: "Academic settings",
+        description:
+          "Maintain academic years, term schedules, current context and the class catalogue.",
+        detail: "Manage calendar and classes",
+        icon: CalendarRange,
+      },
+      {
+        href: "/library",
+        title: "Books & Prospectus",
+        description:
+          "Configure term rates, generate student charges and maintain collection records.",
+        detail: "Manage records and configuration",
+        icon: LibraryBig,
+      },
       {
         href: "/admissions",
         title: "Admissions",
@@ -200,7 +223,7 @@ const settingsByRole: Record<DashboardVariant, RoleSettings> = {
     sectionDescription:
       "Every operational workspace is available for review without write controls.",
     noteTitle: "Oversight boundary",
-    note: "Board Members can review Administrator, Accountant and Librarian workspaces. They cannot create, edit, import, record, reverse or configure data, and cannot access Super Administrator pages.",
+    note: "Board Members can review Administrator and Accountant workspaces, including Books & Prospectus. They cannot create, edit, import, record, reverse or configure data, and cannot access Super Administrator pages.",
     destinations: [
       {
         href: "/admissions",
@@ -233,34 +256,6 @@ const settingsByRole: Record<DashboardVariant, RoleSettings> = {
           "Review Books & Prospectus charges, collection performance and balances.",
         detail: "Read-only Library oversight",
         icon: LibraryBig,
-      },
-    ],
-  },
-  librarian: {
-    title: "Librarian settings",
-    description:
-      "Review the current academic context and open the Books & Prospectus workspace.",
-    accessLabel: "Library operations",
-    sectionTitle: "Library workspace",
-    sectionDescription:
-      "Library responsibilities and system boundaries are kept together here.",
-    noteTitle: "Configuration boundary",
-    note: "The Librarian can generate Library charges and record or reverse collections. Books & Prospectus rates remain controlled by the Super Administrator.",
-    destinations: [
-      {
-        href: "/library",
-        title: "Books & Prospectus",
-        description:
-          "Review charge coverage, generate term charges and manage Library collections.",
-        detail: "Open Library operations",
-        icon: LibraryBig,
-      },
-      {
-        title: "Role access",
-        description:
-          "Your navigation is limited to the Dashboard, Library and this Settings page.",
-        detail: "Library-only access boundary",
-        icon: BookOpenCheck,
       },
     ],
   },

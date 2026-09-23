@@ -187,7 +187,7 @@ export default async function InvoiceDetailPage({
               <div>
                 <p className="text-sm font-semibold">Separate Library bill</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Collected by the Librarian / Book Keeper; excluded from the
+                  Collected through Books & Prospectus; excluded from the
                   school-fee total above.
                 </p>
               </div>

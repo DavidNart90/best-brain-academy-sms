@@ -5,8 +5,7 @@ type Invitation = {
   displayName: string;
   email: string;
   phone: string | null;
-  role:
-    "SUPER_ADMIN" | "ADMINISTRATOR" | "ACCOUNTANT" | "MANAGEMENT" | "LIBRARIAN";
+  role: "SUPER_ADMIN" | "ADMINISTRATOR" | "ACCOUNTANT" | "MANAGEMENT";
   status: "active" | "disabled";
   temporaryPassword: string;
 };
@@ -81,13 +80,9 @@ function isInvitation(value: unknown): value is Invitation {
     /[0-9]/.test(row.temporaryPassword) &&
     /[^A-Za-z0-9]/.test(row.temporaryPassword) &&
     (row.phone === null || typeof row.phone === "string") &&
-    [
-      "SUPER_ADMIN",
-      "ADMINISTRATOR",
-      "ACCOUNTANT",
-      "MANAGEMENT",
-      "LIBRARIAN",
-    ].includes(String(row.role)) &&
+    ["SUPER_ADMIN", "ADMINISTRATOR", "ACCOUNTANT", "MANAGEMENT"].includes(
+      String(row.role),
+    ) &&
     ["active", "disabled"].includes(String(row.status))
   );
 }

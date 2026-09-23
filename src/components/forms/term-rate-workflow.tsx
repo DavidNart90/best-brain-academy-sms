@@ -34,12 +34,14 @@ export function TermRateWorkflow({
   canManage,
   configuration,
   domain,
+  isCurrentTerm,
   termId,
   termLabel,
 }: {
   canManage: boolean;
   configuration: TermRateConfiguration;
   domain: TermRateDomain;
+  isCurrentTerm: boolean;
   termId: number;
   termLabel: string;
 }) {
@@ -48,8 +50,12 @@ export function TermRateWorkflow({
   const [message, setMessage] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const noun = domain === "school_fees" ? "school fees" : "Books & Prospectus";
-  const statusLabel =
-    configuration.status === "approved"
+  const isFutureTerm = !isCurrentTerm;
+  const isEditableApprovedCurrentTerm =
+    isCurrentTerm && configuration.status === "approved";
+  const statusLabel = isFutureTerm
+    ? "Locked"
+    : configuration.status === "approved"
       ? "Approved"
       : configuration.status === "draft"
         ? "Draft"
@@ -86,19 +92,26 @@ export function TermRateWorkflow({
                   "bg-success-soft text-success",
                 configuration.status === "draft" &&
                   "bg-warning-soft text-warning",
+                isFutureTerm && "bg-muted text-muted-foreground",
               )}
             >
               {statusLabel}
             </Badge>
           </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {configuration.status === "approved"
-              ? `These ${noun} are locked and available for billing.`
-              : configuration.status === "draft"
-                ? `Review and edit the copied ${noun}. Approve only when every amount is ready for billing.`
-                : configuration.previousTermLabel
-                  ? `Copy ${configuration.previousTermLabel} into an editable draft for this term.`
-                  : `Create an editable ${noun} draft for this term.`}
+            {isFutureTerm
+              ? `${noun === "school fees" ? "Student fees" : noun} for this future term are locked. They will open when the term becomes current.`
+              : isEditableApprovedCurrentTerm
+                ? domain === "school_fees"
+                  ? "Approved for billing. Current-term student fees remain editable; issued invoices keep their original amounts."
+                  : "Approved for billing. Current-term Books & Prospectus prices remain editable; generated student charges keep their original amounts."
+                : configuration.status === "approved"
+                  ? `These ${noun} are locked and available for billing.`
+                  : configuration.status === "draft"
+                    ? `Review and edit the copied ${noun}. Approve only when every amount is ready for billing.`
+                    : configuration.previousTermLabel
+                      ? `Copy ${configuration.previousTermLabel} into an editable draft for this term.`
+                      : `Create an editable ${noun} draft for this term.`}
           </p>
           {configuration.sourceTermLabel ? (
             <p className="mt-1 text-xs text-muted-foreground">
@@ -112,7 +125,9 @@ export function TermRateWorkflow({
           ) : null}
         </div>
 
-        {canManage && configuration.status === "not_started" ? (
+        {canManage &&
+        !isFutureTerm &&
+        configuration.status === "not_started" ? (
           <Button
             type="button"
             onClick={() => run("prepare")}
@@ -125,7 +140,7 @@ export function TermRateWorkflow({
           </Button>
         ) : null}
 
-        {canManage && configuration.status === "draft" ? (
+        {canManage && !isFutureTerm && configuration.status === "draft" ? (
           <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
             <DialogTrigger asChild>
               <Button type="button" disabled={pending}>
@@ -138,9 +153,9 @@ export function TermRateWorkflow({
                   Approve {noun} for {termLabel}?
                 </DialogTitle>
                 <DialogDescription>
-                  Approval locks this configuration. New invoices or charges can
-                  only be generated after approval and will keep these amounts
-                  as financial snapshots.
+                  Approval makes this configuration available for billing. While
+                  this term remains current, prices can still be corrected;
+                  existing invoices or charges keep their original amounts.
                 </DialogDescription>
               </DialogHeader>
               <div className="rounded-lg border bg-muted/35 p-4 text-sm">
@@ -148,7 +163,8 @@ export function TermRateWorkflow({
                   <LockKeyhole className="size-4 text-primary" /> Final review
                 </p>
                 <p className="mt-2 text-muted-foreground">
-                  Check every class, location and term amount before continuing.
+                  Check every class, location and term amount before making the
+                  rates available for billing.
                 </p>
               </div>
               <DialogFooter>
@@ -167,7 +183,7 @@ export function TermRateWorkflow({
                   ) : (
                     <CheckCircle2 />
                   )}
-                  Approve and lock
+                  Approve for billing
                 </Button>
               </DialogFooter>
             </DialogContent>

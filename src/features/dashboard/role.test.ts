@@ -6,15 +6,14 @@ describe("dashboard role composition", () => {
     [["ADMINISTRATOR"], "administrator"],
     [["ACCOUNTANT"], "accountant"],
     [["MANAGEMENT"], "board-member"],
-    [["LIBRARIAN"], "librarian"],
     [[], "workspace"],
   ] as const)("maps %j to %s", (roles, expected) => {
     expect(resolveDashboardVariant([...roles])).toBe(expected);
   });
 
   it("always gives a Super Administrator the combined dashboard", () => {
-    expect(
-      resolveDashboardVariant(["LIBRARIAN", "ACCOUNTANT", "SUPER_ADMIN"]),
-    ).toBe("super-admin");
+    expect(resolveDashboardVariant(["ACCOUNTANT", "SUPER_ADMIN"])).toBe(
+      "super-admin",
+    );
   });
 });

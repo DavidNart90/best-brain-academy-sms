@@ -61,11 +61,13 @@ export default async function LibraryPage({
   const result = await getLibraryPage(await searchParams);
   const canCollect = hasPermission(context, "library.collections.manage");
   const canConfigure = hasPermission(context, "library.settings.manage");
-  const canEditRates =
-    canConfigure && result.rateConfiguration.status === "draft";
   const selectedTerm = result.terms.find(
     (term) => term.id === result.selectedTermId,
   );
+  const canEditRates =
+    canConfigure &&
+    (selectedTerm?.isCurrent ?? false) &&
+    result.rateConfiguration.status !== "not_started";
   const pageCount = Math.max(1, Math.ceil(result.total / result.pageSize));
 
   function hrefForPage(page: number) {
@@ -153,6 +155,7 @@ export default async function LibraryPage({
           canManage={canConfigure}
           configuration={result.rateConfiguration}
           domain="library_prospectus"
+          isCurrentTerm={selectedTerm?.isCurrent ?? false}
           termId={result.selectedTermId}
           termLabel={selectedTerm?.label ?? "Selected term"}
         />

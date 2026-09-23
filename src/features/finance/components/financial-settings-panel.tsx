@@ -38,6 +38,12 @@ function FeesSettings({
   periods: FinancePeriod[];
   settings: FinanceSettings;
 }) {
+  const isCurrentTerm =
+    periods.find((period) => period.id === settings.academicTermId)
+      ?.isCurrent ?? false;
+  const canEditFees =
+    isCurrentTerm && settings.rateConfiguration.status !== "not_started";
+
   return (
     <>
       <LiveFilterForm
@@ -68,10 +74,11 @@ function FeesSettings({
         canManage
         configuration={settings.rateConfiguration}
         domain="school_fees"
+        isCurrentTerm={isCurrentTerm}
         termId={settings.academicTermId}
         termLabel={`${settings.academicYearName} · ${settings.academicTermName}`}
       />
-      {settings.rateConfiguration.status === "draft" ? (
+      {canEditFees ? (
         <>
           <BaseClassFeesForm
             academicYearId={settings.academicYearId}

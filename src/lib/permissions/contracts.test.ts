@@ -45,6 +45,10 @@ const administrator: AccessContext = {
     "finance.outstanding.print",
     "finance.end_term_invoices.read",
     "finance.end_term_invoices.manage",
+    "settings.manage",
+    "library.read",
+    "library.collections.manage",
+    "library.settings.manage",
   ],
 };
 const accountant: AccessContext = {
@@ -64,12 +68,6 @@ const accountant: AccessContext = {
     "finance.outstanding.print",
     "reports.read",
   ],
-};
-const librarian: AccessContext = {
-  ...manager,
-  displayName: "Synthetic librarian",
-  roles: ["LIBRARIAN"],
-  permissions: ["dashboard.read", "library.read", "library.collections.manage"],
 };
 describe("permission boundary", () => {
   it("denies absent, pending and disabled actors even with a stale permission list", () => {
@@ -140,6 +138,9 @@ describe("permission boundary", () => {
         "/staff",
         "/financials/outstanding",
         "/financials/end-of-term-invoices",
+        "/library",
+        "/settings/school",
+        "/settings/academics",
       ]),
     );
     expect(paths).not.toContain("/financials");
@@ -151,6 +152,10 @@ describe("permission boundary", () => {
     expect(
       hasPermission(administrator, "finance.end_term_invoices.manage"),
     ).toBe(true);
+    expect(hasPermission(administrator, "library.collections.manage")).toBe(
+      true,
+    );
+    expect(hasPermission(administrator, "library.settings.manage")).toBe(true);
   });
   it("gives accountants read-only people access and the finance workspace", () => {
     const paths = permittedRoutes(accountant).map((route) => route.href);
@@ -172,17 +177,14 @@ describe("permission boundary", () => {
     expect(hasPermission(accountant, "finance.transactions.manage")).toBe(true);
   });
   it("gives every active role its settings landing without widening settings access", () => {
-    for (const context of [manager, administrator, accountant, librarian]) {
+    for (const context of [manager, administrator, accountant]) {
       expect(permittedRoutes(context).map((route) => route.href)).toContain(
         "/settings",
       );
     }
-    expect(permittedRoutes(librarian).map((route) => route.href)).not.toContain(
-      "/settings/financials",
+    expect(permittedRoutes(administrator).map((route) => route.href)).toEqual(
+      expect.arrayContaining(["/settings/school", "/settings/academics"]),
     );
-    expect(
-      permittedRoutes(administrator).map((route) => route.href),
-    ).not.toContain("/settings/school");
   });
   it("presents the compatibility role code as Board Member", () => {
     expect(getRoleLabel("MANAGEMENT")).toBe("Board Member");

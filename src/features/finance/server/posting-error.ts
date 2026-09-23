@@ -29,9 +29,16 @@ export function postingError(
       "The payment exceeds the outstanding balance.",
       "Cancelled invoices cannot accept payments.",
       "This payment method requires an external reference.",
+      "Admission fee configuration is unavailable for this date. Contact the Super Administrator.",
     ];
+    const admissionReconciliationMessage =
+      operation === "admission_receipt" &&
+      /^Admission fees do not match \d+ admissions? for \d{4}-\d{2}-\d{2}\. Expected GHS \d+\.\d{2} at GHS \d+\.\d{2} each\. Contact the Administrator to check the admissions count for this date\.$/.test(
+        error.message ?? "",
+      );
     message =
-      error.message && allowed.includes(error.message)
+      error.message &&
+      (allowed.includes(error.message) || admissionReconciliationMessage)
         ? error.message
         : "Check the amount, payment reference and required fields. No transaction was posted.";
   }

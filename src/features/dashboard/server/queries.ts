@@ -145,6 +145,11 @@ export async function getAdministratorDashboardData(
         .gte("admission_date", currentTerm.data?.starts_on ?? "")
         .lte("admission_date", currentTerm.data?.ends_on ?? "")
     : Promise.resolve({ count: 0, error: null });
+  const today = new Date().toISOString().slice(0, 10);
+  const admissionsTodayRequest = supabase
+    .from("students")
+    .select("id", { count: "exact", head: true })
+    .eq("admission_date", today);
 
   let outstandingRequest = supabase
     .from("invoices")
@@ -160,7 +165,7 @@ export async function getAdministratorDashboardData(
       currentTerm.data.id,
     );
 
-  const [students, admissions, staff, teachers, outstanding] =
+  const [students, admissions, admissionsToday, staff, teachers, outstanding] =
     await Promise.all([
       supabase
         .from("student_directory")
@@ -170,6 +175,7 @@ export async function getAdministratorDashboardData(
         .order("id")
         .limit(1000),
       admissionsRequest,
+      admissionsTodayRequest,
       supabase
         .from("staff")
         .select("id", { count: "exact", head: true })
@@ -187,6 +193,7 @@ export async function getAdministratorDashboardData(
   if (
     students.error ||
     admissions.error ||
+    admissionsToday.error ||
     staff.error ||
     teachers.error ||
     outstanding.error
@@ -227,6 +234,7 @@ export async function getAdministratorDashboardData(
 
   return {
     activeStudents: students.count ?? 0,
+    admissionsToday: admissionsToday.count ?? 0,
     admissionsThisTerm: admissions.count ?? 0,
     activeStaff: staff.count ?? 0,
     teachingStaff: teachers.count ?? 0,

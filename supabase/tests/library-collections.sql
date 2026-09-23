@@ -16,9 +16,9 @@ begin
   values (actor, 'library-test-' || actor::text || '@example.invalid');
   update public.profiles
   set status = 'active', must_change_password = false,
-      display_name = 'Synthetic Librarian'
+      display_name = 'Synthetic Administrator'
   where id = actor;
-  insert into public.user_roles (user_id, role_code) values (actor, 'LIBRARIAN');
+  insert into public.user_roles (user_id, role_code) values (actor, 'ADMINISTRATOR');
   insert into auth.sessions (id, user_id, not_after)
   values (session_id, actor, now() + interval '10 minutes');
   perform set_config(
@@ -38,7 +38,7 @@ begin
     admission_number, first_name, last_name, gender, admission_date, status,
     has_disability, religious_denomination, created_by, updated_by
   ) values (
-    'LIB-' || upper(left(replace(actor::text, '-', ''), 12)),
+    'BBA-' || floor(extract(epoch from clock_timestamp()) * 1000000)::bigint::text,
     'Synthetic', 'Library Student', 'female', current_date, 'active', false,
     'Synthetic', actor, actor
   ) returning id into student_id;
@@ -63,6 +63,8 @@ declare
   charge_result jsonb;
   replay_generation jsonb;
   charge_id bigint;
+  basic5_class_id bigint;
+  future_term_id bigint;
   method_id bigint;
   collection_key uuid := gen_random_uuid();
   collection_result jsonb;
@@ -73,13 +75,17 @@ declare
   reversal_result jsonb;
 begin
   if not exists (
-    select 1 from public.roles where code = 'LIBRARIAN'
+    select 1 from public.roles where code = 'ADMINISTRATOR'
   ) or not exists (
     select 1 from public.role_permissions
-    where role_code = 'LIBRARIAN'
+    where role_code = 'ADMINISTRATOR'
       and permission_code = 'library.collections.manage'
+  ) or not exists (
+    select 1 from public.role_permissions
+    where role_code = 'ADMINISTRATOR'
+      and permission_code = 'library.settings.manage'
   ) then
-    raise exception 'Librarian role or collection grant is missing';
+    raise exception 'Administrator Library grants are missing';
   end if;
   if exists (
     select 1
@@ -108,14 +114,42 @@ begin
     raise exception 'Confirmed Basic 5 rate is incorrect';
   end if;
 
+  select id into basic5_class_id from public.classes where code = 'BAS5';
+  select id into future_term_id
+  from public.academic_terms
+  where not is_current and status = 'active'
+  order by sequence, id
+  limit 1;
+
+  if not exists (
+    select 1 from public.term_rate_configurations
+    where academic_term_id = term_id
+      and domain = 'library_prospectus'
+      and status = 'approved'
+  ) then
+    raise exception 'Current Books & Prospectus configuration is not approved';
+  end if;
+
   begin
-    perform public.set_library_term_rate(
-      term_id, (select id from public.classes where code = 'BAS5'),
-      'chargeable', 501.00
+    perform public.prepare_term_rate_configuration(
+      future_term_id, 'library_prospectus'
     );
-    raise exception 'Librarian changed protected Library settings';
-  exception when insufficient_privilege then null;
+    raise exception 'Future Books & Prospectus configuration was opened';
+  exception when check_violation then
+    if sqlerrm <> 'Books & Prospectus prices for a future term are locked until that term becomes current.' then
+      raise;
+    end if;
   end;
+  if exists (
+    select 1 from public.term_rate_configurations
+    where academic_term_id = future_term_id
+      and domain = 'library_prospectus'
+  ) or exists (
+    select 1 from public.library_term_rates
+    where academic_term_id = future_term_id
+  ) then
+    raise exception 'Future Books & Prospectus lock left partial configuration';
+  end if;
 
   charge_result := public.generate_library_term_charges(term_id, student_id);
   charge_id := (charge_result->'created'->0->>'chargeId')::bigint;
@@ -129,6 +163,21 @@ begin
       and description = 'Books & Prospectus'
   ) then
     raise exception 'Library charge snapshot is incorrect';
+  end if;
+  perform public.set_library_term_rate(
+    term_id, basic5_class_id, 'chargeable', 510.00
+  );
+  if not exists (
+    select 1 from public.library_term_rates rate
+    where rate.academic_term_id = term_id
+      and rate.class_id = basic5_class_id
+      and rate.charge_status = 'chargeable' and rate.amount = 510.00
+  ) or not exists (
+    select 1 from public.library_charges
+    where id = charge_id and expected_amount = 500.00
+      and amount_paid = 0 and outstanding = 500.00
+  ) then
+    raise exception 'Current approved Library edit changed a generated charge snapshot';
   end if;
   replay_generation := public.generate_library_term_charges(term_id, student_id);
   if (replay_generation->>'createdCount')::integer <> 0
@@ -201,7 +250,7 @@ begin
     select 1 from public.library_collections
     where id = collection_id and status = 'reversed'
       and reversal_reason = 'Synthetic correction'
-      and reversed_by_name_snapshot = 'Synthetic Librarian'
+      and reversed_by_name_snapshot = 'Synthetic Administrator'
   ) then
     raise exception 'Library reversal did not restore the balance and history';
   end if;

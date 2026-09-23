@@ -27,7 +27,17 @@ const options = {
 
 function renderForm() {
   return render(
-    <CashflowEntryForm options={options} businessDate="2026-09-08" />,
+    <CashflowEntryForm
+      options={options}
+      businessDate="2026-09-08"
+      admissionExpectation={{
+        businessDate: "2026-09-08",
+        admissionCount: 3,
+        feePerAdmission: "50.00",
+        expectedAmount: "150.00",
+        termLabel: "2026/2027 · Term 1",
+      }}
+    />,
   );
 }
 
@@ -118,6 +128,25 @@ describe("daily cashflow entry", () => {
       });
     },
   );
+
+  it("shows the expected admission total before posting", async () => {
+    const user = userEvent.setup();
+    renderForm();
+    await user.click(screen.getByRole("button", { name: "Admission fees" }));
+    expect(
+      screen.getByText("Admissions on this date").nextSibling,
+    ).toHaveTextContent("3");
+    expect(screen.getByText("Fee per admission").nextSibling).toHaveTextContent(
+      "GHS 50.00",
+    );
+    expect(
+      screen.getByText("Expected admission fees").nextSibling,
+    ).toHaveTextContent("GHS 150.00");
+    expect(screen.getByLabelText(/Daily total/)).toHaveAttribute(
+      "placeholder",
+      "150.00",
+    );
+  });
 
   it("asks for an income name and reveals a required name for Other expenses", async () => {
     const user = userEvent.setup();

@@ -57,7 +57,7 @@ export default async function FinancialSettingsPage({
     <>
       <PageHeader
         title="Financial settings"
-        description={`Choose the configuration area you need. The selected fee period is ${settings.academicYearName} ${settings.academicTermName}; approved rates are locked for billing.`}
+        description={`Choose the configuration area you need. The selected fee period is ${settings.academicYearName} ${settings.academicTermName}; current-term student fees remain editable after approval, while future terms stay locked.`}
       />
       <FinancialModuleCards selectedSection={selectedSection} />
       {selectedSection && (
