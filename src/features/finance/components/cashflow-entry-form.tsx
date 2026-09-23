@@ -8,6 +8,7 @@ import {
   LoaderCircle,
   PlusCircle,
 } from "lucide-react";
+import { Money } from "@/components/data-display/money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,14 @@ export type CashflowFormOptions = {
   }>;
 };
 
+export type AdmissionFeeExpectation = {
+  businessDate: string;
+  admissionCount: number;
+  feePerAdmission: string | null;
+  expectedAmount: string | null;
+  termLabel: string | null;
+};
+
 type Mode =
   | "school_fee_payment"
   | "feeding_receipt"
@@ -46,9 +55,11 @@ const modes: Array<{ value: Mode; label: string }> = [
 export function CashflowEntryForm({
   options,
   businessDate,
+  admissionExpectation,
 }: {
   options: CashflowFormOptions;
   businessDate: string;
+  admissionExpectation: AdmissionFeeExpectation;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("school_fee_payment");
@@ -195,6 +206,66 @@ export function CashflowEntryForm({
           replacement.
         </p>
       ) : null}
+      {mode === "admission_receipt" ? (
+        <div
+          id="admission-reconciliation"
+          className="mt-4 border-l-2 border-primary bg-brand-subtle/45 px-4 py-3"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <p className="text-sm font-semibold">
+                Admission-fee reconciliation
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {admissionExpectation.termLabel ??
+                  "No academic term covers this business date."}
+              </p>
+            </div>
+            <span className="text-xs font-medium text-primary">
+              {admissionExpectation.businessDate}
+            </span>
+          </div>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-3">
+            <div>
+              <dt className="text-xs text-muted-foreground">
+                Admissions on this date
+              </dt>
+              <dd className="mt-1 text-base font-semibold tabular-nums">
+                {admissionExpectation.admissionCount}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">
+                Fee per admission
+              </dt>
+              <dd className="mt-1 text-base font-semibold">
+                {admissionExpectation.feePerAdmission ? (
+                  <Money value={admissionExpectation.feePerAdmission} />
+                ) : (
+                  "Not configured"
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">
+                Expected admission fees
+              </dt>
+              <dd className="mt-1 text-base font-semibold text-primary">
+                {admissionExpectation.expectedAmount ? (
+                  <Money value={admissionExpectation.expectedAmount} />
+                ) : (
+                  "Unavailable"
+                )}
+              </dd>
+            </div>
+          </dl>
+          <p className="mt-3 text-xs leading-5 text-muted-foreground">
+            The amount entered below must match the expected total. If it does
+            not, nothing will be posted; contact the Administrator to check the
+            admissions count for this date.
+          </p>
+        </div>
+      ) : null}
       <form key={mode + "-" + formVersion} className="mt-5" onSubmit={submit}>
         <fieldset
           disabled={pending}
@@ -262,7 +333,17 @@ export function CashflowEntryForm({
             <Input
               name="amount"
               inputMode="decimal"
-              placeholder="0.00"
+              placeholder={
+                mode === "admission_receipt" &&
+                admissionExpectation.expectedAmount
+                  ? admissionExpectation.expectedAmount
+                  : "0.00"
+              }
+              aria-describedby={
+                mode === "admission_receipt"
+                  ? "admission-reconciliation"
+                  : undefined
+              }
               required
               maxLength={15}
             />

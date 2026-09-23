@@ -31,6 +31,7 @@ export type ClassEnrollmentSummary = {
 
 export type AdministratorDashboardData = {
   activeStudents: number;
+  admissionsToday: number;
   admissionsThisTerm: number;
   activeStaff: number;
   teachingStaff: number;

@@ -19,4 +19,20 @@ describe("finance diagnostics", () => {
     expect(result.message).not.toContain("SQL");
     log.mockRestore();
   });
+
+  it("returns the reviewed admission reconciliation guidance", () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const message =
+      "Admission fees do not match 10 admissions for 2026-09-23. Expected GHS 500.00 at GHS 50.00 each. Contact the Administrator to check the admissions count for this date.";
+    expect(
+      postingError({ code: "22023", message }, "admission_receipt").message,
+    ).toBe(message);
+    expect(
+      postingError(
+        { code: "22023", message: "Private SQL details" },
+        "admission_receipt",
+      ).message,
+    ).not.toContain("Private SQL details");
+    log.mockRestore();
+  });
 });

@@ -109,7 +109,6 @@ export async function getRolePermissionMatrix(): Promise<RolePermissionMatrix> {
     "ADMINISTRATOR",
     "ACCOUNTANT",
     "MANAGEMENT",
-    "LIBRARIAN",
   ];
   const roles = rolesResult.data
     .flatMap((item) => {

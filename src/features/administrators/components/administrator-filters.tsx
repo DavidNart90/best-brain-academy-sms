@@ -47,7 +47,6 @@ export function AdministratorFilters({
         <option value="ADMINISTRATOR">Administrator</option>
         <option value="ACCOUNTANT">Accountant</option>
         <option value="MANAGEMENT">Board Member</option>
-        <option value="LIBRARIAN">Librarian / Book Keeper</option>
       </select>
       <Button asChild type="button" variant="outline" size="icon">
         <Link href="/administrators" aria-label="Clear administrator filters">

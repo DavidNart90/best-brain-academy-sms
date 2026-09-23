@@ -51,7 +51,7 @@ export async function buildAdministratorTemplate() {
     ],
     [
       "Roles",
-      "Super Administrator, Administrator, Accountant, Board Member or Librarian / Book Keeper.",
+      "Super Administrator, Administrator, Accountant or Board Member.",
     ],
     [
       "Security",
@@ -92,13 +92,12 @@ export async function buildAdministratorTemplate() {
     ["Administrator", "Disabled"],
     ["Accountant", ""],
     ["Board Member", ""],
-    ["Librarian / Book Keeper", ""],
   ]);
   for (let row = 2; row <= MAX_ROWS + 1; row += 1) {
     sheet.getCell(`D${row}`).dataValidation = {
       type: "list",
       allowBlank: false,
-      formulae: ["'Reference Data'!$A$2:$A$6"],
+      formulae: ["'Reference Data'!$A$2:$A$5"],
     };
     sheet.getCell(`E${row}`).dataValidation = {
       type: "list",
@@ -115,8 +114,6 @@ const roleMap = new Map([
   ["accountant", "ACCOUNTANT"],
   ["board member", "MANAGEMENT"],
   ["management", "MANAGEMENT"],
-  ["librarian", "LIBRARIAN"],
-  ["librarian / book keeper", "LIBRARIAN"],
 ]);
 export async function parseAdministratorWorkbook(file: File): Promise<{
   preview: AdministratorImportPreview;

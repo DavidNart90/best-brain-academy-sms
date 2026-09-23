@@ -81,7 +81,6 @@ export function AdministratorAccessDialog({
                 <option value="ADMINISTRATOR">Administrator</option>
                 <option value="ACCOUNTANT">Accountant</option>
                 <option value="MANAGEMENT">Board Member</option>
-                <option value="LIBRARIAN">Librarian / Book Keeper</option>
               </select>
             </label>
             <Button

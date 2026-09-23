@@ -439,30 +439,105 @@ export async function getDailyCashflow(businessDate: string) {
   };
 }
 
-export async function getCashflowFormOptions() {
+export async function getCashflowFormOptions(businessDate: string) {
   const supabase = await createServerSupabaseClient();
-  const [methods, expenseCategories] = await Promise.all([
-    supabase
-      .from("payment_methods")
-      .select("id,name,requires_reference,status")
-      .eq("status", "active")
-      .order("sort_order")
-      .limit(50),
-    supabase
-      .from("expense_categories")
-      .select("id,code,name,status")
-      .eq("is_system", false)
-      .eq("status", "active")
-      .order("sort_order")
-      .limit(100),
-  ]);
-  if (methods.error || expenseCategories.error)
+  const [methods, expenseCategories, admissions, term, component] =
+    await Promise.all([
+      supabase
+        .from("payment_methods")
+        .select("id,name,requires_reference,status")
+        .eq("status", "active")
+        .order("sort_order")
+        .limit(50),
+      supabase
+        .from("expense_categories")
+        .select("id,code,name,status")
+        .eq("is_system", false)
+        .eq("status", "active")
+        .order("sort_order")
+        .limit(100),
+      supabase
+        .from("students")
+        .select("id", { count: "exact", head: true })
+        .eq("admission_date", businessDate),
+      supabase
+        .from("academic_terms")
+        .select("id,name,academic_year_id")
+        .eq("status", "active")
+        .lte("starts_on", businessDate)
+        .gte("ends_on", businessDate)
+        .order("is_current", { ascending: false })
+        .order("starts_on", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("fee_components")
+        .select("id")
+        .eq("code", "admission_fee")
+        .eq("status", "active")
+        .maybeSingle(),
+    ]);
+  if (
+    methods.error ||
+    expenseCategories.error ||
+    admissions.error ||
+    term.error ||
+    component.error
+  )
     throw new Error(
       "Cashflow entry options could not be loaded. Try again or contact an administrator.",
     );
+
+  const [year, admissionRate] = term.data
+    ? await Promise.all([
+        supabase
+          .from("academic_years")
+          .select("name")
+          .eq("id", term.data.academic_year_id)
+          .maybeSingle(),
+        component.data
+          ? supabase
+              .from("fee_component_rates")
+              .select("amount")
+              .eq("fee_component_id", component.data.id)
+              .eq("academic_year_id", term.data.academic_year_id)
+              .eq("academic_term_id", term.data.id)
+              .is("class_id", null)
+              .is("school_location_id", null)
+              .eq("status", "active")
+              .order("id", { ascending: false })
+              .limit(1)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ])
+    : [
+        { data: null, error: null },
+        { data: null, error: null },
+      ];
+  if (year.error || admissionRate.error)
+    throw new Error(
+      "Admission-fee reconciliation could not be loaded. Try again or contact an administrator.",
+    );
+
+  const admissionCount = admissions.count ?? 0;
+  const feePerAdmission = admissionRate.data
+    ? Number(admissionRate.data.amount).toFixed(2)
+    : null;
   return {
     paymentMethods: methods.data,
     expenseCategories: expenseCategories.data,
+    admissionExpectation: {
+      businessDate,
+      admissionCount,
+      feePerAdmission,
+      expectedAmount:
+        feePerAdmission === null
+          ? null
+          : (admissionCount * Number(feePerAdmission)).toFixed(2),
+      termLabel: term.data
+        ? `${year.data?.name ?? "Academic year"} · ${term.data.name}`
+        : null,
+    },
   };
 }
 

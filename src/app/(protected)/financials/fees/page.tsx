@@ -93,6 +93,7 @@ export default async function FeeStructurePage({
           canManage={canManage}
           configuration={settings.rateConfiguration}
           domain="school_fees"
+          isCurrentTerm={selected.isCurrent}
           termId={settings.academicTermId}
           termLabel={selected.label}
         />
@@ -196,32 +197,37 @@ export default async function FeeStructurePage({
           zero.
         </p>
       </section>
-      {canManage && settings.rateConfiguration.status === "draft" && (
-        <details className="configuration-disclosure mt-5 print:hidden">
-          <summary>
-            <strong>Edit fees for {selected.label}</strong>
-            <span className="text-xs text-muted-foreground">
-              Authorized financial settings
-            </span>
-          </summary>
-          <div
-            className="space-y-4 border-t p-4"
-            key={JSON.stringify([
-              selected.id,
-              settings.baseClassFees,
-              settings.transportCharges,
-              settings.flatFees,
-            ])}
-          >
-            <BaseClassFeesForm {...periodProps} rows={settings.baseClassFees} />
-            <TransportChargesForm
-              {...periodProps}
-              rows={settings.transportCharges}
-            />
-            <FlatFeesForm {...periodProps} flatFees={settings.flatFees} />
-          </div>
-        </details>
-      )}
+      {canManage &&
+        selected.isCurrent &&
+        settings.rateConfiguration.status !== "not_started" && (
+          <details className="configuration-disclosure mt-5 print:hidden">
+            <summary>
+              <strong>Edit fees for {selected.label}</strong>
+              <span className="text-xs text-muted-foreground">
+                Authorized financial settings
+              </span>
+            </summary>
+            <div
+              className="space-y-4 border-t p-4"
+              key={JSON.stringify([
+                selected.id,
+                settings.baseClassFees,
+                settings.transportCharges,
+                settings.flatFees,
+              ])}
+            >
+              <BaseClassFeesForm
+                {...periodProps}
+                rows={settings.baseClassFees}
+              />
+              <TransportChargesForm
+                {...periodProps}
+                rows={settings.transportCharges}
+              />
+              <FlatFeesForm {...periodProps} flatFees={settings.flatFees} />
+            </div>
+          </details>
+        )}
     </>
   );
 }

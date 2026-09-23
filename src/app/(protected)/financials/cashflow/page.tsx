@@ -38,7 +38,7 @@ export default async function CashflowPage({
       : new Date().toISOString().slice(0, 10);
   const cashflow = await getDailyCashflow(businessDate);
   const entryOptions = hasPermission(context, "finance.transactions.manage")
-    ? await getCashflowFormOptions()
+    ? await getCashflowFormOptions(businessDate)
     : null;
 
   return (
@@ -67,6 +67,7 @@ export default async function CashflowPage({
             key={businessDate}
             options={entryOptions}
             businessDate={businessDate}
+            admissionExpectation={entryOptions.admissionExpectation}
           />
         )}
         <section className="panel p-5" aria-labelledby="cashflow-date-title">

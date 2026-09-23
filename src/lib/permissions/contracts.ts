@@ -34,7 +34,6 @@ export const roleSchema = z.enum([
   "ADMINISTRATOR",
   "ACCOUNTANT",
   "MANAGEMENT",
-  "LIBRARIAN",
 ]);
 export type Role = z.infer<typeof roleSchema>;
 export const roleLabels: Record<Role, string> = {
@@ -42,7 +41,6 @@ export const roleLabels: Record<Role, string> = {
   ADMINISTRATOR: "Administrator",
   ACCOUNTANT: "Accountant",
   MANAGEMENT: "Board Member",
-  LIBRARIAN: "Librarian / Book Keeper",
 };
 export function getRoleLabel(role: string | null | undefined) {
   const parsed = roleSchema.safeParse(role);
