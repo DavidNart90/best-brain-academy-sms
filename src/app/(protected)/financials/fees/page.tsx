@@ -51,7 +51,7 @@ export default async function FeeStructurePage({
       </PageState>
     );
   const settings = await getFinanceSettings(selected.id);
-  const canManage = hasPermission(context, "finance.settings.manage");
+  const canManage = hasPermission(context, "finance.fees.manage");
   const periodProps = {
     academicYearId: settings.academicYearId,
     academicTermId: settings.academicTermId,

@@ -13,7 +13,22 @@ select ok(not has_table_privilege('authenticated', 'public.role_permissions', 'U
 select ok(not has_function_privilege('anon', 'public.get_access_context()', 'EXECUTE'), 'Access RPC rejects anonymous');
 select ok(not has_function_privilege('authenticated', 'private.create_pending_profile()', 'EXECUTE'), 'Auth trigger cannot be called by staff');
 select ok(not (select prosecdef from pg_proc where oid = 'public.get_access_context()'::regprocedure), 'Access RPC runs as invoker');
-select is((select count(*)::integer from public.role_permissions where role_code = 'MANAGEMENT' and permission_code like '%.manage'), 0, 'Management has no management grants');
+select is(
+  (
+    select array_agg(permission_code order by permission_code)
+    from public.role_permissions
+    where role_code = 'MANAGEMENT'
+      and permission_code like '%.manage'
+  ),
+  array[
+    'finance.fees.manage',
+    'finance.settings.manage',
+    'library.settings.manage',
+    'people.lifecycle.manage',
+    'settings.manage'
+  ]::text[],
+  'Board Member has only the approved configuration and people-lifecycle management grants'
+);
 
 insert into auth.users(id, raw_user_meta_data)
 values ('00000000-0000-4000-8000-000000000099', '{"display_name":"Synthetic trigger test","role":"SUPER_ADMIN","status":"active"}');
