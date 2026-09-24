@@ -36,7 +36,9 @@ const permissionLabels: Record<Permission, string> = {
   "reports.read": "View reports",
   "administrators.manage": "Manage administrator access",
   "settings.manage": "Manage school settings",
-  "finance.settings.manage": "Configure fee rates and finance categories",
+  "finance.fees.manage": "Configure student fee structure",
+  "finance.settings.manage":
+    "Configure salaries, payment setup and finance categories",
   "finance.transactions.manage":
     "Generate invoices and process financial transactions",
   "finance.end_term_invoices.read": "View and print end-of-term invoices",
@@ -162,9 +164,9 @@ export default async function RolesAndPermissionsPage() {
           Role templates are controlled centrally
         </p>
         <p className="mt-1 text-xs leading-5 text-muted-foreground">
-          Assign a role from the Administrators page. Super Administrator is the
-          only role that can configure administrator accounts and school
-          settings.
+          Assign a role from the Administrators page. Only Super Administrators
+          can change administrator accounts or role assignments; configuration
+          access follows the grants shown in this matrix.
         </p>
       </aside>
     </>

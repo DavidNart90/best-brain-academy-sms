@@ -111,9 +111,7 @@ export function AppShell({
                 {context.displayName || "Staff account"}
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {role
-                  ? `${roleLabels[role]}${role === "MANAGEMENT" ? " · Read only" : ""}`
-                  : "No role assigned"}
+                {role ? roleLabels[role] : "No role assigned"}
               </p>
             </div>
             <span

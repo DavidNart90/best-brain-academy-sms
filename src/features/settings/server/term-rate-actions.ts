@@ -15,7 +15,7 @@ const inputSchema = z.object({
 
 function permissionFor(domain: TermRateDomain) {
   return domain === "school_fees"
-    ? "finance.settings.manage"
+    ? "finance.fees.manage"
     : "library.settings.manage";
 }
 

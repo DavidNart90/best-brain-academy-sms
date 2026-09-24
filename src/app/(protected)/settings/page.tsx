@@ -217,14 +217,38 @@ const settingsByRole: Record<DashboardVariant, RoleSettings> = {
   "board-member": {
     title: "Board Member settings",
     description:
-      "Use a read-only oversight workspace for school performance and financial review.",
-    accessLabel: "Read-only oversight",
-    sectionTitle: "Oversight workspace",
+      "Configure school, academic and financial settings while overseeing daily operations.",
+    accessLabel: "Configuration and oversight",
+    sectionTitle: "Board configuration workspace",
     sectionDescription:
-      "Every operational workspace is available for review without write controls.",
-    noteTitle: "Oversight boundary",
-    note: "Board Members can review Administrator and Accountant workspaces, including Books & Prospectus. They cannot create, edit, import, record, reverse or configure data, and cannot access Super Administrator pages.",
+      "School-wide settings and cross-school oversight are grouped here, with transaction and administrator controls kept separate.",
+    noteTitle: "Board responsibility boundary",
+    note: "Board Members can configure school, academic, financial, fee-structure and Books & Prospectus settings. They can review daily cashflow and collection records, but cannot input or reverse transactions, manage Books & Prospectus collections, configure roles, or change administrator accounts.",
     destinations: [
+      {
+        href: "/settings/school",
+        title: "School settings",
+        description:
+          "Maintain the school identity, crest, contact details and transport locations.",
+        detail: "Manage school configuration",
+        icon: Building2,
+      },
+      {
+        href: "/settings/academics",
+        title: "Academic settings",
+        description:
+          "Maintain academic years, term schedules, current context and the class catalogue.",
+        detail: "Manage calendar and classes",
+        icon: CalendarRange,
+      },
+      {
+        href: "/settings/financials",
+        title: "Financial settings",
+        description:
+          "Configure fees, salaries, payment methods and approved financial categories.",
+        detail: "Manage finance configuration",
+        icon: Wallet,
+      },
       {
         href: "/admissions",
         title: "Students & admissions",
@@ -251,10 +275,10 @@ const settingsByRole: Record<DashboardVariant, RoleSettings> = {
       },
       {
         href: "/library",
-        title: "Library",
+        title: "Books & Prospectus",
         description:
-          "Review Books & Prospectus charges, collection performance and balances.",
-        detail: "Read-only Library oversight",
+          "Configure term rates while reviewing charges, collection performance and balances.",
+        detail: "Configure rates; review collections",
         icon: LibraryBig,
       },
     ],

@@ -83,6 +83,13 @@ async function canManageFinance() {
   );
 }
 
+async function canManageFeeStructure() {
+  return requireRateLimitedPermission(
+    "finance.fees.manage",
+    "finance-settings",
+  );
+}
+
 async function feeComponentId(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   code: string,
@@ -106,7 +113,7 @@ function toRateAmount(amount: string) {
 export async function saveBaseClassFees(
   input: unknown,
 ): Promise<FinanceActionResult> {
-  const access = await canManageFinance();
+  const access = await canManageFeeStructure();
   if (!access.ok) return { ok: false, message: access.message };
   const context = access.context;
   const parsed = baseClassFeesInputSchema.safeParse(input);
@@ -142,7 +149,7 @@ export async function saveBaseClassFees(
 export async function saveTransportCharges(
   input: unknown,
 ): Promise<FinanceActionResult> {
-  const access = await canManageFinance();
+  const access = await canManageFeeStructure();
   if (!access.ok) return { ok: false, message: access.message };
   const context = access.context;
   const parsed = transportChargesInputSchema.safeParse(input);
@@ -182,7 +189,7 @@ export async function saveTransportCharges(
 export async function saveFlatFees(
   input: unknown,
 ): Promise<FinanceActionResult> {
-  const access = await canManageFinance();
+  const access = await canManageFeeStructure();
   if (!access.ok) return { ok: false, message: access.message };
   const context = access.context;
   const parsed = flatFeesInputSchema.safeParse(input);
