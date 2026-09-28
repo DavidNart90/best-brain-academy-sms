@@ -16,6 +16,7 @@ const labels: Record<string, string> = {
   staff: "Staff",
   library: "Library collections",
   financials: "Financials",
+  assets: "Assets & Inventory",
   cashflow: "Daily cashflow",
   fees: "Fee structure",
   invoices: "Invoices",

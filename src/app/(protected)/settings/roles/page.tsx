@@ -33,6 +33,7 @@ const permissionLabels: Record<Permission, string> = {
   "staff.export": "Export staff",
   "people.lifecycle.manage": "End staff or student active status",
   "financials.read": "View financials",
+  "assets.manage": "Manage school assets and inventory",
   "reports.read": "View reports",
   "administrators.manage": "Manage administrator access",
   "settings.manage": "Manage school settings",

@@ -454,6 +454,106 @@ export type Database = {
           },
         ];
       };
+      asset_inventory_records: {
+        Row: {
+          acquired_on: string | null;
+          category: string;
+          condition: string;
+          created_at: string;
+          created_by: string | null;
+          custodian: string | null;
+          description: string | null;
+          id: number;
+          item_name: string;
+          notes: string | null;
+          quantity: number;
+          record_code: string;
+          record_type: string;
+          reorder_level: number | null;
+          room_or_store: string | null;
+          school_location_id: number | null;
+          serial_number: string | null;
+          status: string;
+          supplier: string | null;
+          unit_cost: number | null;
+          unit_name: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          acquired_on?: string | null;
+          category: string;
+          condition?: string;
+          created_at?: string;
+          created_by?: string | null;
+          custodian?: string | null;
+          description?: string | null;
+          id?: never;
+          item_name: string;
+          notes?: string | null;
+          quantity?: number;
+          record_code: string;
+          record_type: string;
+          reorder_level?: number | null;
+          room_or_store?: string | null;
+          school_location_id?: number | null;
+          serial_number?: string | null;
+          status?: string;
+          supplier?: string | null;
+          unit_cost?: number | null;
+          unit_name?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          acquired_on?: string | null;
+          category?: string;
+          condition?: string;
+          created_at?: string;
+          created_by?: string | null;
+          custodian?: string | null;
+          description?: string | null;
+          id?: never;
+          item_name?: string;
+          notes?: string | null;
+          quantity?: number;
+          record_code?: string;
+          record_type?: string;
+          reorder_level?: number | null;
+          room_or_store?: string | null;
+          school_location_id?: number | null;
+          serial_number?: string | null;
+          status?: string;
+          supplier?: string | null;
+          unit_cost?: number | null;
+          unit_name?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "asset_inventory_records_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "asset_inventory_records_school_location_id_fkey";
+            columns: ["school_location_id"];
+            isOneToOne: false;
+            referencedRelation: "school_locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "asset_inventory_records_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       audit_logs: {
         Row: {
           action: string;
@@ -3555,6 +3655,7 @@ export type Database = {
         Returns: Json;
       };
       get_access_context: { Args: never; Returns: Json };
+      get_asset_inventory_summary: { Args: never; Returns: Json };
       get_end_term_invoice_setup: {
         Args: { target_source_academic_term_id?: number };
         Returns: Json;
@@ -3835,6 +3936,10 @@ export type Database = {
           target_payment_id: number;
           target_reason: string;
         };
+        Returns: Json;
+      };
+      save_asset_inventory_record: {
+        Args: { payload: Json; target_record_id: number | null };
         Returns: Json;
       };
       save_end_term_invoice_configuration: {

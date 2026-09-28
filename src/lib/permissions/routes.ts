@@ -127,6 +127,13 @@ export const appRoutes: AppRoute[] = [
     description: "School expenses and supporting records.",
   },
   {
+    href: "/financials/assets",
+    title: "Assets & Inventory",
+    permission: "assets.manage",
+    phase: 6,
+    description: "Audited school assets, equipment and consumable stock.",
+  },
+  {
     href: "/financials/salary-deductions",
     title: "Salaries & Deductions",
     permission: "financials.read",

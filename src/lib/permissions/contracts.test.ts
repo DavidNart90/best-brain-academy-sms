@@ -21,6 +21,7 @@ const manager: AccessContext = {
     "classes.read",
     "staff.read",
     "financials.read",
+    "assets.manage",
     "finance.fees.manage",
     "finance.settings.manage",
     "finance.end_term_invoices.read",
@@ -64,6 +65,7 @@ const accountant: AccessContext = {
     "students.read",
     "staff.read",
     "financials.read",
+    "assets.manage",
     "finance.transactions.manage",
     "finance.end_term_invoices.read",
     "finance.end_term_invoices.manage",
@@ -116,6 +118,7 @@ describe("permission boundary", () => {
         "/financials/payments",
         "/financials/outstanding",
         "/financials/end-of-term-invoices",
+        "/financials/assets",
         "/reports",
         "/settings",
         "/settings/school",
@@ -128,6 +131,7 @@ describe("permission boundary", () => {
     expect(paths).not.toContain("/administrators");
     expect(hasPermission(manager, "students.manage")).toBe(false);
     expect(hasPermission(manager, "finance.transactions.manage")).toBe(false);
+    expect(hasPermission(manager, "assets.manage")).toBe(true);
     expect(hasPermission(manager, "finance.fees.manage")).toBe(true);
     expect(hasPermission(manager, "finance.settings.manage")).toBe(true);
     expect(hasPermission(manager, "settings.manage")).toBe(true);
@@ -157,6 +161,7 @@ describe("permission boundary", () => {
     );
     expect(paths).not.toContain("/financials");
     expect(paths).not.toContain("/financials/payments");
+    expect(paths).not.toContain("/financials/assets");
     expect(paths).not.toContain("/settings/financials");
     expect(hasPermission(administrator, "finance.transactions.manage")).toBe(
       false,
@@ -179,6 +184,7 @@ describe("permission boundary", () => {
         "/financials/payments",
         "/financials/outstanding",
         "/financials/end-of-term-invoices",
+        "/financials/assets",
         "/reports",
         "/settings",
         "/settings/financials",
@@ -187,6 +193,7 @@ describe("permission boundary", () => {
     expect(hasPermission(accountant, "students.manage")).toBe(false);
     expect(hasPermission(accountant, "staff.manage")).toBe(false);
     expect(hasPermission(accountant, "finance.transactions.manage")).toBe(true);
+    expect(hasPermission(accountant, "assets.manage")).toBe(true);
     expect(hasPermission(accountant, "finance.fees.manage")).toBe(true);
   });
   it("gives every active role its settings landing without widening settings access", () => {
@@ -213,6 +220,9 @@ describe("permission boundary", () => {
     );
     expect(resolveRoute("/financials/outstanding")?.permission).toBe(
       "finance.outstanding.read",
+    );
+    expect(resolveRoute("/financials/assets")?.permission).toBe(
+      "assets.manage",
     );
     expect(
       resolveRoute("/financials/end-of-term-invoices/123")?.permission,
