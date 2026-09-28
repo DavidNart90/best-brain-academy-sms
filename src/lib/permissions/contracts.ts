@@ -14,6 +14,7 @@ export const permissionSchema = z.enum([
   "staff.export",
   "people.lifecycle.manage",
   "financials.read",
+  "assets.manage",
   "reports.read",
   "administrators.manage",
   "settings.manage",
