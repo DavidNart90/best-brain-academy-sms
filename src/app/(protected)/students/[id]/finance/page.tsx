@@ -53,6 +53,9 @@ export default async function StudentFinancePage({
       (sum, invoice) => sum + Math.round(Number(invoice.outstanding) * 100),
       0,
     ) / 100;
+  const paymentNumberById = new Map(
+    history.payments.map((payment) => [payment.id, payment.payment_number]),
+  );
 
   return (
     <>
@@ -71,7 +74,7 @@ export default async function StudentFinancePage({
       </PageHeader>
       <div className="space-y-5">
         <section
-          className="grid gap-4 sm:grid-cols-3"
+          className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
           aria-label="Student account summary"
         >
           <Summary label="Invoices" value={String(history.invoices.length)} />
@@ -80,6 +83,7 @@ export default async function StudentFinancePage({
             value={<Money value={balance.toFixed(2)} />}
           />
           <Summary label="Payments" value={String(history.payments.length)} />
+          <Summary label="Receipts" value={String(history.receipts.length)} />
         </section>
         <section
           className="panel overflow-hidden"
@@ -216,6 +220,83 @@ export default async function StudentFinancePage({
                           <StatusBadge
                             status={
                               payment.status === "active"
+                                ? "Active"
+                                : "Reversed"
+                            }
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </PaginatedRows>
+                </tbody>
+              </table>
+            </div>
+          </InMemoryTablePagination>
+        </section>
+        <section
+          className="panel overflow-hidden"
+          aria-labelledby="student-receipts-title"
+        >
+          <div className="border-b p-5">
+            <h2 id="student-receipts-title" className="text-base font-semibold">
+              Receipts
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Official school-fee receipts issued for this student.
+            </p>
+          </div>
+          <InMemoryTablePagination
+            total={history.receipts.length}
+            pageSize={10}
+            itemLabel="receipts"
+          >
+            <div
+              className="table-scroll"
+              tabIndex={0}
+              role="region"
+              aria-label="Student school-fee receipts"
+            >
+              <table className="w-full min-w-[680px] text-sm">
+                <thead className="bg-muted/70">
+                  <tr>
+                    <th className="px-5 py-3 text-left font-medium">Receipt</th>
+                    <th className="py-3 text-left font-medium">Payment</th>
+                    <th className="py-3 text-left font-medium">
+                      Business date
+                    </th>
+                    <th className="py-3 text-right font-medium">Amount</th>
+                    <th className="py-3 text-right font-medium">
+                      Remaining balance
+                    </th>
+                    <th className="px-5 py-3 text-left font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <PaginatedRows printAll>
+                    {history.receipts.map((receipt) => (
+                      <tr key={receipt.id} className="border-t">
+                        <td className="px-5 py-4">
+                          <Link
+                            href={`/financials/receipts/document?source=School%20fee&id=${receipt.payment_id}`}
+                            className="font-mono text-xs font-semibold text-primary hover:underline"
+                          >
+                            {receipt.receipt_number}
+                          </Link>
+                        </td>
+                        <td className="py-4 font-mono text-xs">
+                          {paymentNumberById.get(receipt.payment_id) ?? "—"}
+                        </td>
+                        <td className="py-4">{receipt.business_date}</td>
+                        <td className="py-4 text-right">
+                          <Money value={receipt.amount} />
+                        </td>
+                        <td className="py-4 text-right font-semibold">
+                          <Money value={receipt.remainingBalance} />
+                        </td>
+                        <td className="px-5 py-4">
+                          <StatusBadge
+                            status={
+                              receipt.status === "active"
                                 ? "Active"
                                 : "Reversed"
                             }

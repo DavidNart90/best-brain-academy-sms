@@ -1,10 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, LockKeyhole, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowLeft, Mail, MapPin, Phone } from "lucide-react";
 import { PermissionDenied } from "@/components/data-display/page-state";
 import { StatusBadge } from "@/components/data-display/status-badge";
 import { Button } from "@/components/ui/button";
+import { StudentEditForm } from "@/features/students/components/student-edit-form";
 import {
   EnrollmentChangeDialog,
   GuardianLinkDialog,
@@ -63,6 +64,7 @@ export default async function StudentProfilePage({
   ]);
   if (!student) notFound();
   const canManage = hasPermission(context, "students.manage");
+  const canReadFinancials = hasPermission(context, "financials.read");
   const current = student.enrollments.find((item) => item.status === "active");
   const initials =
     `${student.firstName[0] ?? ""}${student.lastName[0] ?? ""}`.toUpperCase();
@@ -116,22 +118,38 @@ export default async function StudentProfilePage({
           <span className="rounded-md bg-card px-3 py-2 text-sm font-semibold text-primary shadow-xs">
             Profile
           </span>
-          <Link
-            href={`/students/${student.id}/finance`}
-            className="rounded-md px-3 py-2 text-sm font-medium text-primary hover:bg-brand-subtle"
-          >
-            Financial account
-          </Link>
-          {["Invoices", "Payments", "Receipts"].map((label) => (
-            <span
-              key={label}
-              className="inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm text-muted-foreground"
-              aria-disabled="true"
-            >
-              <LockKeyhole className="size-3.5" />
-              {label} · Phase 3
-            </span>
-          ))}
+          {canReadFinancials && (
+            <>
+              <Link
+                href={`/students/${student.id}/finance`}
+                className="rounded-md px-3 py-2 text-sm font-medium text-primary hover:bg-brand-subtle"
+              >
+                Financial account
+              </Link>
+              {[
+                {
+                  label: "Invoices",
+                  href: `/students/${student.id}/finance#student-invoices-title`,
+                },
+                {
+                  label: "Payments",
+                  href: `/students/${student.id}/finance#student-payments-title`,
+                },
+                {
+                  label: "Receipts",
+                  href: `/students/${student.id}/finance#student-receipts-title`,
+                },
+              ].map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-primary hover:bg-brand-subtle"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </>
+          )}
         </nav>
       </section>
 
@@ -225,6 +243,8 @@ export default async function StudentProfilePage({
           </div>
         </section>
       </div>
+
+      {canManage && <StudentEditForm student={student} />}
 
       <section className="panel p-5 sm:p-6" aria-labelledby="history-heading">
         <div className="flex flex-wrap items-center justify-between gap-3">

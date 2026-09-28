@@ -3879,6 +3879,10 @@ export type Database = {
         Args: { payload: Json; target_staff_id: number };
         Returns: Json;
       };
+      update_student: {
+        Args: { payload: Json; target_student_id: number };
+        Returns: Json;
+      };
       void_expense: {
         Args: {
           request_fingerprint: string;
