@@ -23,6 +23,67 @@ const requiredName = (label: string) =>
     .min(1, `${label} is required.`)
     .max(80, `${label} must be 80 characters or fewer.`);
 
+const studentDetailsFields = {
+  admissionNumber: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(
+      /^BBA-\d{3,36}$/,
+      "Use BBA- followed by at least three digits, for example BBA-001.",
+    ),
+  firstName: requiredName("First name"),
+  middleName: optionalText(80),
+  lastName: requiredName("Last name"),
+  gender: z.enum(["female", "male"], { error: "Choose a gender." }),
+  dateOfBirth: optionalDateSchema,
+  admissionDate: dateSchema,
+  hasDisability: z
+    .union([z.enum(["yes", "no"]), z.boolean()], {
+      error: "Choose Yes or No for disability status.",
+    })
+    .transform((value) =>
+      typeof value === "boolean" ? value : value === "yes",
+    ),
+  disabilityDetails: optionalText(500),
+  religiousDenomination: z
+    .string({ error: "Religious denomination is required." })
+    .trim()
+    .min(2, "Religious denomination is required.")
+    .max(120, "Religious denomination must be 120 characters or fewer."),
+  previousSchool: optionalText(160),
+  notes: optionalText(1000),
+};
+
+function validateStudentDetails(
+  value: {
+    dateOfBirth: string | null;
+    admissionDate: string;
+    hasDisability: boolean;
+    disabilityDetails: string | null;
+  },
+  context: z.RefinementCtx,
+) {
+  if (
+    value.dateOfBirth &&
+    value.admissionDate &&
+    value.dateOfBirth > value.admissionDate
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["dateOfBirth"],
+      message: "Date of birth cannot be after the admission date.",
+    });
+  }
+  if (value.hasDisability && !value.disabilityDetails) {
+    context.addIssue({
+      code: "custom",
+      path: ["disabilityDetails"],
+      message: "State the disability when Yes is selected.",
+    });
+  }
+}
+
 export const studentStatuses = [
   "active",
   "inactive",
@@ -36,33 +97,8 @@ export const admissionNumberMessage =
 
 export const studentInputSchema = z
   .object({
-    admissionNumber: z
-      .string()
-      .trim()
-      .toUpperCase()
-      .regex(admissionNumberPattern, admissionNumberMessage),
-    firstName: requiredName("First name"),
-    middleName: optionalText(80),
-    lastName: requiredName("Last name"),
-    gender: z.enum(studentGenders, { error: "Choose a gender." }),
-    dateOfBirth: optionalDateSchema,
-    admissionDate: dateSchema,
+    ...studentDetailsFields,
     status: z.enum(studentStatuses, { error: "Choose a student status." }),
-    hasDisability: z
-      .union([z.enum(["yes", "no"]), z.boolean()], {
-        error: "Choose Yes or No for disability status.",
-      })
-      .transform((value) =>
-        typeof value === "boolean" ? value : value === "yes",
-      ),
-    disabilityDetails: optionalText(500),
-    religiousDenomination: z
-      .string({ error: "Religious denomination is required." })
-      .trim()
-      .min(2, "Religious denomination is required.")
-      .max(120, "Religious denomination must be 120 characters or fewer."),
-    previousSchool: optionalText(160),
-    notes: optionalText(1000),
     guardianName: z
       .string()
       .trim()
@@ -92,26 +128,7 @@ export const studentInputSchema = z
     classId: idSchema,
     schoolLocationId: idSchema,
   })
-  .superRefine((value, context) => {
-    if (
-      value.dateOfBirth &&
-      value.admissionDate &&
-      value.dateOfBirth > value.admissionDate
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["dateOfBirth"],
-        message: "Date of birth cannot be after the admission date.",
-      });
-    }
-    if (value.hasDisability && !value.disabilityDetails) {
-      context.addIssue({
-        code: "custom",
-        path: ["disabilityDetails"],
-        message: "State the disability when Yes is selected.",
-      });
-    }
-  })
+  .superRefine(validateStudentDetails)
   .transform((value) => ({
     ...value,
     disabilityDetails: value.hasDisability ? value.disabilityDetails : null,
@@ -136,6 +153,17 @@ export const studentListQuerySchema = z.object({
 export const importModeSchema = z.enum(["preview", "confirm"]);
 
 export const studentIdSchema = z.coerce.number().int().positive();
+
+export const studentUpdateSchema = z
+  .object({
+    studentId: studentIdSchema,
+    ...studentDetailsFields,
+  })
+  .superRefine(validateStudentDetails)
+  .transform((value) => ({
+    ...value,
+    disabilityDetails: value.hasDisability ? value.disabilityDetails : null,
+  }));
 
 export const guardianLinkSchema = z.object({
   studentId: studentIdSchema,
@@ -177,6 +205,8 @@ export const studentExitSchema = z.object({
 
 export type StudentInput = z.infer<typeof studentInputSchema>;
 export type StudentFormValues = z.input<typeof studentInputSchema>;
+export type StudentUpdateInput = z.infer<typeof studentUpdateSchema>;
+export type StudentUpdateFormValues = z.input<typeof studentUpdateSchema>;
 export type StudentListQuery = z.infer<typeof studentListQuerySchema>;
 export type GuardianLinkInput = z.infer<typeof guardianLinkSchema>;
 export type GuardianLinkFormValues = z.input<typeof guardianLinkSchema>;

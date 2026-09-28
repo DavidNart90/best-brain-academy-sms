@@ -882,6 +882,22 @@ export async function getStudentFinanceHistory(studentId: number) {
     throw new Error(
       "Student payment history could not be loaded. Try again or contact an administrator.",
     );
+  const paymentIds = payments.data.map((payment) => payment.id);
+  const receipts = paymentIds.length
+    ? await supabase
+        .from("receipts")
+        .select(
+          "id,receipt_number,payment_id,amount,remaining_balance,business_date,status",
+        )
+        .in("payment_id", paymentIds)
+        .order("business_date", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(200)
+    : { data: [], error: null };
+  if (receipts.error)
+    throw new Error(
+      "Student receipt history could not be loaded. Try again or contact an administrator.",
+    );
   return {
     student: {
       id: student.data.id,
@@ -903,6 +919,11 @@ export async function getStudentFinanceHistory(studentId: number) {
     payments: payments.data.map((payment) => ({
       ...payment,
       amount: formatRateAmount(payment.amount),
+    })),
+    receipts: receipts.data.map((receipt) => ({
+      ...receipt,
+      amount: formatRateAmount(receipt.amount),
+      remainingBalance: formatRateAmount(receipt.remaining_balance),
     })),
   };
 }

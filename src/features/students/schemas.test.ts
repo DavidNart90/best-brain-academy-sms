@@ -4,6 +4,7 @@ import {
   guardianLinkSchema,
   studentInputSchema,
   studentListQuerySchema,
+  studentUpdateSchema,
 } from "./schemas";
 
 const validStudent = {
@@ -86,6 +87,59 @@ describe("studentListQuerySchema", () => {
 });
 
 describe("student profile write schemas", () => {
+  it("normalizes editable student details without accepting lifecycle fields", () => {
+    const result = studentUpdateSchema.parse({
+      studentId: "7",
+      admissionNumber: " bba-027 ",
+      firstName: "  Akosua ",
+      middleName: "",
+      lastName: "Mensah",
+      gender: "female",
+      dateOfBirth: "2015-04-12",
+      admissionDate: "2026-09-08",
+      hasDisability: "no",
+      disabilityDetails: "Should be cleared",
+      religiousDenomination: "Pentecostal",
+      previousSchool: "",
+      notes: "",
+      status: "withdrawn",
+    });
+
+    expect(result).toMatchObject({
+      studentId: 7,
+      admissionNumber: "BBA-027",
+      firstName: "Akosua",
+      middleName: null,
+      hasDisability: false,
+      disabilityDetails: null,
+    });
+    expect(result).not.toHaveProperty("status");
+  });
+
+  it("rejects invalid personal detail corrections", () => {
+    const result = studentUpdateSchema.safeParse({
+      studentId: 7,
+      admissionNumber: "BBA-027",
+      firstName: "Akosua",
+      middleName: "",
+      lastName: "Mensah",
+      gender: "female",
+      dateOfBirth: "2027-01-01",
+      admissionDate: "2026-09-08",
+      hasDisability: "yes",
+      disabilityDetails: "",
+      religiousDenomination: "Pentecostal",
+      previousSchool: "",
+      notes: "",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues.map((issue) => issue.path[0])).toEqual(
+        expect.arrayContaining(["dateOfBirth", "disabilityDetails"]),
+      );
+  });
+
   it("validates and normalizes a guardian link", () => {
     expect(
       guardianLinkSchema.parse({

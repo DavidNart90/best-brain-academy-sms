@@ -9,6 +9,7 @@ import {
   guardianLinkSchema,
   studentExitSchema,
   studentInputSchema,
+  studentUpdateSchema,
 } from "../schemas";
 
 export type StudentActionResult = {
@@ -19,7 +20,7 @@ export type StudentActionResult = {
 
 const denied: StudentActionResult = {
   ok: false,
-  message: "Your account cannot add students.",
+  message: "Your account cannot manage students.",
 };
 
 function studentDatabaseMessage(error: { code?: string; message?: string }) {
@@ -33,6 +34,22 @@ function studentDatabaseMessage(error: { code?: string; message?: string }) {
     return error.message ?? "Review the student details and try again.";
   if (error.code === "42501") return denied.message;
   return "The student could not be added. Review the details and try again.";
+}
+
+function studentUpdateDatabaseMessage(error: {
+  code?: string;
+  message?: string;
+}) {
+  if (error.code === "23505")
+    return error.message?.includes("possible duplicate")
+      ? "Another student already has the same name and date of birth."
+      : "That admission number already belongs to another student.";
+  if (error.code === "23514")
+    return "Review the student details and correct the highlighted information.";
+  if (error.code === "22023")
+    return error.message ?? "Review the student details and try again.";
+  if (error.code === "42501") return denied.message;
+  return "The student details could not be updated. Review them and try again.";
 }
 
 export async function endStudentActiveStatus(
@@ -104,6 +121,39 @@ export async function createStudent(
     ok: true,
     message: "Student added with an active enrollment.",
     studentId: Number.isInteger(studentId) ? studentId : undefined,
+  };
+}
+
+export async function updateStudent(
+  input: unknown,
+): Promise<StudentActionResult> {
+  const access = await requireRateLimitedPermission(
+    "students.manage",
+    "people-write",
+  );
+  if (!access.ok) return { ok: false, message: access.message };
+  const parsed = studentUpdateSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Check the student details.",
+    };
+  const { studentId, ...payload } = parsed.data;
+  const supabase = await createServerSupabaseClient();
+  const result = await supabase.rpc("update_student", {
+    target_student_id: studentId,
+    payload: payload as unknown as Json,
+  });
+  if (result.error)
+    return { ok: false, message: studentUpdateDatabaseMessage(result.error) };
+  revalidatePath("/students");
+  revalidatePath(`/students/${studentId}`);
+  revalidatePath(`/students/${studentId}/finance`);
+  revalidatePath("/admissions");
+  return {
+    ok: true,
+    message: "Student details updated.",
+    studentId,
   };
 }
 
