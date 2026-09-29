@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Camera, LoaderCircle, Plus, RefreshCw } from "lucide-react";
+import { Camera, LoaderCircle, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import { FormField } from "@/components/forms/form-field";
 import { Button } from "@/components/ui/button";
@@ -31,11 +31,22 @@ import {
 } from "../server/actions";
 import type { StudentReferenceData } from "../types";
 
-export function StudentPhotoUpload({ studentId }: { studentId: number }) {
+export function StudentPhotoUpload({
+  studentId,
+  canRemove = false,
+  hasPhoto = false,
+}: {
+  studentId: number;
+  canRemove?: boolean;
+  hasPhoto?: boolean;
+}) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
+  const [removeOpen, setRemoveOpen] = useState(false);
+  const [removePending, setRemovePending] = useState(false);
+  const [removeMessage, setRemoveMessage] = useState("");
   async function upload(file?: File) {
     if (!file) return;
     setPending(true);
@@ -55,8 +66,35 @@ export function StudentPhotoUpload({ studentId }: { studentId: number }) {
     if (response.ok) router.refresh();
     if (input.current) input.current.value = "";
   }
+
+  async function remove() {
+    setRemovePending(true);
+    setMessage("");
+    setRemoveMessage("");
+    try {
+      const response = await fetch(`/api/students/${studentId}/photo`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const failure = (await response.json()) as { message?: string };
+        setRemoveMessage(
+          failure.message ?? "The student photo could not be removed.",
+        );
+        return;
+      }
+      const result = (await response.json()) as { message?: string };
+      setMessage(result.message ?? "Student photo removed.");
+      setRemoveOpen(false);
+      router.refresh();
+    } catch {
+      setRemoveMessage("The student photo could not be removed.");
+    } finally {
+      setRemovePending(false);
+    }
+  }
+
   return (
-    <div>
+    <div className="flex flex-col items-start gap-2 sm:items-end">
       <input
         ref={input}
         className="sr-only"
@@ -65,16 +103,83 @@ export function StudentPhotoUpload({ studentId }: { studentId: number }) {
         accept="image/jpeg,image/png,image/webp"
         onChange={(event) => void upload(event.target.files?.[0])}
       />
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        disabled={pending}
-        onClick={() => input.current?.click()}
-      >
-        {pending ? <LoaderCircle className="animate-spin" /> : <Camera />}
-        {pending ? "Uploading…" : "Update photo"}
-      </Button>
+      <div className="flex flex-wrap gap-2 sm:justify-end">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={pending || removePending}
+          onClick={() => input.current?.click()}
+        >
+          {pending ? <LoaderCircle className="animate-spin" /> : <Camera />}
+          {pending ? "Uploading…" : "Update photo"}
+        </Button>
+        {canRemove && hasPhoto && (
+          <Dialog
+            open={removeOpen}
+            onOpenChange={(open) => {
+              setRemoveOpen(open);
+              if (open) setRemoveMessage("");
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:bg-danger-soft hover:text-destructive"
+                disabled={pending || removePending}
+              >
+                <Trash2 /> Remove photo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Remove this student photo?</DialogTitle>
+                <DialogDescription>
+                  The stored profile photo will be permanently deleted. The
+                  student record will remain and their initials will be shown
+                  instead.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="px-6 py-5">
+                <div className="rounded-lg border border-destructive/20 bg-danger-soft p-4 text-sm leading-6 text-muted-foreground">
+                  This cannot be undone. You can upload a new profile photo at
+                  any time.
+                </div>
+                {removeMessage && (
+                  <p className="mt-3 text-sm text-destructive" role="alert">
+                    {removeMessage}
+                  </p>
+                )}
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={removePending}
+                  onClick={() => setRemoveOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={removePending}
+                  onClick={() => void remove()}
+                >
+                  {removePending ? (
+                    <LoaderCircle className="animate-spin" />
+                  ) : (
+                    <Trash2 />
+                  )}
+                  {removePending ? "Removing…" : "Remove photo"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
       {message && (
         <p className="mt-2 text-xs text-muted-foreground" role="status">
           {message}

@@ -4161,6 +4161,14 @@ export type Database = {
         };
         Returns: Json;
       };
+      remove_student_photo: {
+        Args: { target_student_id: number };
+        Returns: Json;
+      };
+      restore_student_photo_after_failed_removal: {
+        Args: { target_photo_path: string; target_student_id: number };
+        Returns: boolean;
+      };
       reverse_admission_receipt: {
         Args: {
           request_fingerprint: string;

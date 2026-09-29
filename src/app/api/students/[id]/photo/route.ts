@@ -137,3 +137,57 @@ export async function POST(
   revalidatePath(`/students/${id.data}`);
   return Response.json({ ok: true, message: "Student photo updated." });
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  if (!isTrustedMutationRequest(request))
+    return Response.json(
+      { message: "Request origin is not allowed." },
+      { status: 403 },
+    );
+  const access = await guardApiRequest("administrators.manage", "file-upload");
+  if (!access.ok) return access.response;
+  const id = await parsedId(params);
+  if (!id.success)
+    return Response.json({ message: "Student not found." }, { status: 404 });
+
+  const supabase = await createServerSupabaseClient();
+  const removed = await supabase.rpc("remove_student_photo", {
+    target_student_id: id.data,
+  });
+  if (removed.error)
+    return Response.json(
+      {
+        message:
+          removed.error.code === "22023"
+            ? "This student does not have a profile photo."
+            : "The student photo could not be removed.",
+      },
+      { status: removed.error.code === "P0002" ? 404 : 400 },
+    );
+
+  const path = (removed.data as { removedPhotoPath?: unknown } | null)
+    ?.removedPhotoPath;
+  if (typeof path !== "string")
+    return Response.json(
+      { message: "The student photo could not be removed." },
+      { status: 500 },
+    );
+
+  const deleted = await supabase.storage.from("student-photos").remove([path]);
+  if (deleted.error || deleted.data.length !== 1) {
+    await supabase.rpc("restore_student_photo_after_failed_removal", {
+      target_student_id: id.data,
+      target_photo_path: path,
+    });
+    return Response.json(
+      { message: "The stored photo could not be deleted. Please try again." },
+      { status: 503 },
+    );
+  }
+
+  revalidatePath(`/students/${id.data}`);
+  return Response.json({ ok: true, message: "Student photo removed." });
+}
