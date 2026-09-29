@@ -210,6 +210,11 @@ export async function saveFlatFees(
       amount: parsed.data.feedingAmount,
     },
     {
+      code: "township_transport_fee",
+      rateId: parsed.data.townshipTransportRateId,
+      amount: parsed.data.townshipTransportAmount,
+    },
+    {
       code: "admission_fee",
       rateId: parsed.data.admissionRateId,
       amount: parsed.data.admissionAmount,
@@ -236,7 +241,7 @@ export async function saveFlatFees(
       return { ok: false, message: databaseMessage(result.error) };
   }
   refreshFinanceSettings();
-  return { ok: true, message: "Feeding and admission fees saved." };
+  return { ok: true, message: "Daily and admission fees saved." };
 }
 
 export async function savePaymentMethod(
@@ -488,6 +493,7 @@ export async function cancelInvoiceAction(
 type ReversalOperation =
   | "reverse_school_fee_payment"
   | "reverse_feeding_receipt"
+  | "reverse_township_transport_receipt"
   | "reverse_admission_receipt"
   | "reverse_misc_receipt"
   | "void_expense";
@@ -512,6 +518,7 @@ export async function reverseFinanceAction(
   const rpc = {
     reverse_school_fee_payment: "reverse_school_fee_payment",
     reverse_feeding_receipt: "reverse_feeding_receipt",
+    reverse_township_transport_receipt: "reverse_township_transport_receipt",
     reverse_admission_receipt: "reverse_admission_receipt",
     reverse_misc_receipt: "reverse_misc_receipt",
     void_expense: "void_expense",
@@ -561,6 +568,7 @@ export async function reverseFinanceAction(
 type PostingOperation =
   | "school_fee_payment"
   | "feeding_receipt"
+  | "township_transport_receipt"
   | "admission_receipt"
   | "misc_receipt"
   | "expense";
@@ -578,6 +586,7 @@ export async function recordFinanceAction(
     ![
       "school_fee_payment",
       "feeding_receipt",
+      "township_transport_receipt",
       "admission_receipt",
       "misc_receipt",
       "expense",
@@ -615,6 +624,7 @@ export async function recordFinanceAction(
     if (result.error) return postingError(result.error, operation);
   } else if (
     operation === "feeding_receipt" ||
+    operation === "township_transport_receipt" ||
     operation === "admission_receipt"
   ) {
     const value = parsed.data as import("../schemas").DailyCollectionInput;

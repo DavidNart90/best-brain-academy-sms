@@ -45,7 +45,9 @@ export async function saveAssetInventoryRecord(
   const value = parsed.data;
   const supabase = await createServerSupabaseClient();
   const result = await supabase.rpc("save_asset_inventory_record", {
-    target_record_id: value.id,
+    // Postgres accepts NULL here to select the create branch, while generated
+    // RPC argument types cannot express nullable function parameters.
+    target_record_id: value.id ?? (null as never),
     payload: {
       recordCode: value.recordCode,
       recordType: value.recordType,

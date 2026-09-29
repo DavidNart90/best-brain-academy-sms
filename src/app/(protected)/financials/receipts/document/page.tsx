@@ -15,6 +15,7 @@ import { requirePermission } from "@/lib/auth/access";
 const sources = [
   "School fee",
   "Feeding",
+  "Township transport",
   "Admission",
   "Miscellaneous",
 ] as const;
@@ -115,9 +116,11 @@ export default async function ReceiptDocumentPage({
                 ? "School-fee payment"
                 : source === "Feeding"
                   ? "Feeding collection"
-                  : source === "Admission"
-                    ? "Admission collection"
-                    : field("description")
+                  : source === "Township transport"
+                    ? "Within-township transport collection"
+                    : source === "Admission"
+                      ? "Admission collection"
+                      : field("description")
             }
           />
           <Detail

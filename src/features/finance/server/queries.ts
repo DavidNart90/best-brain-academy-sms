@@ -109,7 +109,7 @@ export async function getFinanceSettings(
       .eq("status", "active")
       .order("sort_order")
       .limit(100),
-    supabase.from("fee_components").select("id,code").limit(50),
+    supabase.from("fee_components").select("id,code,name,applies_to").limit(50),
     supabase
       .from("fee_component_rates")
       .select("id,amount,class_id,school_location_id,fee_component_id")
@@ -156,6 +156,9 @@ export async function getFinanceSettings(
   const componentCodeById = new Map(
     feeComponents.data.map((row) => [row.id, row.code]),
   );
+  const componentByCode = new Map(
+    feeComponents.data.map((row) => [row.code, row]),
+  );
   type RateRow = {
     id: number;
     amount: number;
@@ -199,17 +202,36 @@ export async function getFinanceSettings(
   );
 
   const feedingRate = rateFor("feeding_fee", () => true);
+  const townshipTransportRate = rateFor("township_transport_fee", () => true);
   const admissionRate = rateFor("admission_fee", () => true);
   const flatFees: FlatFeeRow[] = [
     {
       code: "feeding_fee",
-      name: "Feeding Fee",
+      name: componentByCode.get("feeding_fee")?.name ?? "Feeding Fee",
+      appliesTo:
+        componentByCode.get("feeding_fee")?.applies_to ??
+        "Nursery 1 through Basic 6",
       rateId: feedingRate?.id ?? null,
       amount: feedingRate ? formatRateAmount(feedingRate.amount) : null,
     },
     {
+      code: "township_transport_fee",
+      name:
+        componentByCode.get("township_transport_fee")?.name ??
+        "Transportation Within Township",
+      appliesTo:
+        componentByCode.get("township_transport_fee")?.applies_to ??
+        "Students using daily in-and-out transport within the township",
+      rateId: townshipTransportRate?.id ?? null,
+      amount: townshipTransportRate
+        ? formatRateAmount(townshipTransportRate.amount)
+        : null,
+    },
+    {
       code: "admission_fee",
-      name: "Admission Fee",
+      name: componentByCode.get("admission_fee")?.name ?? "Admission Fee",
+      appliesTo:
+        componentByCode.get("admission_fee")?.applies_to ?? "New students",
       rateId: admissionRate?.id ?? null,
       amount: admissionRate ? formatRateAmount(admissionRate.amount) : null,
     },
@@ -357,37 +379,49 @@ export async function getInvoicesPage(
 
 export async function getDailyCashflow(businessDate: string) {
   const supabase = await createServerSupabaseClient();
-  const [payments, feeding, admission, miscellaneous, expenses] =
-    await Promise.all([
-      supabase
-        .from("payments")
-        .select("amount", { count: "exact" })
-        .eq("business_date", businessDate)
-        .eq("status", "active"),
-      supabase
-        .from("feeding_receipts")
-        .select("amount", { count: "exact" })
-        .eq("business_date", businessDate)
-        .eq("status", "active"),
-      supabase
-        .from("admission_receipts")
-        .select("amount", { count: "exact" })
-        .eq("business_date", businessDate)
-        .eq("status", "active"),
-      supabase
-        .from("misc_receipts")
-        .select("amount", { count: "exact" })
-        .eq("business_date", businessDate)
-        .eq("status", "active"),
-      supabase
-        .from("expenses")
-        .select("amount", { count: "exact" })
-        .eq("business_date", businessDate)
-        .eq("status", "active"),
-    ]);
+  const [
+    payments,
+    feeding,
+    townshipTransport,
+    admission,
+    miscellaneous,
+    expenses,
+  ] = await Promise.all([
+    supabase
+      .from("payments")
+      .select("amount", { count: "exact" })
+      .eq("business_date", businessDate)
+      .eq("status", "active"),
+    supabase
+      .from("feeding_receipts")
+      .select("amount", { count: "exact" })
+      .eq("business_date", businessDate)
+      .eq("status", "active"),
+    supabase
+      .from("township_transport_receipts")
+      .select("amount", { count: "exact" })
+      .eq("business_date", businessDate)
+      .eq("status", "active"),
+    supabase
+      .from("admission_receipts")
+      .select("amount", { count: "exact" })
+      .eq("business_date", businessDate)
+      .eq("status", "active"),
+    supabase
+      .from("misc_receipts")
+      .select("amount", { count: "exact" })
+      .eq("business_date", businessDate)
+      .eq("status", "active"),
+    supabase
+      .from("expenses")
+      .select("amount", { count: "exact" })
+      .eq("business_date", businessDate)
+      .eq("status", "active"),
+  ]);
   if (
     payments.error ||
     feeding.error ||
+    townshipTransport.error ||
     admission.error ||
     miscellaneous.error ||
     expenses.error
@@ -405,6 +439,7 @@ export async function getDailyCashflow(businessDate: string) {
     ).toFixed(2);
   const schoolFees = sum(payments.data);
   const feedingTotal = sum(feeding.data);
+  const townshipTransportTotal = sum(townshipTransport.data);
   const admissionTotal = sum(admission.data);
   const miscellaneousTotal = sum(miscellaneous.data);
   const expensesTotal = sum(expenses.data);
@@ -412,6 +447,7 @@ export async function getDailyCashflow(businessDate: string) {
   const gross = (
     (toCents(schoolFees) +
       toCents(feedingTotal) +
+      toCents(townshipTransportTotal) +
       toCents(admissionTotal) +
       toCents(miscellaneousTotal)) /
     100
@@ -420,6 +456,7 @@ export async function getDailyCashflow(businessDate: string) {
   return {
     schoolFees,
     feeding: feedingTotal,
+    townshipTransport: townshipTransportTotal,
     admission: admissionTotal,
     miscellaneous: miscellaneousTotal,
     grossReceipts: gross,
@@ -427,12 +464,14 @@ export async function getDailyCashflow(businessDate: string) {
     netCashflow: ((toCents(gross) - toCents(expensesTotal)) / 100).toFixed(2),
     schoolFeeCount: payments.count ?? 0,
     feedingCount: feeding.count ?? 0,
+    townshipTransportCount: townshipTransport.count ?? 0,
     admissionCount: admission.count ?? 0,
     miscellaneousCount: miscellaneous.count ?? 0,
     expenseCount: expenses.count ?? 0,
     entryCount:
       (payments.count ?? 0) +
       (feeding.count ?? 0) +
+      (townshipTransport.count ?? 0) +
       (admission.count ?? 0) +
       (miscellaneous.count ?? 0) +
       (expenses.count ?? 0),
@@ -441,7 +480,7 @@ export async function getDailyCashflow(businessDate: string) {
 
 export async function getCashflowFormOptions(businessDate: string) {
   const supabase = await createServerSupabaseClient();
-  const [methods, expenseCategories, admissions, term, component] =
+  const [methods, expenseCategories, admissions, term, components] =
     await Promise.all([
       supabase
         .from("payment_methods")
@@ -472,60 +511,87 @@ export async function getCashflowFormOptions(businessDate: string) {
         .maybeSingle(),
       supabase
         .from("fee_components")
-        .select("id")
-        .eq("code", "admission_fee")
+        .select("id,code,applies_to")
+        .in("code", ["feeding_fee", "township_transport_fee", "admission_fee"])
         .eq("status", "active")
-        .maybeSingle(),
+        .limit(10),
     ]);
   if (
     methods.error ||
     expenseCategories.error ||
     admissions.error ||
     term.error ||
-    component.error
+    components.error
   )
     throw new Error(
       "Cashflow entry options could not be loaded. Try again or contact an administrator.",
     );
 
-  const [year, admissionRate] = term.data
+  const [year, configuredRates] = term.data
     ? await Promise.all([
         supabase
           .from("academic_years")
           .select("name")
           .eq("id", term.data.academic_year_id)
           .maybeSingle(),
-        component.data
+        components.data.length > 0
           ? supabase
               .from("fee_component_rates")
-              .select("amount")
-              .eq("fee_component_id", component.data.id)
+              .select("fee_component_id,amount")
+              .in(
+                "fee_component_id",
+                components.data.map((component) => component.id),
+              )
               .eq("academic_year_id", term.data.academic_year_id)
               .eq("academic_term_id", term.data.id)
               .is("class_id", null)
               .is("school_location_id", null)
               .eq("status", "active")
               .order("id", { ascending: false })
-              .limit(1)
-              .maybeSingle()
-          : Promise.resolve({ data: null, error: null }),
+              .limit(10)
+          : Promise.resolve({ data: [], error: null }),
       ])
     : [
         { data: null, error: null },
-        { data: null, error: null },
+        { data: [], error: null },
       ];
-  if (year.error || admissionRate.error)
+  if (year.error || configuredRates.error)
     throw new Error(
       "Admission-fee reconciliation could not be loaded. Try again or contact an administrator.",
     );
 
   const admissionCount = admissions.count ?? 0;
-  const feePerAdmission = admissionRate.data
-    ? Number(admissionRate.data.amount).toFixed(2)
-    : null;
+  const componentByCode = new Map(
+    components.data.map((component) => [component.code, component]),
+  );
+  const rateByComponentId = new Map(
+    configuredRates.data.map((rate) => [
+      rate.fee_component_id,
+      Number(rate.amount).toFixed(2),
+    ]),
+  );
+  const configuredFee = (code: string) => {
+    const component = componentByCode.get(code);
+    const amount = component
+      ? (rateByComponentId.get(component.id) ?? null)
+      : null;
+    return {
+      amount,
+      appliesTo: component?.applies_to ?? null,
+      enabled: amount !== null && Number(amount) > 0,
+    };
+  };
+  const feedingFee = configuredFee("feeding_fee");
+  const townshipTransportFee = configuredFee("township_transport_fee");
+  const admissionFee = configuredFee("admission_fee");
+  const feePerAdmission = admissionFee.amount;
   return {
     paymentMethods: methods.data,
     expenseCategories: expenseCategories.data,
+    dailyFees: {
+      feeding: feedingFee,
+      townshipTransport: townshipTransportFee,
+    },
     admissionExpectation: {
       businessDate,
       admissionCount,
@@ -544,7 +610,12 @@ export async function getCashflowFormOptions(businessDate: string) {
 export type FinanceReceiptRow = {
   id: number;
   receiptNumber: string;
-  source: "School fee" | "Feeding" | "Admission" | "Miscellaneous";
+  source:
+    | "School fee"
+    | "Feeding"
+    | "Township transport"
+    | "Admission"
+    | "Miscellaneous";
   person: string;
   description: string;
   amount: string;
@@ -555,6 +626,7 @@ export type FinanceReceiptRow = {
   reversalOperation:
     | "reverse_school_fee_payment"
     | "reverse_feeding_receipt"
+    | "reverse_township_transport_receipt"
     | "reverse_admission_receipt"
     | "reverse_misc_receipt";
 };
@@ -623,6 +695,7 @@ export async function getReceiptsPage(
       row.source === "School fees"
         ? "School fee"
         : row.source === "Feeding" ||
+            row.source === "Township transport" ||
             row.source === "Admission" ||
             row.source === "Miscellaneous"
           ? row.source
@@ -634,21 +707,25 @@ export async function getReceiptsPage(
           ? row.person_name === "Daily aggregate"
             ? "Daily feeding total"
             : "Feeding collection"
-          : source === "Admission"
-            ? row.person_name === "Daily aggregate"
-              ? "Daily admission total"
-              : "Admission collection"
-            : (descriptionById.get(Number(row.record_id)) ??
-              row.category ??
-              "Miscellaneous collection");
+          : source === "Township transport"
+            ? "Daily within-township transport total"
+            : source === "Admission"
+              ? row.person_name === "Daily aggregate"
+                ? "Daily admission total"
+                : "Admission collection"
+              : (descriptionById.get(Number(row.record_id)) ??
+                row.category ??
+                "Miscellaneous collection");
     const reversalOperation =
       source === "School fee"
         ? ("reverse_school_fee_payment" as const)
         : source === "Feeding"
           ? ("reverse_feeding_receipt" as const)
-          : source === "Admission"
-            ? ("reverse_admission_receipt" as const)
-            : ("reverse_misc_receipt" as const);
+          : source === "Township transport"
+            ? ("reverse_township_transport_receipt" as const)
+            : source === "Admission"
+              ? ("reverse_admission_receipt" as const)
+              : ("reverse_misc_receipt" as const);
     return {
       id: Number(row.record_id),
       receiptNumber: row.document_reference ?? "—",
@@ -956,9 +1033,11 @@ export async function getReceiptDocument(
   const table =
     source === "Feeding"
       ? "feeding_receipts"
-      : source === "Admission"
-        ? "admission_receipts"
-        : "misc_receipts";
+      : source === "Township transport"
+        ? "township_transport_receipts"
+        : source === "Admission"
+          ? "admission_receipts"
+          : "misc_receipts";
   const result = await supabase
     .from(table)
     .select("*")
@@ -1023,6 +1102,7 @@ export async function getInvoiceDetail(
     .from("invoice_lines")
     .select("id,description,amount,sort_order")
     .eq("invoice_id", invoiceId)
+    .gt("amount", 0)
     .order("sort_order");
   if (lines.error) throw new Error(invoiceError);
   const libraryBalance = await getInvoiceLibraryBalance(
@@ -1148,6 +1228,7 @@ function mapEndTermInvoice(
     createdByName: row.recorded_by_snapshot,
     createdAt: row.created_at,
     lines: row.invoice_lines
+      .filter((line) => Number(line.amount) > 0)
       .sort((left, right) => left.sort_order - right.sort_order)
       .map((line) => ({
         id: line.id,

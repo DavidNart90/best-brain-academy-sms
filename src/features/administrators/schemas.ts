@@ -55,6 +55,14 @@ export const administratorStatusChangeSchema = z.object({
   userId: z.uuid(),
   status: z.enum(administratorStatuses),
 });
+export const administratorEmailChangeSchema = z.object({
+  userId: z.uuid(),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .pipe(z.email("Enter a valid email address.")),
+});
 export const administratorAccountDeletionSchema = z.object({
   userId: z.uuid(),
   confirmationEmail: z.string().trim().toLowerCase().pipe(z.email()),

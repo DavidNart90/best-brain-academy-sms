@@ -77,6 +77,7 @@ export type FinancialSummary = {
   schoolFeesCollected: string;
   outstandingFees: string;
   feedingCollected: string;
+  townshipTransportCollected: string;
   admissionCollected: string;
   miscellaneousCollected: string;
   grossReceipts: string;

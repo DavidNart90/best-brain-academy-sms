@@ -171,7 +171,7 @@ function mapSalary(row: {
   payroll_month: string;
   gross_salary: number;
   total_deductions: number;
-  net_salary: number;
+  net_salary: number | null;
   status: string;
   reversal_number: string | null;
 }): SalaryListRow {
@@ -185,7 +185,7 @@ function mapSalary(row: {
     payrollMonth: row.payroll_month,
     grossSalary: money(row.gross_salary),
     totalDeductions: money(row.total_deductions),
-    netSalary: money(row.net_salary),
+    netSalary: money(row.net_salary ?? 0),
     status: row.status as "active" | "reversed",
     reversalNumber: row.reversal_number,
   };
@@ -288,7 +288,7 @@ export async function getSalaryPage(
     pageCount: Math.max(1, Math.ceil((result.count ?? 0) / pageSize)),
     grossSalary: sumMoney(totals.data.map((row) => row.gross_salary)),
     totalDeductions: sumMoney(totals.data.map((row) => row.total_deductions)),
-    netSalary: sumMoney(totals.data.map((row) => row.net_salary)),
+    netSalary: sumMoney(totals.data.map((row) => row.net_salary ?? 0)),
     salaryPaid: sumMoney(totalPositions.map((row) => Number(row.salaryPaid))),
     salaryOutstanding: sumMoney(
       totalPositions.map((row) => Number(row.salaryOutstanding)),

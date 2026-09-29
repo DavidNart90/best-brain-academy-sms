@@ -142,6 +142,7 @@ function normalizeSnapshot(value: unknown): FinancialSnapshot {
     schoolFeesCollected: asMoney(summary.schoolFeesCollected),
     outstandingFees: asMoney(summary.outstandingFees),
     feedingCollected: asMoney(summary.feedingCollected),
+    townshipTransportCollected: asMoney(summary.townshipTransportCollected),
     admissionCollected: asMoney(summary.admissionCollected),
     miscellaneousCollected: asMoney(summary.miscellaneousCollected),
     grossReceipts: asMoney(summary.grossReceipts),
@@ -522,7 +523,7 @@ async function getFinancialActivityTable(
   const labels = {
     collections: [
       "Collection report",
-      "Posted school-fee, feeding, admission, and miscellaneous receipts.",
+      "Posted school-fee, feeding, within-township transport, admission, and miscellaneous receipts.",
     ],
     payments: [
       "Payment report",

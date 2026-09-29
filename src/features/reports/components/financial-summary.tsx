@@ -95,6 +95,10 @@ export function FinancialSummaryReport({
               value={snapshot.summary.feedingCollected}
             />
             <LedgerRow
+              label="Within-township transport"
+              value={snapshot.summary.townshipTransportCollected}
+            />
+            <LedgerRow
               label="Admission collections"
               value={snapshot.summary.admissionCollected}
             />

@@ -23,6 +23,18 @@ const options = {
     { id: 1, code: "FUEL", name: "Fuel", status: "active" },
     { id: 2, code: "OTHER", name: "Other", status: "active" },
   ],
+  dailyFees: {
+    feeding: {
+      amount: "10.00",
+      appliesTo: "Nursery 1 through Basic 6",
+      enabled: true,
+    },
+    townshipTransport: {
+      amount: "6.00",
+      appliesTo: "Daily in-and-out riders within the township",
+      enabled: true,
+    },
+  },
 };
 
 function renderForm() {
@@ -105,7 +117,7 @@ describe("daily cashflow entry", () => {
     expect(post).not.toHaveBeenCalled();
   });
 
-  it.each(["Feeding fees", "Admission fees"])(
+  it.each(["Feeding fees", "Township transport", "Admission fees"])(
     "posts %s as a daily total without a student",
     async (mode) => {
       const user = userEvent.setup();
@@ -128,6 +140,35 @@ describe("daily cashflow entry", () => {
       });
     },
   );
+
+  it("does not show township transport when its configured amount is zero", () => {
+    render(
+      <CashflowEntryForm
+        options={{
+          ...options,
+          dailyFees: {
+            ...options.dailyFees,
+            townshipTransport: {
+              ...options.dailyFees.townshipTransport,
+              amount: "0.00",
+              enabled: false,
+            },
+          },
+        }}
+        businessDate="2026-09-08"
+        admissionExpectation={{
+          businessDate: "2026-09-08",
+          admissionCount: 0,
+          feePerAdmission: "50.00",
+          expectedAmount: "0.00",
+          termLabel: "2026/2027 · Term 1",
+        }}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Township transport" }),
+    ).not.toBeInTheDocument();
+  });
 
   it("shows the expected admission total before posting", async () => {
     const user = userEvent.setup();

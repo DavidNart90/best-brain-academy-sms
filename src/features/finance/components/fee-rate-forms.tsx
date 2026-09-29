@@ -182,6 +182,9 @@ export function FlatFeesForm({
 }) {
   const [message, setMessage] = useState("");
   const feeding = flatFees.find((row) => row.code === "feeding_fee");
+  const townshipTransport = flatFees.find(
+    (row) => row.code === "township_transport_fee",
+  );
   const admission = flatFees.find((row) => row.code === "admission_fee");
   const form = useForm<FlatFeesFormValues, unknown, FlatFeesInput>({
     resolver: zodResolver(flatFeesInputSchema),
@@ -190,6 +193,8 @@ export function FlatFeesForm({
       academicTermId,
       feedingRateId: feeding?.rateId ?? "",
       feedingAmount: feeding?.amount ?? "",
+      townshipTransportRateId: townshipTransport?.rateId ?? "",
+      townshipTransportAmount: townshipTransport?.amount ?? "",
       admissionRateId: admission?.rateId ?? "",
       admissionAmount: admission?.amount ?? "",
     },
@@ -201,15 +206,16 @@ export function FlatFeesForm({
   });
   return (
     <form onSubmit={submit} noValidate className="panel p-5 sm:p-6">
-      <h3 className="text-sm font-semibold">Feeding and admission fees</h3>
+      <h3 className="text-sm font-semibold">Daily and admission fees</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         These reference amounts are never auto-charged. Accounts staff post the
-        actual feeding or admission total collected for each business date.
+        actual daily total collected. Set township transport to 0.00 to hide and
+        disable that collection option.
       </p>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <FormField
           id="feeding-amount"
-          label="Feeding fee (per student per day)"
+          label="Feeding (Nursery 1–Basic 6, daily)"
           error={form.formState.errors.feedingAmount?.message}
         >
           <Input
@@ -217,6 +223,18 @@ export function FlatFeesForm({
             inputMode="decimal"
             placeholder="0.00"
             {...form.register("feedingAmount")}
+          />
+        </FormField>
+        <FormField
+          id="township-transport-amount"
+          label="Within-township transport (daily in & out)"
+          error={form.formState.errors.townshipTransportAmount?.message}
+        >
+          <Input
+            id="township-transport-amount"
+            inputMode="decimal"
+            placeholder="0.00"
+            {...form.register("townshipTransportAmount")}
           />
         </FormField>
         <FormField
@@ -239,7 +257,7 @@ export function FlatFeesForm({
           ) : (
             <Save />
           )}{" "}
-          Save fees
+          Save daily and admission fees
         </Button>
         <Notice message={message} />
       </div>

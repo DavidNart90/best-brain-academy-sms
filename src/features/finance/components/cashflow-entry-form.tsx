@@ -28,6 +28,16 @@ export type CashflowFormOptions = {
     name: string;
     status: string;
   }>;
+  dailyFees: {
+    feeding: DailyFeeOption;
+    townshipTransport: DailyFeeOption;
+  };
+};
+
+type DailyFeeOption = {
+  amount: string | null;
+  appliesTo: string | null;
+  enabled: boolean;
 };
 
 export type AdmissionFeeExpectation = {
@@ -41,12 +51,17 @@ export type AdmissionFeeExpectation = {
 type Mode =
   | "school_fee_payment"
   | "feeding_receipt"
+  | "township_transport_receipt"
   | "admission_receipt"
   | "misc_receipt"
   | "expense";
 const modes: Array<{ value: Mode; label: string }> = [
   { value: "school_fee_payment", label: "School Fees" },
   { value: "feeding_receipt", label: "Feeding fees" },
+  {
+    value: "township_transport_receipt",
+    label: "Township transport",
+  },
   { value: "admission_receipt", label: "Admission fees" },
   { value: "misc_receipt", label: "Miscellaneous income" },
   { value: "expense", label: "Expense" },
@@ -83,7 +98,22 @@ export function CashflowEntryForm({
   const isOtherExpense =
     category?.code.toUpperCase() === "OTHER" ||
     category?.name.trim().toLowerCase() === "other";
-  const dailyTotal = mode === "feeding_receipt" || mode === "admission_receipt";
+  const dailyTotal =
+    mode === "feeding_receipt" ||
+    mode === "township_transport_receipt" ||
+    mode === "admission_receipt";
+  const availableModes = modes.filter(
+    (item) =>
+      (item.value !== "feeding_receipt" || options.dailyFees.feeding.enabled) &&
+      (item.value !== "township_transport_receipt" ||
+        options.dailyFees.townshipTransport.enabled),
+  );
+  const selectedDailyFee =
+    mode === "feeding_receipt"
+      ? options.dailyFees.feeding
+      : mode === "township_transport_receipt"
+        ? options.dailyFees.townshipTransport
+        : null;
 
   function resetControls() {
     setSelectedMethod("");
@@ -177,10 +207,10 @@ export function CashflowEntryForm({
         </span>
       </div>
       <div
-        className="mt-4 grid gap-2 sm:grid-cols-3 xl:grid-cols-5"
+        className="mt-4 grid gap-2 sm:grid-cols-3 xl:grid-cols-6"
         aria-label="Transaction type"
       >
-        {modes.map((item) => (
+        {availableModes.map((item) => (
           <button
             key={item.value}
             type="button"
@@ -200,10 +230,23 @@ export function CashflowEntryForm({
       {dailyTotal ? (
         <p className="mt-4 rounded-md bg-muted p-3 text-sm">
           Enter the day&apos;s total{" "}
-          {mode === "feeding_receipt" ? "feeding" : "admission"} collections for
-          the selected payment method. Each method can be posted once per day.
-          To correct a posted total, reverse it in Receipts before posting its
-          replacement.
+          {mode === "feeding_receipt"
+            ? "feeding"
+            : mode === "township_transport_receipt"
+              ? "within-township transport"
+              : "admission"}{" "}
+          collections for the selected payment method. Each method can be posted
+          once per day. To correct a posted total, reverse it in Receipts before
+          posting its replacement.
+          {selectedDailyFee?.amount ? (
+            <span className="mt-2 block text-xs text-muted-foreground">
+              Configured rate: <Money value={selectedDailyFee.amount} /> per
+              paying student per day
+              {selectedDailyFee.appliesTo
+                ? ` · ${selectedDailyFee.appliesTo}`
+                : ""}
+            </span>
+          ) : null}
         </p>
       ) : null}
       {mode === "admission_receipt" ? (

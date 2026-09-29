@@ -39,7 +39,7 @@ export async function saveOwnProfile(
   const supabase = await createServerSupabaseClient();
   const result = await supabase.rpc("update_own_profile", {
     profile_display_name: parsed.data.displayName,
-    profile_phone: parsed.data.phone,
+    profile_phone: parsed.data.phone ?? undefined,
   });
 
   if (result.error)

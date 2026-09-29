@@ -9,6 +9,7 @@ import { reverseFinanceAction } from "../server/actions";
 type Operation =
   | "reverse_school_fee_payment"
   | "reverse_feeding_receipt"
+  | "reverse_township_transport_receipt"
   | "reverse_admission_receipt"
   | "reverse_misc_receipt"
   | "void_expense";
