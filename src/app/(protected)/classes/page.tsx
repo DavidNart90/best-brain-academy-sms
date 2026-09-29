@@ -13,6 +13,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -31,6 +32,14 @@ export default async function ClassesPage({
   if (!context) return <PermissionDenied />;
   const result = await getClassPage(await searchParams);
   const pageCount = Math.max(1, Math.ceil(result.total / result.pageSize));
+  const totals = result.rows.reduce(
+    (sum, schoolClass) => ({
+      male: sum.male + schoolClass.maleStudents,
+      female: sum.female + schoolClass.femaleStudents,
+      students: sum.students + schoolClass.totalStudents,
+    }),
+    { male: 0, female: 0, students: 0 },
+  );
   return (
     <>
       <PageHeader
@@ -141,6 +150,23 @@ export default async function ClassesPage({
                 </TableRow>
               ))}
             </TableBody>
+            <TableFooter>
+              <TableRow className="hover:bg-muted/50">
+                <TableCell className="px-5 font-semibold" colSpan={3}>
+                  Grand total
+                </TableCell>
+                <TableCell className="text-right font-semibold tabular-nums">
+                  {totals.male}
+                </TableCell>
+                <TableCell className="text-right font-semibold tabular-nums">
+                  {totals.female}
+                </TableCell>
+                <TableCell className="text-right font-semibold tabular-nums">
+                  {totals.students}
+                </TableCell>
+                <TableCell colSpan={2} />
+              </TableRow>
+            </TableFooter>
           </Table>
         )}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-4 text-xs text-muted-foreground">
