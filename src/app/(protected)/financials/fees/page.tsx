@@ -67,7 +67,7 @@ export default async function FeeStructurePage({
     <>
       <PageHeader
         title="Fee Structure"
-        description="School fees by class and transport location. Changes apply to future invoices; issued invoices keep their original amounts."
+        description="School fees by class and transport location. Rerun term invoice generation to apply changes to unpaid invoices with no payments."
       >
         <PrintInvoiceButton />
       </PageHeader>

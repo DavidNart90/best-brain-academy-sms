@@ -65,8 +65,8 @@ export function BaseClassFeesForm({
     <form onSubmit={submit} noValidate className="panel p-5 sm:p-6">
       <h3 className="text-sm font-semibold">Base class fees</h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Applies per class for the selected term. Issued invoices keep their
-        original amount even after this changes.
+        Applies per class for the selected term. Rerun term invoice generation
+        to refresh unpaid invoices that have no payments.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {rows.map((row, index) => (
@@ -137,7 +137,8 @@ export function TransportChargesForm({
       <p className="mt-1 text-sm text-muted-foreground">
         Applies per transport location for the selected term, based on how far a
         student stays from school. Enter 0.00 for locations that do not pay a
-        transport charge.
+        transport charge. Rerun term invoice generation to refresh eligible
+        unpaid invoices.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {rows.map((row, index) => (

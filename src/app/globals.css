@@ -164,6 +164,11 @@
   margin: 10mm;
 }
 
+@page class-roster-report {
+  size: A4 landscape;
+  margin: 10mm;
+}
+
 @media print {
   .app-sidebar,
   .app-topbar,
@@ -232,6 +237,17 @@
   .outstanding-report th,
   .outstanding-report td {
     padding: 6px 4px;
+  }
+  .class-roster-report {
+    page: class-roster-report;
+  }
+  .class-roster-report table {
+    min-width: 0;
+    font-size: 10px;
+  }
+  .class-roster-report th,
+  .class-roster-report td {
+    padding: 6px 5px;
   }
   .fee-schedule {
     font-size: 10px;

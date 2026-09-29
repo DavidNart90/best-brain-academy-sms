@@ -103,7 +103,7 @@ export function TermRateWorkflow({
               ? `${noun === "school fees" ? "Student fees" : noun} for this future term are locked. They will open when the term becomes current.`
               : isEditableApprovedCurrentTerm
                 ? domain === "school_fees"
-                  ? "Approved for billing. Current-term student fees remain editable; issued invoices keep their original amounts."
+                  ? "Approved for billing. Current-term student fees remain editable; rerun term invoice generation to refresh unpaid invoices with no payments."
                   : "Approved for billing. Current-term Books & Prospectus prices remain editable; generated student charges keep their original amounts."
                 : configuration.status === "approved"
                   ? `These ${noun} are locked and available for billing.`
@@ -154,8 +154,9 @@ export function TermRateWorkflow({
                 </DialogTitle>
                 <DialogDescription>
                   Approval makes this configuration available for billing. While
-                  this term remains current, prices can still be corrected;
-                  existing invoices or charges keep their original amounts.
+                  this term remains current, prices can still be corrected. If
+                  these are school fees, rerunning term invoice generation
+                  refreshes only unpaid invoices with no payment history.
                 </DialogDescription>
               </DialogHeader>
               <div className="rounded-lg border bg-muted/35 p-4 text-sm">

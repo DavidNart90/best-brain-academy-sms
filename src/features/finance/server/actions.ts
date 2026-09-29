@@ -394,9 +394,15 @@ export async function generateTermInvoices(
   const result = rpcResult.data as unknown as GenerateInvoicesResult;
   refreshInvoices();
   const skippedCount = result.skipped?.length ?? 0;
+  const updatedCount = result.updatedCount ?? 0;
+  const parts = [
+    `${result.createdCount} invoice${result.createdCount === 1 ? "" : "s"} created`,
+    `${updatedCount} unpaid invoice${updatedCount === 1 ? "" : "s"} updated`,
+  ];
+  if (skippedCount) parts.push(`${skippedCount} skipped`);
   return {
     ok: true,
-    message: `${result.createdCount} invoice${result.createdCount === 1 ? "" : "s"} created${skippedCount ? `, ${skippedCount} skipped` : ""}.`,
+    message: `${parts.join(", ")}.`,
     result,
   };
 }

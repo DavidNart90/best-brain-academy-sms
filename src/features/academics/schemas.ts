@@ -132,6 +132,14 @@ export const classListQuerySchema = z.object({
   q: z.string().trim().max(80).catch(""),
   status: z.enum(["all", "active", "archived"]).catch("active"),
   page: z.coerce.number().int().min(1).catch(1),
+  academicYearId: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.coerce.number().int().positive().optional().catch(undefined),
+  ),
+  academicTermId: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.coerce.number().int().positive().optional().catch(undefined),
+  ),
 });
 
 export type AcademicYearInput = z.infer<typeof academicYearInputSchema>;

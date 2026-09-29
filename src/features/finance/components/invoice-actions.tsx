@@ -43,9 +43,9 @@ export function GenerateInvoicesPanel() {
         Generate term invoices
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Creates one invoice per actively enrolled student for the current
-        academic term. Students who already have an active invoice, or whose
-        class/location has no configured rate, are skipped and listed below.
+        Creates missing invoices for the current term. On a rerun, unpaid
+        invoices with no payments are refreshed from the latest base and
+        transport rates. Invoices with payment history are preserved.
       </p>
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <Button

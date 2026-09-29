@@ -129,10 +129,19 @@ export type OutstandingFilterOption = {
 
 export type GenerateInvoicesResult = {
   createdCount: number;
+  updatedCount: number;
   created: Array<{
     studentId: number;
     invoiceId: number;
     invoiceNumber: string;
+  }>;
+  updated: Array<{
+    studentId: number;
+    invoiceId: number;
+    invoiceNumber: string;
+    changedComponents: Array<"baseClassFee" | "transportCharge">;
+    previousTotal: number;
+    newTotal: number;
   }>;
   skipped: Array<{ studentId: number; reason: string }>;
 };
@@ -159,7 +168,10 @@ export type EndTermInvoiceSetup = {
   libraryConfigurationStatus: TermRateConfiguration["status"];
 };
 
-export type EndTermInvoiceGenerationResult = GenerateInvoicesResult & {
+export type EndTermInvoiceGenerationResult = Omit<
+  GenerateInvoicesResult,
+  "updatedCount" | "updated"
+> & {
   nextCursor: number | null;
   hasMore: boolean;
   batchSize: number;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Printer, Settings2 } from "lucide-react";
 import { requirePermission } from "@/lib/auth/access";
 import { hasPermission } from "@/lib/permissions/contracts";
 import {
@@ -18,17 +18,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ClassFilters } from "@/features/academics/components/class-filters";
+import { classListHref } from "@/features/academics/class-list-query";
 import { getClassPage } from "@/features/academics/server/queries";
 import { classGroupLabels } from "@/features/academics/types";
-
-function pageHref(q: string, status: string, page: number) {
-  const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  if (status !== "active") params.set("status", status);
-  if (page > 1) params.set("page", String(page));
-  const query = params.toString();
-  return query ? `/classes?${query}` : "/classes";
-}
 
 export default async function ClassesPage({
   searchParams,
@@ -43,15 +35,28 @@ export default async function ClassesPage({
     <>
       <PageHeader
         title="Classes"
-        description="Review the approved class catalogue in its school-wide display order."
+        description={`Review class enrollment by gender for ${result.selectedYearLabel} · ${result.selectedTermLabel}.`}
       >
-        {hasPermission(context, "settings.manage") && (
-          <Button asChild>
-            <Link href="/settings/academics">
-              <Settings2 /> Manage academic settings
-            </Link>
-          </Button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {result.total > 0 && (
+            <Button asChild variant="outline">
+              <Link
+                href={classListHref(result.query, {
+                  pathname: "/classes/print",
+                })}
+              >
+                <Printer /> Print class report
+              </Link>
+            </Button>
+          )}
+          {hasPermission(context, "settings.manage") && (
+            <Button asChild>
+              <Link href="/settings/academics">
+                <Settings2 /> Manage academic settings
+              </Link>
+            </Button>
+          )}
+        </div>
       </PageHeader>
       <section
         className="panel overflow-hidden"
@@ -67,8 +72,13 @@ export default async function ClassesPage({
             </p>
           </div>
           <ClassFilters
+            key={`${result.query.academicYearId ?? "none"}-${result.query.academicTermId ?? "none"}-${result.query.status}-${result.query.q}`}
             initialQuery={result.query.q}
             initialStatus={result.query.status}
+            initialAcademicYearId={result.query.academicYearId}
+            initialAcademicTermId={result.query.academicTermId}
+            years={result.years}
+            terms={result.terms}
           />
         </div>
         {result.rows.length === 0 ? (
@@ -85,7 +95,10 @@ export default async function ClassesPage({
                 <TableHead className="px-5">Class</TableHead>
                 <TableHead>Code</TableHead>
                 <TableHead>Class group</TableHead>
-                <TableHead>Display order</TableHead>
+                <TableHead className="text-right">Male</TableHead>
+                <TableHead className="text-right">Female</TableHead>
+                <TableHead className="text-right">Total students</TableHead>
+                <TableHead className="text-right">Display order</TableHead>
                 <TableHead className="pr-5">Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -106,7 +119,18 @@ export default async function ClassesPage({
                   <TableCell>
                     {classGroupLabels[schoolClass.class_group]}
                   </TableCell>
-                  <TableCell>{schoolClass.sort_order}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {schoolClass.maleStudents}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {schoolClass.femaleStudents}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold tabular-nums">
+                    {schoolClass.totalStudents}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {schoolClass.sort_order}
+                  </TableCell>
                   <TableCell className="pr-5">
                     <StatusBadge
                       status={
@@ -134,11 +158,9 @@ export default async function ClassesPage({
               }
             >
               <Link
-                href={pageHref(
-                  result.query.q,
-                  result.query.status,
-                  Math.max(1, result.page - 1),
-                )}
+                href={classListHref(result.query, {
+                  page: Math.max(1, result.page - 1),
+                })}
               >
                 <ChevronLeft /> Previous
               </Link>
@@ -153,11 +175,9 @@ export default async function ClassesPage({
               }
             >
               <Link
-                href={pageHref(
-                  result.query.q,
-                  result.query.status,
-                  Math.min(pageCount, result.page + 1),
-                )}
+                href={classListHref(result.query, {
+                  page: Math.min(pageCount, result.page + 1),
+                })}
               >
                 Next <ChevronRight />
               </Link>
