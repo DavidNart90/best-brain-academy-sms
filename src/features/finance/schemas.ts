@@ -63,6 +63,8 @@ export const flatFeesInputSchema = z.object({
   academicTermId: idSchema,
   feedingRateId: optionalIdSchema,
   feedingAmount: moneyAmountSchema,
+  townshipTransportRateId: optionalIdSchema,
+  townshipTransportAmount: transportAmountSchema,
   admissionRateId: optionalIdSchema,
   admissionAmount: moneyAmountSchema,
 });

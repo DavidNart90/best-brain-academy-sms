@@ -6,6 +6,7 @@ import { requireRateLimitedPermission } from "@/lib/security/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   administratorAccountDeletionSchema,
+  administratorEmailChangeSchema,
   administratorInvitationBatchSchema,
   administratorRoleChangeSchema,
   administratorStatusChangeSchema,
@@ -117,6 +118,45 @@ export async function changeAdministratorStatus(
       parsed.data.status === "disabled"
         ? "Account disabled. Existing app access is denied immediately."
         : "Account enabled. Access now follows its assigned role.",
+  };
+}
+
+export async function changeAdministratorEmail(
+  input: unknown,
+): Promise<AdministratorActionResult> {
+  if (!(await requirePermission("administrators.manage"))) return denied;
+  const parsed = administratorEmailChangeSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      ok: false,
+      message:
+        parsed.error.issues[0]?.message ?? "Enter a valid email address.",
+    };
+
+  const supabase = await createServerSupabaseClient(true);
+  const result = await supabase.functions.invoke("administrator-provision", {
+    body: {
+      operation: "change_email",
+      userId: parsed.data.userId,
+      email: parsed.data.email,
+    },
+  });
+  if (result.error) {
+    let message = "The login email could not be updated.";
+    const context = "context" in result.error ? result.error.context : null;
+    if (context instanceof Response) {
+      const body = (await context.json().catch(() => null)) as {
+        message?: string;
+      } | null;
+      if (body?.message) message = body.message;
+    }
+    return { ok: false, message };
+  }
+
+  revalidatePath("/administrators");
+  return {
+    ok: true,
+    message: "Login email updated. The administrator can use it immediately.",
   };
 }
 

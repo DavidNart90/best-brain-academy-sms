@@ -2,7 +2,7 @@
 
 **Owner:** Chief Engineer  
 **Recorded:** 1 September 2026  
-**Updated:** 2 September 2026
+**Updated:** 29 September 2026
 
 **Status:** Authoritative business requirements for Phases 2–5. Phase 3 is authorized one section at a time, subject to the entry checkpoint and task order in [Plan.md](../Plan.md).
 
@@ -117,7 +117,7 @@ These values are the current requirements, not permanent constants. Future term 
 
 ## 6. Daily receipts
 
-The daily receipt worksheet has four explicit income categories.
+The daily receipt worksheet has five explicit income categories.
 
 ### 6.1 School-fee collections
 
@@ -128,6 +128,8 @@ For each entry, accounts staff search live by invoice number or student name, se
 ### 6.2 Feeding-fee collections
 
 - Current standard amount: `GHS 10.00` per paying student per day.
+- Eligibility: Nursery 1 through Basic 6 only. KG 1, KG 2, and JHS are not
+  included in the feeding-fee collection rule.
 - The system must **not** automatically charge, generate, or assume this fee for every student or every school day.
 - As directed by the Chief Engineer on 8 September 2026, the accountant records the aggregate amount actually received for the business day, without selecting students.
 - The amount must be configurable and effective-dated.
@@ -137,7 +139,19 @@ For each entry, accounts staff search live by invoice number or student name, se
 
 This aggregate-entry decision supersedes the earlier per-student feeding roster requirement.
 
-### 6.3 Admission-fee collections
+### 6.3 Within-township transport collections
+
+- Current standard amount: `GHS 6.00` per paying student per day for in-and-out
+  transport within the township.
+- Record the aggregate amount actually received for the business date and
+  payment method, without selecting students.
+- The amount is configurable and effective-dated. A configured amount of
+  `GHS 0.00` disables the collection option and it must not appear on the fee
+  structure, cashflow entry choices, or generated invoice lines.
+- Prevent duplicate active totals for the same business date and payment
+  method. Reverse a posted total before recording its replacement.
+
+### 6.4 Admission-fee collections
 
 - Current amount: `GHS 50.00` for a new student.
 - The amount must be configurable and effective-dated.
@@ -145,7 +159,7 @@ This aggregate-entry decision supersedes the earlier per-student feeding roster 
 - Prevent duplicate active totals for the same business date and payment method; preserve historical student-linked receipts and audited reversals.
 - A waiver, refund, or repeat-admission rule requires later approval; it must not be invented during implementation.
 
-### 6.4 Miscellaneous collections
+### 6.5 Miscellaneous collections
 
 Use miscellaneous income only for approved receipts that are not school fees, feeding fees, or admission fees. Each entry requires:
 
@@ -168,7 +182,9 @@ The accounts workspace should make frequent income and expense entry fast withou
 
 1. Select the business date, defaulting visibly to today.
 2. Choose money received or money spent.
-3. For money received, choose School Fees, Feeding fees, Admission fees, or Miscellaneous income.
+3. For money received, choose School Fees, Feeding fees, Township transport,
+   Admission fees, or Miscellaneous income. Township transport is omitted when
+   its configured rate is zero.
 4. For money spent, choose a configurable expense category and enter a positive amount and clear description.
 5. Search/select an invoice for School Fees. Feeding/admission entries use manually recorded daily totals, without student selection.
 6. Show the relevant class, location, invoice, outstanding balance, and default configured amount where applicable.
@@ -225,6 +241,9 @@ Daily School-Fee Collections
 Daily Feeding Collections
   = valid feeding payments received on the business date
 
+Daily Township Transport Collections
+  = valid within-township transport payments received on the business date
+
 Daily Admission Collections
   = valid admission-fee payments received on the business date
 
@@ -234,6 +253,7 @@ Daily Miscellaneous Collections
 Daily Gross Receipts
   = School-Fee Collections
   + Feeding Collections
+  + Township Transport Collections
   + Admission Collections
   + Miscellaneous Collections
 
@@ -309,6 +329,8 @@ The financial settings area must support authorized configuration of:
 - effective-dated base class fees;
 - effective-dated location/transport charges and display label;
 - feeding-fee amount;
+- within-township daily transport amount, where zero disables display and
+  posting;
 - admission-fee amount;
 - miscellaneous-income categories;
 - expense categories;

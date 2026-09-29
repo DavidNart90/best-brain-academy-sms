@@ -30,6 +30,8 @@ export function postingError(
       "Cancelled invoices cannot accept payments.",
       "This payment method requires an external reference.",
       "Admission fee configuration is unavailable for this date. Contact the Super Administrator.",
+      "Feeding collection is not active for this date.",
+      "Township transport collection is not active for this date.",
     ];
     const admissionReconciliationMessage =
       operation === "admission_receipt" &&

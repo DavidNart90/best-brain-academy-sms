@@ -249,6 +249,50 @@ export type Database = {
           },
         ];
       };
+      administrator_email_change_requests: {
+        Row: {
+          completed_at: string | null;
+          created_at: string;
+          failure_reason: string | null;
+          id: string;
+          new_email: string;
+          old_email: string;
+          requested_by: string;
+          status: string;
+          target_user_id: string;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string;
+          failure_reason?: string | null;
+          id?: string;
+          new_email: string;
+          old_email: string;
+          requested_by: string;
+          status?: string;
+          target_user_id: string;
+        };
+        Update: {
+          completed_at?: string | null;
+          created_at?: string;
+          failure_reason?: string | null;
+          id?: string;
+          new_email?: string;
+          old_email?: string;
+          requested_by?: string;
+          status?: string;
+          target_user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "administrator_email_change_requests_requested_by_fkey";
+            columns: ["requested_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       administrator_provisioning_requests: {
         Row: {
           account_status: string;
@@ -649,6 +693,68 @@ export type Database = {
           },
         ];
       };
+      end_term_invoice_configurations: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          id: number;
+          parent_notes: string;
+          source_academic_term_id: number;
+          target_academic_term_id: number;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          id?: never;
+          parent_notes?: string;
+          source_academic_term_id: number;
+          target_academic_term_id: number;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          id?: never;
+          parent_notes?: string;
+          source_academic_term_id?: number;
+          target_academic_term_id?: number;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "end_term_invoice_configurations_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "end_term_invoice_configurations_source_academic_term_id_fkey";
+            columns: ["source_academic_term_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_terms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "end_term_invoice_configurations_target_academic_term_id_fkey";
+            columns: ["target_academic_term_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_terms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "end_term_invoice_configurations_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       expense_categories: {
         Row: {
           code: string;
@@ -962,6 +1068,7 @@ export type Database = {
       };
       fee_components: {
         Row: {
+          applies_to: string;
           code: string;
           created_at: string;
           created_by: string | null;
@@ -975,6 +1082,7 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
+          applies_to: string;
           code: string;
           created_at?: string;
           created_by?: string | null;
@@ -988,6 +1096,7 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          applies_to?: string;
           code?: string;
           created_at?: string;
           created_by?: string | null;
@@ -1216,68 +1325,6 @@ export type Database = {
           },
         ];
       };
-      end_term_invoice_configurations: {
-        Row: {
-          created_at: string;
-          created_by: string;
-          id: number;
-          parent_notes: string;
-          source_academic_term_id: number;
-          target_academic_term_id: number;
-          updated_at: string;
-          updated_by: string;
-        };
-        Insert: {
-          created_at?: string;
-          created_by: string;
-          id?: never;
-          parent_notes?: string;
-          source_academic_term_id: number;
-          target_academic_term_id: number;
-          updated_at?: string;
-          updated_by: string;
-        };
-        Update: {
-          created_at?: string;
-          created_by?: string;
-          id?: never;
-          parent_notes?: string;
-          source_academic_term_id?: number;
-          target_academic_term_id?: number;
-          updated_at?: string;
-          updated_by?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "end_term_invoice_configurations_created_by_fkey";
-            columns: ["created_by"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "end_term_invoice_configurations_source_academic_term_id_fkey";
-            columns: ["source_academic_term_id"];
-            isOneToOne: false;
-            referencedRelation: "academic_terms";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "end_term_invoice_configurations_target_academic_term_id_fkey";
-            columns: ["target_academic_term_id"];
-            isOneToOne: false;
-            referencedRelation: "academic_terms";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "end_term_invoice_configurations_updated_by_fkey";
-            columns: ["updated_by"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       invoice_lines: {
         Row: {
           amount: number;
@@ -1381,10 +1428,10 @@ export type Database = {
           school_motto_snapshot: string | null;
           school_name_snapshot: string;
           school_phone_snapshot: string | null;
+          source_academic_term_id: number | null;
           status: string;
           student_id: number;
           student_name_snapshot: string;
-          source_academic_term_id: number | null;
           subtotal: number;
           total: number;
           updated_at: string;
@@ -1424,10 +1471,10 @@ export type Database = {
           school_motto_snapshot?: string | null;
           school_name_snapshot: string;
           school_phone_snapshot?: string | null;
+          source_academic_term_id?: number | null;
           status?: string;
           student_id: number;
           student_name_snapshot: string;
-          source_academic_term_id?: number | null;
           subtotal: number;
           total: number;
           updated_at?: string;
@@ -1467,10 +1514,10 @@ export type Database = {
           school_motto_snapshot?: string | null;
           school_name_snapshot?: string;
           school_phone_snapshot?: string | null;
+          source_academic_term_id?: number | null;
           status?: string;
           student_id?: number;
           student_name_snapshot?: string;
-          source_academic_term_id?: number | null;
           subtotal?: number;
           total?: number;
           updated_at?: string;
@@ -1513,17 +1560,17 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "invoices_school_location_id_fkey";
-            columns: ["school_location_id"];
-            isOneToOne: false;
-            referencedRelation: "school_locations";
-            referencedColumns: ["id"];
-          },
-          {
             foreignKeyName: "invoices_end_term_configuration_id_fkey";
             columns: ["end_term_configuration_id"];
             isOneToOne: false;
             referencedRelation: "end_term_invoice_configurations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoices_school_location_id_fkey";
+            columns: ["school_location_id"];
+            isOneToOne: false;
+            referencedRelation: "school_locations";
             referencedColumns: ["id"];
           },
           {
@@ -1649,10 +1696,31 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "library_charges_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_charges_enrollment_id_fkey";
+            columns: ["enrollment_id"];
+            isOneToOne: false;
+            referencedRelation: "student_directory";
+            referencedColumns: ["enrollment_id"];
+          },
+          {
             foreignKeyName: "library_charges_enrollment_id_fkey";
             columns: ["enrollment_id"];
             isOneToOne: false;
             referencedRelation: "student_enrollments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_charges_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "student_directory";
             referencedColumns: ["id"];
           },
           {
@@ -1667,6 +1735,13 @@ export type Database = {
             columns: ["term_rate_id"];
             isOneToOne: false;
             referencedRelation: "library_term_rates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_charges_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -1765,6 +1840,13 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "library_collections_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "library_collections_payment_method_id_fkey";
             columns: ["payment_method_id"];
             isOneToOne: false;
@@ -1772,10 +1854,31 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "library_collections_reversed_by_fkey";
+            columns: ["reversed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_collections_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "student_directory";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "library_collections_student_id_fkey";
             columns: ["student_id"];
             isOneToOne: false;
             referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_collections_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -1827,6 +1930,20 @@ export type Database = {
             columns: ["class_id"];
             isOneToOne: false;
             referencedRelation: "classes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_term_rates_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_term_rates_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -2546,6 +2663,13 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: "salary_deductions_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "salary_deductions_deduction_type_id_fkey";
             columns: ["deduction_type_id"];
             isOneToOne: false;
@@ -2553,10 +2677,31 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "salary_deductions_reversed_by_fkey";
+            columns: ["reversed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "salary_deductions_salary_record_id_fkey";
+            columns: ["salary_record_id"];
+            isOneToOne: false;
+            referencedRelation: "salary_cash_positions";
+            referencedColumns: ["salary_record_id"];
+          },
+          {
             foreignKeyName: "salary_deductions_salary_record_id_fkey";
             columns: ["salary_record_id"];
             isOneToOne: false;
             referencedRelation: "salary_records";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "salary_deductions_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -2567,7 +2712,7 @@ export type Database = {
           created_by: string;
           gross_salary: number;
           id: number;
-          net_salary: number;
+          net_salary: number | null;
           payroll_month: string;
           recorded_by_snapshot: string;
           reversal_number: string | null;
@@ -2590,7 +2735,7 @@ export type Database = {
           created_by: string;
           gross_salary: number;
           id?: never;
-          net_salary?: never;
+          net_salary?: number | null;
           payroll_month: string;
           recorded_by_snapshot: string;
           reversal_number?: string | null;
@@ -2613,7 +2758,7 @@ export type Database = {
           created_by?: string;
           gross_salary?: number;
           id?: never;
-          net_salary?: never;
+          net_salary?: number | null;
           payroll_month?: string;
           recorded_by_snapshot?: string;
           reversal_number?: string | null;
@@ -2633,88 +2778,35 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "salary_records_staff_id_fkey";
-            columns: ["staff_id"];
-            isOneToOne: false;
-            referencedRelation: "staff";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "salary_records_staff_id_fkey";
-            columns: ["staff_id"];
-            isOneToOne: false;
-            referencedRelation: "staff_directory";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      staff_salary_configurations: {
-        Row: {
-          created_at: string;
-          created_by: string;
-          effective_from: string;
-          effective_to: string | null;
-          end_reason: string | null;
-          gross_salary: number;
-          id: number;
-          notes: string | null;
-          staff_id: number;
-          status: string;
-          updated_at: string;
-          updated_by: string;
-        };
-        Insert: {
-          created_at?: string;
-          created_by: string;
-          effective_from: string;
-          effective_to?: string | null;
-          end_reason?: string | null;
-          gross_salary: number;
-          id?: never;
-          notes?: string | null;
-          staff_id: number;
-          status?: string;
-          updated_at?: string;
-          updated_by: string;
-        };
-        Update: {
-          created_at?: string;
-          created_by?: string;
-          effective_from?: string;
-          effective_to?: string | null;
-          end_reason?: string | null;
-          gross_salary?: number;
-          id?: never;
-          notes?: string | null;
-          staff_id?: number;
-          status?: string;
-          updated_at?: string;
-          updated_by?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "staff_salary_configurations_created_by_fkey";
+            foreignKeyName: "salary_records_created_by_fkey";
             columns: ["created_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "staff_salary_configurations_staff_id_fkey";
+            foreignKeyName: "salary_records_reversed_by_fkey";
+            columns: ["reversed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "salary_records_staff_id_fkey";
             columns: ["staff_id"];
             isOneToOne: false;
             referencedRelation: "staff";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "staff_salary_configurations_staff_id_fkey";
+            foreignKeyName: "salary_records_staff_id_fkey";
             columns: ["staff_id"];
             isOneToOne: false;
             referencedRelation: "staff_directory";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "staff_salary_configurations_updated_by_fkey";
+            foreignKeyName: "salary_records_updated_by_fkey";
             columns: ["updated_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
@@ -3027,6 +3119,80 @@ export type Database = {
           },
           {
             foreignKeyName: "staff_assignments_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      staff_salary_configurations: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          effective_from: string;
+          effective_to: string | null;
+          end_reason: string | null;
+          gross_salary: number;
+          id: number;
+          notes: string | null;
+          staff_id: number;
+          status: string;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          effective_from: string;
+          effective_to?: string | null;
+          end_reason?: string | null;
+          gross_salary: number;
+          id?: never;
+          notes?: string | null;
+          staff_id: number;
+          status?: string;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          effective_from?: string;
+          effective_to?: string | null;
+          end_reason?: string | null;
+          gross_salary?: number;
+          id?: never;
+          notes?: string | null;
+          staff_id?: number;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_salary_configurations_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_salary_configurations_staff_id_fkey";
+            columns: ["staff_id"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_salary_configurations_staff_id_fkey";
+            columns: ["staff_id"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_salary_configurations_updated_by_fkey";
             columns: ["updated_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
@@ -3389,6 +3555,122 @@ export type Database = {
           },
         ];
       };
+      township_transport_receipts: {
+        Row: {
+          amount: number;
+          business_date: string;
+          collection_scope: string;
+          created_at: string;
+          created_by: string;
+          external_reference: string | null;
+          id: number;
+          notes: string | null;
+          payment_method_id: number;
+          payment_method_name_snapshot: string;
+          receipt_number: string;
+          recorded_by_snapshot: string | null;
+          reversal_number: string | null;
+          reversal_reason: string | null;
+          reversed_at: string | null;
+          reversed_by: string | null;
+          reversed_by_name_snapshot: string | null;
+          school_address_snapshot: string | null;
+          school_email_snapshot: string | null;
+          school_logo_path_snapshot: string | null;
+          school_motto_snapshot: string | null;
+          school_name_snapshot: string | null;
+          school_phone_snapshot: string | null;
+          status: string;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          amount: number;
+          business_date: string;
+          collection_scope?: string;
+          created_at?: string;
+          created_by: string;
+          external_reference?: string | null;
+          id?: never;
+          notes?: string | null;
+          payment_method_id: number;
+          payment_method_name_snapshot: string;
+          receipt_number: string;
+          recorded_by_snapshot?: string | null;
+          reversal_number?: string | null;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot?: string | null;
+          school_phone_snapshot?: string | null;
+          status?: string;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          amount?: number;
+          business_date?: string;
+          collection_scope?: string;
+          created_at?: string;
+          created_by?: string;
+          external_reference?: string | null;
+          id?: never;
+          notes?: string | null;
+          payment_method_id?: number;
+          payment_method_name_snapshot?: string;
+          receipt_number?: string;
+          recorded_by_snapshot?: string | null;
+          reversal_number?: string | null;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          reversed_by_name_snapshot?: string | null;
+          school_address_snapshot?: string | null;
+          school_email_snapshot?: string | null;
+          school_logo_path_snapshot?: string | null;
+          school_motto_snapshot?: string | null;
+          school_name_snapshot?: string | null;
+          school_phone_snapshot?: string | null;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "township_transport_receipts_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "township_transport_receipts_payment_method_id_fkey";
+            columns: ["payment_method_id"];
+            isOneToOne: false;
+            referencedRelation: "payment_methods";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "township_transport_receipts_reversed_by_fkey";
+            columns: ["reversed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "township_transport_receipts_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_roles: {
         Row: {
           assigned_at: string;
@@ -3616,13 +3898,8 @@ export type Database = {
         };
         Returns: Json;
       };
-      finalize_administrator_invitation: {
-        Args: {
-          error_message?: string;
-          request_id: string;
-          succeeded: boolean;
-          target_user_id: string;
-        };
+      fail_administrator_email_change: {
+        Args: { p_error_message?: string; p_request_id: string };
         Returns: Json;
       };
       finalize_administrator_account_deletion: {
@@ -3630,6 +3907,15 @@ export type Database = {
           p_error_message?: string;
           p_request_id: string;
           p_succeeded: boolean;
+        };
+        Returns: Json;
+      };
+      finalize_administrator_invitation: {
+        Args: {
+          error_message?: string;
+          request_id: string;
+          succeeded: boolean;
+          target_user_id: string;
         };
         Returns: Json;
       };
@@ -3655,6 +3941,28 @@ export type Database = {
         Returns: Json;
       };
       get_access_context: { Args: never; Returns: Json };
+      get_administrator_directory: {
+        Args: {
+          page_number?: number;
+          page_size?: number;
+          role_filter?: string;
+          search_text?: string;
+          status_filter?: string;
+        };
+        Returns: {
+          account_status: string;
+          display_name: string;
+          email: string;
+          invitation_status: string;
+          invited_at: string;
+          last_sign_in_at: string;
+          mfa_enrolled: boolean;
+          phone: string;
+          role_code: string;
+          total_count: number;
+          user_id: string;
+        }[];
+      };
       get_asset_inventory_summary: { Args: never; Returns: Json };
       get_end_term_invoice_setup: {
         Args: { target_source_academic_term_id?: number };
@@ -3680,28 +3988,6 @@ export type Database = {
           salary_deductions: number;
         }[];
       };
-      get_administrator_directory: {
-        Args: {
-          page_number?: number;
-          page_size?: number;
-          role_filter?: string;
-          search_text?: string;
-          status_filter?: string;
-        };
-        Returns: {
-          account_status: string;
-          display_name: string;
-          email: string;
-          invitation_status: string;
-          invited_at: string;
-          last_sign_in_at: string;
-          mfa_enrolled: boolean;
-          phone: string;
-          role_code: string;
-          total_count: number;
-          user_id: string;
-        }[];
-      };
       import_staff: { Args: { payload: Json }; Returns: Json };
       import_students: { Args: { payload: Json }; Returns: Json };
       link_student_guardian: {
@@ -3712,23 +3998,20 @@ export type Database = {
         Args: { request_key: string; target_payroll_month: string };
         Returns: Json;
       };
-      prepare_administrator_invitations: {
-        Args: { payload: Json };
-        Returns: Json;
-      };
       prepare_administrator_account_deletion: {
         Args: { p_confirmed_email: string; p_target_user_id: string };
         Returns: Json;
       };
-      prepare_term_rate_configuration: {
-        Args: { target_academic_term_id: number; target_domain: string };
+      prepare_administrator_email_change: {
+        Args: { p_new_email: string; p_target_user_id: string };
         Returns: Json;
       };
-      update_own_profile: {
-        Args: {
-          profile_display_name: string;
-          profile_phone?: string | null;
-        };
+      prepare_administrator_invitations: {
+        Args: { payload: Json };
+        Returns: Json;
+      };
+      prepare_term_rate_configuration: {
+        Args: { target_academic_term_id: number; target_domain: string };
         Returns: Json;
       };
       record_admission_receipt: {
@@ -3938,8 +4221,17 @@ export type Database = {
         };
         Returns: Json;
       };
+      reverse_township_transport_receipt: {
+        Args: {
+          request_fingerprint: string;
+          request_key: string;
+          target_reason: string;
+          target_receipt_id: number;
+        };
+        Returns: Json;
+      };
       save_asset_inventory_record: {
-        Args: { payload: Json; target_record_id: number | null };
+        Args: { payload: Json; target_record_id: number };
         Returns: Json;
       };
       save_end_term_invoice_configuration: {
@@ -3978,6 +4270,10 @@ export type Database = {
       };
       set_student_photo: {
         Args: { target_photo_path: string; target_student_id: number };
+        Returns: Json;
+      };
+      update_own_profile: {
+        Args: { profile_display_name: string; profile_phone?: string };
         Returns: Json;
       };
       update_staff: {

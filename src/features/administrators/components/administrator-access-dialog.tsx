@@ -15,7 +15,9 @@ import {
 } from "@/components/ui/dialog";
 import type { AdministratorDirectoryRow } from "../types";
 import { AdministratorDeleteSection } from "./administrator-delete-section";
+import { AdministratorEmailEditor } from "./administrator-email-editor";
 import {
+  changeAdministratorEmail,
   changeAdministratorRole,
   changeAdministratorStatus,
 } from "../server/actions";
@@ -27,6 +29,8 @@ export function AdministratorAccessDialog({
   account: AdministratorDirectoryRow;
   currentUserId: string;
 }) {
+  const [savedEmail, setSavedEmail] = useState(account.email);
+  const [email, setEmail] = useState(account.email);
   const [role, setRole] = useState(account.role ?? "ADMINISTRATOR");
   const [status, setStatus] = useState<"active" | "disabled">(
     account.status === "disabled" ? "disabled" : "active",
@@ -38,15 +42,36 @@ export function AdministratorAccessDialog({
   } | null>(null);
   const [pending, startTransition] = useTransition();
   const isSelf = account.userId === currentUserId;
-  function run(kind: "role" | "status") {
+  const normalizedEmail = email.trim().toLowerCase();
+  function runEmailChange() {
+    setOutcome(null);
+    startTransition(async () => {
+      const result = await changeAdministratorEmail({
+        userId: account.userId,
+        email: normalizedEmail,
+      });
+      setOutcome(result);
+      if (result.ok) {
+        setEmail(normalizedEmail);
+        setSavedEmail(normalizedEmail);
+        setConfirmed(false);
+      }
+    });
+  }
+  function runAccessChange(kind: "role" | "status") {
     setOutcome(null);
     startTransition(async () => {
       const result =
         kind === "role"
           ? await changeAdministratorRole({ userId: account.userId, role })
-          : await changeAdministratorStatus({ userId: account.userId, status });
+          : await changeAdministratorStatus({
+              userId: account.userId,
+              status,
+            });
       setOutcome(result);
-      if (result.ok) setConfirmed(false);
+      if (result.ok) {
+        setConfirmed(false);
+      }
     });
   }
   return (
@@ -60,12 +85,22 @@ export function AdministratorAccessDialog({
         <DialogHeader>
           <DialogTitle>Manage {account.displayName}</DialogTitle>
           <DialogDescription>
-            Permission changes apply immediately. Your own account cannot be
-            changed here, and the final active Super Administrator is protected.
+            Email and access changes apply immediately. Your own account cannot
+            be changed here, and the final active Super Administrator is
+            protected.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-5 px-6 py-5">
-          <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+          <AdministratorEmailEditor
+            userId={account.userId}
+            email={email}
+            currentEmail={savedEmail}
+            confirmed={confirmed}
+            pending={pending}
+            onChange={setEmail}
+            onSave={runEmailChange}
+          />
+          <div className="grid gap-2 border-t pt-5 sm:grid-cols-[1fr_auto] sm:items-end">
             <label
               className="field text-sm font-medium"
               htmlFor={`role-${account.userId}`}
@@ -85,7 +120,7 @@ export function AdministratorAccessDialog({
             </label>
             <Button
               type="button"
-              onClick={() => run("role")}
+              onClick={() => runAccessChange("role")}
               disabled={!confirmed || pending || role === account.role}
             >
               {pending && <LoaderCircle className="animate-spin" />} Save role
@@ -112,7 +147,7 @@ export function AdministratorAccessDialog({
             <Button
               type="button"
               variant={status === "disabled" ? "destructive" : "default"}
-              onClick={() => run("status")}
+              onClick={() => runAccessChange("status")}
               disabled={!confirmed || pending || status === account.status}
             >
               {pending && <LoaderCircle className="animate-spin" />} Save status
@@ -126,10 +161,14 @@ export function AdministratorAccessDialog({
               onChange={(event) => setConfirmed(event.target.checked)}
             />
             <span>
-              I confirm this privileged access change for {account.email}.
+              I confirm this privileged access change for {savedEmail}.
             </span>
           </label>
-          {!isSelf && <AdministratorDeleteSection account={account} />}
+          {!isSelf && (
+            <AdministratorDeleteSection
+              account={{ ...account, email: savedEmail }}
+            />
+          )}
           {outcome && (
             <p
               role={outcome.ok ? "status" : "alert"}

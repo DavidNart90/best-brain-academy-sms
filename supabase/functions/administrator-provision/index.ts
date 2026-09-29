@@ -17,10 +17,21 @@ type DeleteAccountRequest = {
   userId: string;
   confirmationEmail: string;
 };
+type ChangeEmailRequest = {
+  operation: "change_email";
+  userId: string;
+  email: string;
+};
 type PreparedDeletion = {
   requestId: string;
   userId: string;
   email: string;
+};
+type PreparedEmailChange = {
+  requestId: string;
+  userId: string;
+  oldEmail: string;
+  newEmail: string;
 };
 const MAX_BODY_BYTES = 64 * 1024;
 
@@ -99,6 +110,21 @@ function isDeleteAccountRequest(value: unknown): value is DeleteAccountRequest {
     typeof row.confirmationEmail === "string" &&
     row.confirmationEmail.length <= 254 &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.confirmationEmail)
+  );
+}
+
+function isChangeEmailRequest(value: unknown): value is ChangeEmailRequest {
+  if (!value || typeof value !== "object") return false;
+  const row = value as Record<string, unknown>;
+  return (
+    row.operation === "change_email" &&
+    typeof row.userId === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      row.userId,
+    ) &&
+    typeof row.email === "string" &&
+    row.email.length <= 254 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)
   );
 }
 
@@ -250,6 +276,71 @@ Deno.serve(async (request: Request) => {
       deleted: true,
       userId: payload.userId,
       message: "Account deleted.",
+    });
+  }
+
+  if (isChangeEmailRequest(payload)) {
+    const normalizedEmail = payload.email.trim().toLowerCase();
+    const prepared = await caller.rpc("prepare_administrator_email_change", {
+      p_target_user_id: payload.userId,
+      p_new_email: normalizedEmail,
+    });
+    if (prepared.error)
+      return json(
+        {
+          message:
+            prepared.error.code === "42501"
+              ? "Your account cannot manage administrators."
+              : prepared.error.code === "22023" ||
+                  prepared.error.code === "23505"
+                ? prepared.error.message
+                : "The login email could not be prepared.",
+        },
+        prepared.error.code === "42501" ? 403 : 400,
+      );
+
+    const change = prepared.data as PreparedEmailChange | null;
+    if (
+      !change?.requestId ||
+      change.userId !== payload.userId ||
+      change.newEmail !== normalizedEmail
+    )
+      return json({ message: "The login email could not be prepared." }, 500);
+
+    const updated = await admin.auth.admin.updateUserById(payload.userId, {
+      email: normalizedEmail,
+      email_confirm: true,
+    });
+    if (updated.error || updated.data.user.email !== normalizedEmail) {
+      const failed = await admin.rpc("fail_administrator_email_change", {
+        p_request_id: change.requestId,
+        p_error_message: "Auth email update failed.",
+      });
+      const failure = failed.data as { status?: string } | null;
+      if (!failed.error && failure?.status === "completed")
+        return json({
+          updated: true,
+          userId: payload.userId,
+          email: normalizedEmail,
+          message: "Login email updated.",
+        });
+      return json(
+        {
+          message:
+            updated.error?.message?.toLowerCase().includes("registered") ||
+            updated.error?.message?.toLowerCase().includes("already")
+              ? "Another account already uses that email address."
+              : "The login email could not be updated.",
+        },
+        409,
+      );
+    }
+
+    return json({
+      updated: true,
+      userId: payload.userId,
+      email: normalizedEmail,
+      message: "Login email updated.",
     });
   }
 

@@ -6,6 +6,7 @@ export type FeeComponent = {
   id: number;
   code: string;
   name: string;
+  appliesTo: string;
   scope: FeeComponentScope;
   isRequired: boolean;
   sortOrder: number;
@@ -38,8 +39,9 @@ export type TransportChargeRow = {
 };
 
 export type FlatFeeRow = {
-  code: "feeding_fee" | "admission_fee";
+  code: "feeding_fee" | "township_transport_fee" | "admission_fee";
   name: string;
+  appliesTo: string;
   rateId: number | null;
   amount: string | null;
 };

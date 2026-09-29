@@ -51,6 +51,12 @@ export default async function FeeStructurePage({
       </PageState>
     );
   const settings = await getFinanceSettings(selected.id);
+  const visibleTransportCharges = settings.transportCharges.filter(
+    (location) => location.amount === null || Number(location.amount) > 0,
+  );
+  const visibleFlatFees = settings.flatFees.filter(
+    (fee) => fee.amount === null || Number(fee.amount) > 0,
+  );
   const canManage = hasPermission(context, "finance.fees.manage");
   const periodProps = {
     academicYearId: settings.academicYearId,
@@ -122,7 +128,7 @@ export default async function FeeStructurePage({
                 <tr className="border-b bg-muted/70">
                   <th className="p-3 text-left font-medium">Class</th>
                   <th className="p-3 text-right font-medium">Base fee</th>
-                  {settings.transportCharges.map((location) => (
+                  {visibleTransportCharges.map((location) => (
                     <th
                       key={location.schoolLocationId}
                       className="p-3 text-right font-medium"
@@ -142,7 +148,7 @@ export default async function FeeStructurePage({
                       <td className="p-3 text-right">
                         <Rate amount={row.amount} />
                       </td>
-                      {settings.transportCharges.map((location) => (
+                      {visibleTransportCharges.map((location) => (
                         <td
                           key={location.schoolLocationId}
                           className="p-3 text-right"
@@ -163,7 +169,7 @@ export default async function FeeStructurePage({
           Transport component included in the totals above
         </h3>
         <dl className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {settings.transportCharges.map((location) => (
+          {visibleTransportCharges.map((location) => (
             <div key={location.schoolLocationId}>
               <dt className="text-xs text-muted-foreground">
                 {location.locationName}
@@ -177,24 +183,30 @@ export default async function FeeStructurePage({
         <h3 className="mt-6 border-t pt-5 text-base font-semibold">
           Other fees
         </h3>
-        <dl className="mt-3 grid gap-4 sm:grid-cols-2">
-          {settings.flatFees.map((fee) => (
+        <dl className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visibleFlatFees.map((fee) => (
             <div key={fee.code}>
               <dt className="text-sm">
                 {fee.code === "feeding_fee"
                   ? "Feeding · per paying student per day"
-                  : "Admission · one-time fee"}
+                  : fee.code === "township_transport_fee"
+                    ? "Transportation within township · daily in & out"
+                    : "Admission · one-time fee"}
               </dt>
               <dd className="mt-1 font-semibold">
                 <Rate amount={fee.amount} />
               </dd>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {fee.appliesTo}
+              </p>
             </div>
           ))}
         </dl>
         <p className="mt-5 text-xs text-muted-foreground">
-          Feeding and admission fees are separate from term school fees. A
-          missing rate is shown as “Not configured” and is never treated as
-          zero.
+          Daily feeding, within-township transport and admission fees are
+          separate from term school fees. Zero-value transport options stay
+          available in authorized settings but do not appear here or on
+          invoices.
         </p>
       </section>
       {canManage &&

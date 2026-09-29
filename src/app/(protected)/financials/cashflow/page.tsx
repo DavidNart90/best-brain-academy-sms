@@ -150,6 +150,11 @@ export default async function CashflowPage({
                 count={cashflow.feedingCount}
               />
               <CashflowRow
+                label="Within-township transport"
+                value={cashflow.townshipTransport}
+                count={cashflow.townshipTransportCount}
+              />
+              <CashflowRow
                 label="Admission collections"
                 value={cashflow.admission}
                 count={cashflow.admissionCount}

@@ -34,20 +34,21 @@ describe("finance action contracts", () => {
     permission.mockResolvedValue({ userId: "synthetic" });
     rpc.mockResolvedValue({ data: {}, error: null });
   });
-  it.each(["feeding_receipt", "admission_receipt"] as const)(
-    "posts %s without a student reference",
-    async (operation) => {
-      expect((await recordFinanceAction(operation, input)).ok).toBe(true);
-      expect(rpc).toHaveBeenCalledWith(
-        "record_daily_collection",
-        expect.objectContaining({
-          receipt_amount: 100.01,
-          collection_type: operation,
-        }),
-      );
-      expect(rpc.mock.calls[0]?.[1]).not.toHaveProperty("target_student_id");
-    },
-  );
+  it.each([
+    "feeding_receipt",
+    "township_transport_receipt",
+    "admission_receipt",
+  ] as const)("posts %s without a student reference", async (operation) => {
+    expect((await recordFinanceAction(operation, input)).ok).toBe(true);
+    expect(rpc).toHaveBeenCalledWith(
+      "record_daily_collection",
+      expect.objectContaining({
+        receipt_amount: 100.01,
+        collection_type: operation,
+      }),
+    );
+    expect(rpc.mock.calls[0]?.[1]).not.toHaveProperty("target_student_id");
+  });
   it("posts an income name without requiring a configured category", async () => {
     expect(
       (
@@ -86,6 +87,7 @@ describe("finance action contracts", () => {
   it.each([
     ["reverse_school_fee_payment", "target_payment_id"],
     ["reverse_feeding_receipt", "target_receipt_id"],
+    ["reverse_township_transport_receipt", "target_receipt_id"],
     ["reverse_admission_receipt", "target_receipt_id"],
     ["reverse_misc_receipt", "target_receipt_id"],
     ["void_expense", "target_expense_id"],
