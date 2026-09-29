@@ -7,6 +7,28 @@ export type SchoolLocation = Tables<"school_locations">;
 export type SchoolSettings = Tables<"school_settings">;
 export type AuditLog = Tables<"audit_logs">;
 
+export type ClassRosterRow = SchoolClass & {
+  femaleStudents: number;
+  maleStudents: number;
+  totalStudents: number;
+};
+
+export type ClassRosterPeriod = {
+  id: number;
+  label: string;
+  isCurrent: boolean;
+  academicYearId?: number;
+};
+
+export type ClassReportIdentity = {
+  schoolName: string;
+  schoolAddress: string | null;
+  schoolPhone: string | null;
+  schoolEmail: string | null;
+  schoolMotto: string | null;
+  schoolLogoPath: string | null;
+};
+
 export type AcademicConfiguration = {
   years: AcademicYear[];
   terms: AcademicTerm[];
