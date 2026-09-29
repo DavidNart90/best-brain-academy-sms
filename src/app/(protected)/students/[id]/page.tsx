@@ -64,6 +64,7 @@ export default async function StudentProfilePage({
   ]);
   if (!student) notFound();
   const canManage = hasPermission(context, "students.manage");
+  const canRemovePhoto = hasPermission(context, "administrators.manage");
   const canReadFinancials = hasPermission(context, "financials.read");
   const current = student.enrollments.find((item) => item.status === "active");
   const initials =
@@ -109,7 +110,13 @@ export default async function StudentProfilePage({
               </span>
             </div>
           </div>
-          {canManage && <StudentPhotoUpload studentId={student.id} />}
+          {canManage && (
+            <StudentPhotoUpload
+              studentId={student.id}
+              canRemove={canRemovePhoto}
+              hasPhoto={student.hasPhoto}
+            />
+          )}
         </div>
         <nav
           aria-label="Student profile sections"
