@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, Save } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { DateOfBirthInput } from "@/components/forms/date-of-birth-input";
 import { FormField } from "@/components/forms/form-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import {
 } from "../schemas";
 import { updateStaff } from "../server/actions";
 import type { StaffProfile } from "../types";
+import { formatDateOfBirth } from "@/utils/date-of-birth";
 
 export function StaffEditForm({ staff }: { staff: StaffProfile }) {
   const router = useRouter();
@@ -33,7 +35,7 @@ export function StaffEditForm({ staff }: { staff: StaffProfile }) {
       position: staff.position,
       status: staff.status === "archived" ? "inactive" : staff.status,
       dateJoined: staff.dateJoined ?? "",
-      dateOfBirth: staff.dateOfBirth ?? "",
+      dateOfBirth: formatDateOfBirth(staff.dateOfBirth, ""),
       knownSubjects: staff.knownSubjects.join("; "),
     },
   });
@@ -135,11 +137,10 @@ export function StaffEditForm({ staff }: { staff: StaffProfile }) {
           id="edit-date-of-birth"
           label="Date of birth"
           error={errors.dateOfBirth?.message}
-          description="Optional. Must be before the date joined."
+          description="Optional. Use DD-MM-YYYY; it must be before the date joined."
         >
-          <Input
+          <DateOfBirthInput
             id="edit-date-of-birth"
-            type="date"
             {...form.register("dateOfBirth")}
             aria-invalid={Boolean(errors.dateOfBirth)}
           />

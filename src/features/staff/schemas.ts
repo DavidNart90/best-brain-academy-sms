@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  dateOfBirthFormatMessage,
+  dateOfBirthToIso,
+} from "@/utils/date-of-birth";
 
 const optionalText = (maximum: number) =>
   z
@@ -8,6 +12,15 @@ const optionalText = (maximum: number) =>
     .pipe(z.string().max(maximum).nullable());
 const date = z.iso.date("Choose a valid calendar date.");
 const optionalDate = optionalText(10).pipe(date.nullable());
+const optionalDateOfBirth = z
+  .union([z.string(), z.null(), z.undefined()])
+  .transform((value, context) => {
+    if (!value?.trim()) return null;
+    const isoDate = dateOfBirthToIso(value);
+    if (isoDate) return isoDate;
+    context.addIssue({ code: "custom", message: dateOfBirthFormatMessage });
+    return z.NEVER;
+  });
 const subject = z.string().trim().min(1).max(120);
 export const subjectListSchema = z
   .union([
@@ -173,7 +186,7 @@ export const staffUpdateSchema = z
     position: z.string().trim().min(2, "Position is required.").max(120),
     status: z.enum(["active", "inactive"]),
     dateJoined: optionalDate,
-    dateOfBirth: optionalDate,
+    dateOfBirth: optionalDateOfBirth,
     knownSubjects: subjectListSchema,
   })
   .superRefine((value, context) => {

@@ -65,7 +65,7 @@ const validRow = [
   "",
   "Mensah",
   "Female",
-  "2016-04-12",
+  "12-04-2016",
   "2026-09-08",
   "Active",
   "2026/2027",
@@ -129,6 +129,9 @@ describe("student Excel workflow", () => {
     expect(workbook.getWorksheet("Students")?.getCell("O1").text).toBe(
       "Religious Denomination",
     );
+    expect(workbook.getWorksheet("Students")?.getCell("F2").numFmt).toBe(
+      "dd-mm-yyyy",
+    );
   });
 
   it("previews a valid row without saving it", async () => {
@@ -149,6 +152,7 @@ describe("student Excel workflow", () => {
       academicTermId: 1,
       classId: 5,
       schoolLocationId: 2,
+      dateOfBirth: "2016-04-12",
       hasDisability: false,
       religiousDenomination: "Pentecostal",
     });
