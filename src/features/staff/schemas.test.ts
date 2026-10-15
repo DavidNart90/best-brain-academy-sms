@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { assignmentDetailsSchema, staffInputSchema } from "./schemas";
+import {
+  assignmentDetailsSchema,
+  staffInputSchema,
+  staffUpdateSchema,
+} from "./schemas";
 
 const person = {
   fullName: "Synthetic Teacher Example",
@@ -157,5 +161,39 @@ describe("staff known-details onboarding", () => {
       staffInputSchema.safeParse({ ...person, dateJoined: "2026-13-01" })
         .success,
     ).toBe(false);
+  });
+});
+
+const validStaffUpdate = {
+  staffId: 4,
+  fullName: "Ama Mensah",
+  firstName: "Ama",
+  middleName: "",
+  lastName: "Mensah",
+  phone: "0240000000",
+  email: "ama@example.com",
+  position: "Teacher",
+  status: "active",
+  dateJoined: "2020-09-01",
+  dateOfBirth: "17-08-1990",
+  knownSubjects: "English; Science",
+};
+
+describe("staffUpdateSchema", () => {
+  it("normalizes DD-MM-YYYY dates of birth for persistence", () => {
+    expect(staffUpdateSchema.parse(validStaffUpdate).dateOfBirth).toBe(
+      "1990-08-17",
+    );
+  });
+
+  it("rejects an impossible date of birth", () => {
+    const result = staffUpdateSchema.safeParse({
+      ...validStaffUpdate,
+      dateOfBirth: "31-02-1990",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues[0]?.message).toContain("DD-MM-YYYY");
   });
 });

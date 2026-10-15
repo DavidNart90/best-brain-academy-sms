@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, Save } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
+import { DateOfBirthInput } from "@/components/forms/date-of-birth-input";
 import { FormField } from "@/components/forms/form-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -197,10 +198,10 @@ export function StudentForm({
             id="date-of-birth"
             label="Date of birth"
             error={errors.dateOfBirth?.message}
+            description="Use DD-MM-YYYY, for example 12-04-2015."
           >
-            <Input
+            <DateOfBirthInput
               id="date-of-birth"
-              type="date"
               aria-invalid={Boolean(errors.dateOfBirth)}
               aria-describedby={describedBy(
                 "date-of-birth",

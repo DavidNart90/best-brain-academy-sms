@@ -17,6 +17,7 @@ import {
 } from "@/features/students/server/queries";
 import { requirePermission } from "@/lib/auth/access";
 import { hasPermission } from "@/lib/permissions/contracts";
+import { formatDateOfBirth } from "@/utils/date-of-birth";
 
 const statusLabels = {
   active: "Active",
@@ -173,7 +174,10 @@ export default async function StudentProfilePage({
               label="Gender"
               value={<span className="capitalize">{student.gender}</span>}
             />
-            <Detail label="Date of birth" value={date(student.dateOfBirth)} />
+            <Detail
+              label="Date of birth"
+              value={formatDateOfBirth(student.dateOfBirth)}
+            />
             <Detail
               label="Admission date"
               value={date(student.admissionDate)}

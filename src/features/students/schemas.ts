@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  dateOfBirthFormatMessage,
+  dateOfBirthToIso,
+} from "@/utils/date-of-birth";
 
 const idSchema = z.coerce
   .number()
@@ -7,9 +11,15 @@ const idSchema = z.coerce
 const dateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a valid calendar date.");
-const optionalDateSchema = z
-  .union([dateSchema, z.literal(""), z.null(), z.undefined()])
-  .transform((value) => value || null);
+const optionalDateOfBirthSchema = z
+  .union([z.string(), z.null(), z.undefined()])
+  .transform((value, context) => {
+    if (!value?.trim()) return null;
+    const isoDate = dateOfBirthToIso(value);
+    if (isoDate) return isoDate;
+    context.addIssue({ code: "custom", message: dateOfBirthFormatMessage });
+    return z.NEVER;
+  });
 const optionalText = (maximum: number) =>
   z
     .union([z.string(), z.null(), z.undefined()])
@@ -36,7 +46,7 @@ const studentDetailsFields = {
   middleName: optionalText(80),
   lastName: requiredName("Last name"),
   gender: z.enum(["female", "male"], { error: "Choose a gender." }),
-  dateOfBirth: optionalDateSchema,
+  dateOfBirth: optionalDateOfBirthSchema,
   admissionDate: dateSchema,
   hasDisability: z
     .union([z.enum(["yes", "no"]), z.boolean()], {

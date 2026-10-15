@@ -3,6 +3,7 @@ import "server-only";
 import ExcelJS from "exceljs";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database";
+import { dateOfBirthToIso } from "@/utils/date-of-birth";
 import {
   studentInputSchema,
   studentStatuses,
@@ -71,6 +72,13 @@ function dateValue(cell: ExcelJS.Cell) {
     : parsed.toISOString().slice(0, 10);
 }
 
+function dateOfBirthValue(cell: ExcelJS.Cell) {
+  if (cell.value instanceof Date) return cell.value.toISOString().slice(0, 10);
+  const value = textValue(cell);
+  if (!value) return "";
+  return dateOfBirthToIso(value) ?? value;
+}
+
 function normalizeHeader(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -100,7 +108,10 @@ export async function buildStudentTemplate(reference: StudentReferenceData) {
       "Admission numbers",
       "Use BBA- followed by at least three digits, beginning with BBA-001.",
     ],
-    ["Dates", "Use YYYY-MM-DD. Date of Birth is optional."],
+    [
+      "Dates",
+      "Use DD-MM-YYYY for Date of Birth and YYYY-MM-DD for Admission Date. Date of Birth is optional.",
+    ],
     [
       "Disability",
       "Choose Yes or No. When Yes is selected, Disability Details is required.",
@@ -205,7 +216,7 @@ export async function buildStudentTemplate(reference: StudentReferenceData) {
         error: "Use one of the values in the dropdown.",
       };
     }
-    students.getCell(`F${row}`).numFmt = "yyyy-mm-dd";
+    students.getCell(`F${row}`).numFmt = "dd-mm-yyyy";
     students.getCell(`G${row}`).numFmt = "yyyy-mm-dd";
   }
   return Buffer.from(await workbook.xlsx.writeBuffer());
@@ -269,7 +280,7 @@ export async function parseStudentWorkbook(
       middleName: textValue(cell(row, "Middle Name")),
       lastName: textValue(cell(row, "Last Name")),
       gender: textValue(cell(row, "Gender")).toLowerCase(),
-      dateOfBirth: dateValue(cell(row, "Date of Birth")),
+      dateOfBirth: dateOfBirthValue(cell(row, "Date of Birth")),
       admissionDate: dateValue(cell(row, "Admission Date")),
       status: textValue(cell(row, "Status")).toLowerCase(),
       hasDisability,

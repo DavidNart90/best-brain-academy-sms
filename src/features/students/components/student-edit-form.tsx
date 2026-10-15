@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, RotateCcw, Save } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
+import { DateOfBirthInput } from "@/components/forms/date-of-birth-input";
 import { FormField } from "@/components/forms/form-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import {
 } from "../schemas";
 import { updateStudent } from "../server/actions";
 import type { StudentProfile } from "../types";
+import { formatDateOfBirth } from "@/utils/date-of-birth";
 
 function describedBy(id: string, error?: string) {
   return error ? `${id}-error` : undefined;
@@ -29,7 +31,7 @@ function editValues(student: StudentProfile): StudentUpdateFormValues {
     middleName: student.middleName ?? "",
     lastName: student.lastName,
     gender: student.gender,
-    dateOfBirth: student.dateOfBirth ?? "",
+    dateOfBirth: formatDateOfBirth(student.dateOfBirth, ""),
     admissionDate: student.admissionDate,
     hasDisability: student.hasDisability ? "yes" : "no",
     disabilityDetails: student.disabilityDetails ?? "",
@@ -63,7 +65,7 @@ export function StudentEditForm({ student }: { student: StudentProfile }) {
         form.reset({
           ...input,
           middleName: input.middleName ?? "",
-          dateOfBirth: input.dateOfBirth ?? "",
+          dateOfBirth: formatDateOfBirth(input.dateOfBirth, ""),
           hasDisability: input.hasDisability ? "yes" : "no",
           disabilityDetails: input.disabilityDetails ?? "",
           previousSchool: input.previousSchool ?? "",
@@ -186,10 +188,10 @@ export function StudentEditForm({ student }: { student: StudentProfile }) {
           id="edit-student-date-of-birth"
           label="Date of birth"
           error={errors.dateOfBirth?.message}
+          description="Use DD-MM-YYYY, for example 12-04-2015."
         >
-          <Input
+          <DateOfBirthInput
             id="edit-student-date-of-birth"
-            type="date"
             aria-invalid={Boolean(errors.dateOfBirth)}
             aria-describedby={describedBy(
               "edit-student-date-of-birth",

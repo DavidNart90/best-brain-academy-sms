@@ -13,7 +13,7 @@ const validStudent = {
   middleName: "",
   lastName: "Mensah",
   gender: "female",
-  dateOfBirth: "2015-04-12",
+  dateOfBirth: "12-04-2015",
   admissionDate: "2026-09-08",
   status: "active",
   hasDisability: "no",
@@ -42,6 +42,7 @@ describe("studentInputSchema", () => {
     expect(result.guardianEmail).toBeNull();
     expect(result.hasDisability).toBe(false);
     expect(result.disabilityDetails).toBeNull();
+    expect(result.dateOfBirth).toBe("2015-04-12");
     expect(result.classId).toBe(5);
     expect(studentInputSchema.parse(result)).toEqual(result);
   });
@@ -50,13 +51,24 @@ describe("studentInputSchema", () => {
     const result = studentInputSchema.safeParse({
       ...validStudent,
       admissionNumber: "bad number",
-      dateOfBirth: "2027-01-01",
+      dateOfBirth: "01-01-2027",
     });
     expect(result.success).toBe(false);
     if (!result.success)
       expect(result.error.issues.map((issue) => issue.path[0])).toEqual(
         expect.arrayContaining(["admissionNumber", "dateOfBirth"]),
       );
+  });
+
+  it("rejects an impossible DD-MM-YYYY date of birth", () => {
+    const result = studentInputSchema.safeParse({
+      ...validStudent,
+      dateOfBirth: "31-02-2015",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues[0]?.message).toContain("DD-MM-YYYY");
   });
 
   it("requires disability details when Yes is selected", () => {
@@ -95,7 +107,7 @@ describe("student profile write schemas", () => {
       middleName: "",
       lastName: "Mensah",
       gender: "female",
-      dateOfBirth: "2015-04-12",
+      dateOfBirth: "12-04-2015",
       admissionDate: "2026-09-08",
       hasDisability: "no",
       disabilityDetails: "Should be cleared",
@@ -124,7 +136,7 @@ describe("student profile write schemas", () => {
       middleName: "",
       lastName: "Mensah",
       gender: "female",
-      dateOfBirth: "2027-01-01",
+      dateOfBirth: "01-01-2027",
       admissionDate: "2026-09-08",
       hasDisability: "yes",
       disabilityDetails: "",

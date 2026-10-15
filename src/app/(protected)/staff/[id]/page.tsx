@@ -34,6 +34,7 @@ import {
 import { getStaffSalaryHistory } from "@/features/finance/server/salary-queries";
 import { requirePermission } from "@/lib/auth/access";
 import { hasPermission } from "@/lib/permissions/contracts";
+import { formatDateOfBirth } from "@/utils/date-of-birth";
 
 const date = (value: string | null) =>
   value
@@ -157,7 +158,7 @@ export default async function StaffProfilePage({
                   <CalendarDays className="size-3.5" /> Date of birth
                 </dt>
                 <dd className="mt-1 text-sm font-semibold">
-                  {date(staff.dateOfBirth)}
+                  {formatDateOfBirth(staff.dateOfBirth)}
                 </dd>
               </div>
             </dl>
